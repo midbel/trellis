@@ -29,19 +29,8 @@ func (v vertical) Render(tree *Tree, opts *TreeRenderOptions) error {
 	if opts.Border {
 		bWidth++
 	}
-	if opts.Width == 0 {
-		sizes := make(map[int]int)
-		for _, x := range layout {
-			z := len(x.Value) + (2 * (opts.Padding + opts.HorizontalGap))
-			sizes[x.X] += z + (2 * bWidth)
-		}
-		for _, z := range sizes {
-			opts.Width = max(opts.Width, z)
-		}
-	}
-	if opts.Height == 0 {
-		opts.Height = ((opts.VerticalGap*2)+1)*maker.Depth() + (2 * bWidth)
-	}
+	adjustVerticalWidth(layout, bWidth, opts)
+	adjustVerticalHeight(layout, maker.Depth(), bWidth, opts)
 
 	var (
 		sWidth  = (opts.Width / maker.Spacing())
@@ -69,6 +58,27 @@ func (v vertical) Render(tree *Tree, opts *TreeRenderOptions) error {
 	computeVerticalCoordinates(layout[ix], opts)
 	drawVerticalValues(grid, layout[ix], opts)
 	return grid.Render(v.w)
+}
+
+func adjustVerticalHeight(layout []*layoutNode, depth, border int, opts *TreeRenderOptions) {
+	if opts.Height != 0 {
+		return
+	}
+	opts.Height = ((opts.VerticalGap*2)+1)*depth + (2 * border)
+}
+
+func adjustVerticalWidth(layout []*layoutNode, border int, opts *TreeRenderOptions) {
+	if opts.Width != 0 {
+		return
+	}
+	sizes := make(map[int]int)
+	for _, x := range layout {
+		z := len(x.Value) + (2 * (opts.Padding + opts.HorizontalGap))
+		sizes[x.X] += z + (2 * border)
+	}
+	for _, z := range sizes {
+		opts.Width = max(opts.Width, z)
+	}
 }
 
 func computeVerticalCoordinates(node *layoutNode, opts *TreeRenderOptions) {

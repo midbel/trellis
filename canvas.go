@@ -11,6 +11,44 @@ type canvas struct {
 	cells  [][]byte
 }
 
+func makeCanvas(width, height int, border bool) *canvas {
+	if border {
+		width += 2
+		height += 2
+	}
+
+	var (
+		cells = make([][]byte, height)
+		blank = make([]byte, width)
+	)
+	for i := range blank {
+		blank[i] = ' '
+	}
+	if border {
+		blank[0] = verticalBarAscii
+		blank[width-1] = verticalBarAscii
+	}
+	for i := range cells {
+		cells[i] = make([]byte, width)
+		if border && (i == 0 || i == height-1) {
+			for j := range cells[i] {
+				cells[i][j] = horizontalBarAscii
+				if j == 0 || j == width-1 {
+					cells[i][j] = connectBarAscii
+				}
+			}
+		} else {
+			copy(cells[i], blank)
+		}
+	}
+	c := &canvas{
+		cells:  cells,
+		Width:  width,
+		Height: height,
+	}
+	return c
+}
+
 func (c *canvas) DrawHLine(x, y, length int) {
 	tmp := make([]byte, length+1)
 	for i := range tmp {
@@ -55,42 +93,4 @@ func (c *canvas) Render(w io.Writer) error {
 		ws.WriteByte('\n')
 	}
 	return nil
-}
-
-func makeCanvas(width, height int, border bool) *canvas {
-	if border {
-		width += 2
-		height += 2
-	}
-
-	var (
-		cells = make([][]byte, height)
-		blank = make([]byte, width)
-	)
-	for i := range blank {
-		blank[i] = ' '
-	}
-	if border {
-		blank[0] = verticalBarAscii
-		blank[width-1] = verticalBarAscii
-	}
-	for i := range cells {
-		cells[i] = make([]byte, width)
-		if border && (i == 0 || i == height-1) {
-			for j := range cells[i] {
-				cells[i][j] = horizontalBarAscii
-				if j == 0 || j == width-1 {
-					cells[i][j] = connectBarAscii
-				}
-			}
-		} else {
-			copy(cells[i], blank)
-		}
-	}
-	c := &canvas{
-		cells:  cells,
-		Width:  width,
-		Height: height,
-	}
-	return c
 }

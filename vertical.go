@@ -64,7 +64,7 @@ func (v vertical) Render(tree *Tree, opts *TreeRenderOptions) error {
 		return x.Root()
 	})
 
-	layout[ix].W = createSpan(opts.HorizontalGap, opts.Width-opts.HorizontalGap)
+	layout[ix].W = createSpan(bWidth, opts.Width+bWidth)
 	layout[ix].H = createSpan(bWidth, bWidth+sHeight)
 	computeVerticalCoordinates(layout[ix], opts)
 	drawVerticalValues(grid, layout[ix], opts)
@@ -87,7 +87,8 @@ func computeVerticalCoordinates(node *layoutNode, opts *TreeRenderOptions) {
 	for _, x := range node.Children {
 		n := x.Weight()
 
-		x.W = createSpan(offset+opts.HorizontalGap, offset+(width*n)-opts.HorizontalGap)
+		// x.W = createSpan(offset+opts.HorizontalGap, offset+(width*n)-opts.HorizontalGap)
+		x.W = createSpan(offset, offset+(width*n))
 		if len(node.Children) == 1 {
 			x.W = node.W
 		}

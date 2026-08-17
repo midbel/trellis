@@ -26,18 +26,8 @@ func (h horizontal) Render(tree *Tree, opts *TreeRenderOptions) error {
 	if opts.Border {
 		bWidth++
 	}
-	if opts.Width == 0 {
-		for _, x := range layout {
-			n := len(x.Value) + (2 * (opts.Padding + opts.HorizontalGap))
-			opts.Width = max(opts.Width, n)
-		}
-		opts.Width = opts.Width * maker.Depth()
-	} else {
-		opts.Width += (2 * opts.HorizontalGap) * maker.Depth()
-	}
-	if opts.Height == 0 {
-		opts.Height = maker.Spacing() * opts.VerticalGap
-	}
+	adjustHorizontalWidth(layout, maker.Depth(), opts)
+	adjustHorizontalHeight(maker.Spacing(), opts)
 
 	var (
 		sWidth  = (opts.Width / maker.Depth())
@@ -50,10 +40,7 @@ func (h horizontal) Render(tree *Tree, opts *TreeRenderOptions) error {
 	if h := sHeight * maker.Spacing(); h != opts.Height {
 		opts.Height = h
 	}
-	for _, x := range layout {
-		x.X = ((x.X * opts.Width) / maker.Depth()) + opts.HorizontalGap
-		x.Y = (x.Y * opts.Height) / maker.Spacing()
-	}
+	computeHorizontalCoordinates(layout, maker.Depth(), maker.Spacing(), opts)
 
 	grid := makeCanvas(opts.Width, opts.Height, opts.Border)
 	// draw horizontal connectors
@@ -96,4 +83,32 @@ func (h horizontal) Render(tree *Tree, opts *TreeRenderOptions) error {
 		grid.Put(start, x.Y+bWidth+vOffset, value)
 	}
 	return grid.Render(h.w)
+}
+
+func adjustHorizontalWidth(layout []*layoutNode, depth int, opts *TreeRenderOptions) {
+	var best int
+	if opts.Width == 0 {
+		for _, x := range layout {
+			n := len(x.Value) + (2 * (opts.Padding + opts.HorizontalGap))
+			best = max(best, n)
+		}
+		best *= depth
+	}
+	opts.Width = max(best, opts.Width)
+}
+
+func adjustHorizontalHeight(spacing int, opts *TreeRenderOptions) {
+	best := spacing * opts.VerticalGap
+	opts.Height = max(best, opts.Height)
+}
+
+func computeHorizontalCoordinates(layout []*layoutNode, depth, spacing int, opts *TreeRenderOptions) {
+	for _, x := range layout {
+		x.X = ((x.X * opts.Width) / depth) + opts.HorizontalGap
+		x.Y = (x.Y * opts.Height) / spacing
+	}
+}
+
+func drawHorizontalTree(grid *canvas, layout []*layoutNode, opts *TreeRenderOptions) {
+
 }

@@ -56,29 +56,28 @@ func (v vertical) Render(tree *Tree, opts *TreeRenderOptions) error {
 	layout[ix].W = createSpan(bWidth, opts.Width+bWidth)
 	layout[ix].H = createSpan(bWidth, bWidth+sHeight)
 	computeVerticalCoordinates(layout[ix], opts)
-	drawVerticalValues(grid, layout[ix], opts)
+	drawVerticalTree(grid, layout[ix], opts)
 	return grid.Render(v.w)
 }
 
 func adjustVerticalHeight(layout []*layoutNode, depth, border int, opts *TreeRenderOptions) {
-	if opts.Height != 0 {
-		return
-	}
-	opts.Height = ((opts.VerticalGap*2)+1)*depth + (2 * border)
+	best := ((opts.VerticalGap*2)+1)*depth + (2 * border)
+	opts.Height = max(best, opts.Height)
 }
 
 func adjustVerticalWidth(layout []*layoutNode, border int, opts *TreeRenderOptions) {
-	if opts.Width != 0 {
-		return
-	}
-	sizes := make(map[int]int)
+	var (
+		sizes = make(map[int]int)
+		best  int
+	)
 	for _, x := range layout {
 		z := len(x.Value) + (2 * (opts.Padding + opts.HorizontalGap))
-		sizes[x.X] += z + (2 * border)
+		sizes[x.X] += z
 	}
 	for _, z := range sizes {
-		opts.Width = max(opts.Width, z)
+		best = max(best, z+(2*border))
 	}
+	opts.Width = max(best, opts.Width)
 }
 
 func computeVerticalCoordinates(node *layoutNode, opts *TreeRenderOptions) {
@@ -117,7 +116,7 @@ func computeVerticalCoordinates(node *layoutNode, opts *TreeRenderOptions) {
 	}
 }
 
-func drawVerticalValues(grid *canvas, node *layoutNode, opts *TreeRenderOptions) {
+func drawVerticalTree(grid *canvas, node *layoutNode, opts *TreeRenderOptions) {
 	y := node.Y + node.H.Offset()
 	grid.Put(node.W.CenterValue(node.Value, opts.Padding), y, node.Get(opts.Padding))
 
@@ -134,7 +133,7 @@ func drawVerticalValues(grid *canvas, node *layoutNode, opts *TreeRenderOptions)
 		}
 
 		spans = append(spans, x.W)
-		drawVerticalValues(grid, x, opts)
+		drawVerticalTree(grid, x, opts)
 	}
 	if len(spans) >= 2 {
 		first, last := spans[0], spans[len(spans)-1]

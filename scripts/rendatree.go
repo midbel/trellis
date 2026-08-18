@@ -13,6 +13,7 @@ func main() {
 		HorizontalGap: trellis.DefaultHorizontalGapSize,
 		Border:        false,
 		Position:      trellis.ParentAlignFirst,
+		Reverse:       false,
 		Align:         trellis.AlignCenter,
 		// Align: trellis.AlignLeft,
 	}
@@ -22,6 +23,7 @@ func main() {
 	flag.IntVar(&opts.VerticalGap, "g", opts.VerticalGap, "vertical gap")
 	flag.IntVar(&opts.HorizontalGap, "t", opts.HorizontalGap, "horizontal gap")
 	flag.BoolVar(&opts.Border, "b", false, "add border")
+	flag.BoolVar(&opts.Reverse, "r", false, "reverse tree")
 	flag.IntVar(&opts.Padding, "i", 1, "value padding")
 	flag.StringVar(&kind, "k", "", "tree rendering type")
 	flag.Parse()

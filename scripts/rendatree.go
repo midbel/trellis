@@ -13,8 +13,8 @@ func main() {
 		HorizontalGap: trellis.DefaultHorizontalGapSize,
 		Border:        false,
 		Position:      trellis.ParentAlignFirst,
-		// Align:         AlignCenter,
-		Align: trellis.AlignLeft,
+		Align:         trellis.AlignCenter,
+		// Align: trellis.AlignLeft,
 	}
 	var kind string
 	flag.IntVar(&opts.Width, "w", 0, "width")
@@ -44,15 +44,14 @@ func main() {
 	}
 	root := trellis.NewNode("Midbel")
 	root.Nodes = []*trellis.Node{
-		trellis.NewNode("trellis"),
+		// trellis.NewNode("trellis"),
 		sub2,
 		sub3,
 		trellis.NewNode("cli"),
 		sub1,
 		trellis.NewNode("probe"),
-		trellis.NewNode("tree"),
-		trellis.NewNode("packit"),
-		trellis.NewNode("sweet"),
+		// trellis.NewNode("packit"),
+		// trellis.NewNode("sweet"),
 	}
 	tree := trellis.NewTree(root)
 	switch kind {

@@ -54,17 +54,19 @@ type TreeRenderOptions struct {
 	HorizontalGap int
 	VerticalGap   int
 	Padding       int
-	Connector     ConnectorStyle
 	Align         Alignment
 	Position      ParentPosition
 	Border        bool
+	Reverse       bool
+	Style         ConnectorStyle
+	Render        func(*Node) []rune
 }
 
 var defaultTreeRenderOptions = &TreeRenderOptions{
 	VerticalGap:   DefaultVerticalGapSize,
 	HorizontalGap: DefaultHorizontalGapSize,
 	Padding:       1,
-	Connector:     ConnectorAscii,
+	Style:         ConnectorAscii,
 	Align:         AlignCenter,
 	Position:      ParentAlignCenter,
 	Border:        true,

@@ -79,11 +79,13 @@ func computeHorizontalCoordinates(layout []*layoutNode, depth, spacing int, opts
 		var (
 			value  = x.Get(opts.Padding)
 			offset = getOffsetX(opts.Align, width-gaps, len(value))
+			startX = x.X * width
+			startY = x.Y * height
 		)
-		x.X = (x.X * width) + offset + opts.HorizontalGap
-		x.W = createSpan(x.X, x.X+width-opts.HorizontalGap)
-		x.Y = (x.Y * height) + yOffset + opts.VerticalGap
-		x.H = createSpan(x.Y, x.Y+height-opts.VerticalGap)
+		x.X = startX + offset + opts.HorizontalGap
+		x.W = createSpan(startX, startX+width-opts.HorizontalGap)
+		x.Y = startY + yOffset + opts.VerticalGap
+		x.H = createSpan(startY, startY+height-opts.VerticalGap)
 	}
 }
 
@@ -92,10 +94,11 @@ func drawHorizontalTree(grid *canvas, layout []*layoutNode, opts *TreeRenderOpti
 	if opts.Border {
 		borderWidth++
 	}
+	// draw horizontal connectors
 	for _, x := range layout {
 		var (
 			size  = x.W.Len() + opts.HorizontalGap
-			start = x.X - opts.HorizontalGap + borderWidth
+			start = x.W.Start - opts.HorizontalGap + borderWidth
 		)
 		if x.Leaf() {
 			size = opts.HorizontalGap + x.X - x.W.Start
@@ -105,7 +108,7 @@ func drawHorizontalTree(grid *canvas, layout []*layoutNode, opts *TreeRenderOpti
 		}
 		grid.DrawHLine(start, x.Y+borderWidth+x.H.Offset(), size)
 	}
-	// // draw vertical connectors
+	// draw vertical connectors
 	for _, x := range layout {
 		if x.Leaf() || len(x.Children) == 1 {
 			continue
@@ -113,7 +116,7 @@ func drawHorizontalTree(grid *canvas, layout []*layoutNode, opts *TreeRenderOpti
 		var (
 			first = x.Children[0]
 			last  = x.Children[len(x.Children)-1]
-			at    = x.X + borderWidth + x.W.Len()
+			at    = x.W.Start + borderWidth + x.W.Len()
 		)
 		grid.DrawVLine(at, first.Y+1, last.Y-first.Y+1)
 	}

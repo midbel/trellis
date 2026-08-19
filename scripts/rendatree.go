@@ -8,14 +8,14 @@ import (
 )
 
 func main() {
-	opts := trellis.TreeRenderOptions{
+	opts := trellis.Options{
 		VerticalGap:   trellis.DefaultVerticalGapSize,
 		HorizontalGap: trellis.DefaultHorizontalGapSize,
 		Border:        false,
 		Position:      trellis.ParentAlignFirst,
 		Reverse:       false,
-		Align:         trellis.AlignCenter,
-		// Align: trellis.AlignLeft,
+		// Align:         trellis.AlignCenter,
+		Align: trellis.AlignLeft,
 	}
 	var kind string
 	flag.IntVar(&opts.Width, "w", 0, "width")

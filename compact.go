@@ -12,11 +12,8 @@ func NewCompact(w io.Writer) Renderer {
 	}
 }
 
-func (c compact) Render(tree *Tree, opts *TreeRenderOptions) error {
-	if opts == nil {
-		opts = defaultTreeRenderOptions.clone()
-	} else {
-		opts = opts.clone()
-	}
+func (c compact) Render(tree *Tree, options *Options) error {
+	opts := prepareOptions(options)
+	_ = opts
 	return nil
 }

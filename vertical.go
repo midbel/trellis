@@ -15,13 +15,9 @@ func NewVertical(w io.Writer) Renderer {
 	}
 }
 
-func (v vertical) Render(tree *Tree, opts *TreeRenderOptions) error {
-	if opts == nil {
-		opts = defaultTreeRenderOptions.clone()
-	} else {
-		opts = opts.clone()
-	}
+func (v vertical) Render(tree *Tree, options *Options) error {
 	var (
+		opts   = prepareOptions(options)
 		maker  = makeLayout(opts.VerticalGap, opts.Position)
 		layout = maker.Make(tree.Root)
 		bWidth int
@@ -43,12 +39,14 @@ func (v vertical) Render(tree *Tree, opts *TreeRenderOptions) error {
 	for i := range layout {
 		layout[i].X, layout[i].Y = layout[i].Y, layout[i].X
 	}
+	if opts.Reverse {
+		reverseVerticalCoordinates(maker, layout)
+	}
 	for _, n := range layout {
 		n.X = sWidth * n.X
 		n.Y = sHeight * n.Y
 	}
 	grid := makeCanvas(opts.Width, opts.Height, opts.Border)
-	// draw values
 	ix := slices.IndexFunc(layout, func(x *layoutNode) bool {
 		return x.Root()
 	})
@@ -56,19 +54,20 @@ func (v vertical) Render(tree *Tree, opts *TreeRenderOptions) error {
 	layout[ix].W = createSpan(bWidth, opts.Width+bWidth)
 	layout[ix].H = createSpan(bWidth, bWidth+sHeight)
 	computeVerticalCoordinates(layout[ix], opts)
-	if opts.Reverse {
-
-	}
 	drawVerticalTree(grid, layout[ix], opts)
 	return grid.Render(v.w)
 }
 
-func adjustVerticalHeight(layout []*layoutNode, depth, border int, opts *TreeRenderOptions) {
+func reverseVerticalCoordinates(maker *layoutMaker, layout []*layoutNode) {
+
+}
+
+func adjustVerticalHeight(layout []*layoutNode, depth, border int, opts *Options) {
 	best := ((opts.VerticalGap*2)+1)*depth + (2 * border)
 	opts.Height = max(best, opts.Height)
 }
 
-func adjustVerticalWidth(layout []*layoutNode, border int, opts *TreeRenderOptions) {
+func adjustVerticalWidth(layout []*layoutNode, border int, opts *Options) {
 	var (
 		sizes = make(map[int]int)
 		best  int
@@ -83,7 +82,7 @@ func adjustVerticalWidth(layout []*layoutNode, border int, opts *TreeRenderOptio
 	opts.Width = max(best, opts.Width)
 }
 
-func computeVerticalCoordinates(node *layoutNode, opts *TreeRenderOptions) {
+func computeVerticalCoordinates(node *layoutNode, opts *Options) {
 	var count int
 	for _, x := range node.Children {
 		count += x.Weight()
@@ -118,7 +117,7 @@ func computeVerticalCoordinates(node *layoutNode, opts *TreeRenderOptions) {
 	}
 }
 
-func drawVerticalTree(grid *canvas, node *layoutNode, opts *TreeRenderOptions) {
+func drawVerticalTree(grid *canvas, node *layoutNode, opts *Options) {
 	y := node.Y + node.H.Offset()
 	grid.Put(node.W.CenterValue(node.Value, opts.Padding), y, node.Get(opts.Padding))
 

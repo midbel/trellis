@@ -14,13 +14,9 @@ func NewHorizontal(w io.Writer) Renderer {
 	}
 }
 
-func (h horizontal) Render(tree *Tree, opts *TreeRenderOptions) error {
-	if opts == nil {
-		opts = defaultTreeRenderOptions.clone()
-	} else {
-		opts = opts.clone()
-	}
+func (h horizontal) Render(tree *Tree, options *Options) error {
 	var (
+		opts   = prepareOptions(options)
 		maker  = makeLayout(opts.VerticalGap, opts.Position)
 		layout = maker.Make(tree.Root)
 	)
@@ -30,20 +26,23 @@ func (h horizontal) Render(tree *Tree, opts *TreeRenderOptions) error {
 	adjustHorizontalSize(opts, maker.Depth(), maker.Spacing())
 
 	if opts.Reverse {
-		depth := maker.Depth()
-		for _, x := range layout {
-			x.X = depth - x.X - 1
-		}
+		reverseHorizontalCoordinates(maker, layout)
 	}
 
 	computeHorizontalCoordinates(layout, maker.Depth(), maker.Spacing(), opts)
 	grid := makeCanvas(opts.Width, opts.Height, opts.Border)
-	// draw horizontal connectors
 	drawHorizontalTree(grid, layout, opts)
 	return grid.Render(h.w)
 }
 
-func adjustHorizontalSize(opts *TreeRenderOptions, depth int, spacing int) {
+func reverseHorizontalCoordinates(maker *layoutMaker, layout []*layoutNode) {
+	depth := maker.Depth()
+	for _, x := range layout {
+		x.X = depth - x.X - 1
+	}
+}
+
+func adjustHorizontalSize(opts *Options, depth int, spacing int) {
 	var (
 		sWidth  = (opts.Width / depth)
 		sHeight = (opts.Height / spacing)
@@ -56,7 +55,7 @@ func adjustHorizontalSize(opts *TreeRenderOptions, depth int, spacing int) {
 	}
 }
 
-func adjustHorizontalWidth(layout []*layoutNode, depth int, opts *TreeRenderOptions) {
+func adjustHorizontalWidth(layout []*layoutNode, depth int, opts *Options) {
 	var best int
 	for _, x := range layout {
 		n := len(x.Value) + (2 * (opts.Padding + opts.HorizontalGap))
@@ -67,12 +66,12 @@ func adjustHorizontalWidth(layout []*layoutNode, depth int, opts *TreeRenderOpti
 	opts.Width = max(best, opts.Width)
 }
 
-func adjustHorizontalHeight(spacing int, opts *TreeRenderOptions) {
+func adjustHorizontalHeight(spacing int, opts *Options) {
 	best := spacing * (1 + opts.VerticalGap)
 	opts.Height = max(best, opts.Height)
 }
 
-func computeHorizontalCoordinates(layout []*layoutNode, depth, spacing int, opts *TreeRenderOptions) {
+func computeHorizontalCoordinates(layout []*layoutNode, depth, spacing int, opts *Options) {
 	var (
 		width   = opts.Width / depth
 		height  = opts.Height / spacing
@@ -93,7 +92,7 @@ func computeHorizontalCoordinates(layout []*layoutNode, depth, spacing int, opts
 	}
 }
 
-func drawHorizontalTree(grid *canvas, layout []*layoutNode, opts *TreeRenderOptions) {
+func drawHorizontalTree(grid *canvas, layout []*layoutNode, opts *Options) {
 	var borderWidth int
 	if opts.Border {
 		borderWidth++

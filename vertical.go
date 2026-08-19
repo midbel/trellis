@@ -48,7 +48,10 @@ func adjustVerticalSize(opts *Options, depth, spacing int) {
 }
 
 func reverseVerticalCoordinates(maker *layoutMaker, layout []*layoutNode) {
-
+	depth := maker.Depth()
+	for _, x := range layout {
+		x.Y = depth - x.Y - 1
+	}
 }
 
 func adjustVerticalHeight(layout []*layoutNode, depth int, opts *Options) {
@@ -110,14 +113,14 @@ func computeVerticalCoordinates(node *layoutNode, opts *Options) {
 		count++
 	}
 	var (
-		width  = node.W.Len() / count
-		rem    = node.W.Len() % count
-		offset = node.W.Start
+		width = node.W.Len() / count
+		rem   = node.W.Len() % count
+		start = node.W.Start
 	)
 	for _, x := range node.Children {
 		n := x.Weight()
 
-		x.W = createSpan(offset, offset+(width*n))
+		x.W = createSpan(start, start+(width*n))
 		if len(node.Children) == 1 {
 			x.W = node.W
 		}
@@ -129,9 +132,9 @@ func computeVerticalCoordinates(node *layoutNode, opts *Options) {
 		}
 		x.H = node.H.Next()
 		computeVerticalCoordinates(x, opts)
-		offset += (width * n)
+		start += (width * n)
 		if addOne {
-			offset++
+			start++
 		}
 	}
 }
@@ -147,9 +150,17 @@ func drawVerticalTree(grid *canvas, node *layoutNode, opts *Options) {
 	)
 	for _, x := range node.Children {
 		if x.Leaf() {
-			grid.DrawVLine(x.W.Center(), y1, 1+node.H.Offset())
+			if opts.Reverse {
+				grid.DrawVLine(x.W.Center(), node.Y-dist, dist+1)
+			} else {
+				grid.DrawVLine(x.W.Center(), y1, 1+node.H.Offset())
+			}
 		} else {
-			grid.DrawVLine(x.W.Center(), y1, dist+1)
+			if opts.Reverse {
+				grid.DrawVLine(x.W.Center(), node.Y-dist, dist+1)
+			} else {
+				grid.DrawVLine(x.W.Center(), y1, dist+1)
+			}
 		}
 
 		spans = append(spans, x.W)
@@ -157,9 +168,17 @@ func drawVerticalTree(grid *canvas, node *layoutNode, opts *Options) {
 	}
 	if len(spans) >= 2 {
 		first, last := spans[0], spans[len(spans)-1]
-		grid.DrawHLine(first.Center(), y1, last.Center()-first.Center())
+		if opts.Reverse {
+			grid.DrawHLine(first.Center(), node.Y, last.Center()-first.Center())
+		} else {
+			grid.DrawHLine(first.Center(), node.Y+node.H.Len(), last.Center()-first.Center())
+		}
 	}
 	if !node.Leaf() {
-		grid.DrawVLine(node.W.Center(), y+1, dist)
+		if opts.Reverse {
+			grid.DrawVLine(node.W.Center(), node.Y+1, node.H.Offset()-1)
+		} else {
+			grid.DrawVLine(node.W.Center(), y+1, dist)
+		}
 	}
 }

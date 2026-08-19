@@ -20,58 +20,55 @@ func (v vertical) Render(tree *Tree, options *Options) error {
 		opts   = prepareOptions(options)
 		maker  = makeLayout(opts.VerticalGap, opts.Position)
 		layout = maker.Make(tree.Root)
-		bWidth int
 	)
-	if opts.Border {
-		bWidth++
-	}
-	adjustVerticalWidth(layout, bWidth, opts)
-	adjustVerticalHeight(layout, maker.Depth(), bWidth, opts)
+	adjustVerticalWidth(layout, opts)
+	adjustVerticalHeight(layout, maker.Depth(), opts)
 
-	var (
-		sWidth  = (opts.Width / maker.Spacing())
-		sHeight = (opts.Height / maker.Depth())
-	)
-	if h := sHeight * maker.Depth(); h != opts.Height {
-		opts.Height = h
-	}
-
+	adjustVerticalSize(opts, maker.Depth(), maker.Spacing())
 	for i := range layout {
 		layout[i].X, layout[i].Y = layout[i].Y, layout[i].X
 	}
 	if opts.Reverse {
 		reverseVerticalCoordinates(maker, layout)
 	}
-	for _, n := range layout {
-		n.X = sWidth * n.X
-		n.Y = sHeight * n.Y
-	}
+	adjustVerticalCoordinates(layout, maker.Depth(), maker.Spacing(), opts)
 	grid := makeCanvas(opts.Width, opts.Height, opts.Border)
 	ix := slices.IndexFunc(layout, func(x *layoutNode) bool {
 		return x.Root()
 	})
-
-	layout[ix].W = createSpan(bWidth, opts.Width+bWidth)
-	layout[ix].H = createSpan(bWidth, bWidth+sHeight)
-	computeVerticalCoordinates(layout[ix], opts)
 	drawVerticalTree(grid, layout[ix], opts)
 	return grid.Render(v.w)
+}
+
+func adjustVerticalSize(opts *Options, depth, spacing int) {
+	sHeight := (opts.Height / depth)
+	if h := sHeight * depth; h != opts.Height {
+		opts.Height = h
+	}
 }
 
 func reverseVerticalCoordinates(maker *layoutMaker, layout []*layoutNode) {
 
 }
 
-func adjustVerticalHeight(layout []*layoutNode, depth, border int, opts *Options) {
+func adjustVerticalHeight(layout []*layoutNode, depth int, opts *Options) {
+	var border int
+	if opts.Border {
+		border++
+	}
 	best := ((opts.VerticalGap*2)+1)*depth + (2 * border)
 	opts.Height = max(best, opts.Height)
 }
 
-func adjustVerticalWidth(layout []*layoutNode, border int, opts *Options) {
+func adjustVerticalWidth(layout []*layoutNode, opts *Options) {
 	var (
-		sizes = make(map[int]int)
-		best  int
+		sizes  = make(map[int]int)
+		border int
+		best   int
 	)
+	if opts.Border {
+		border++
+	}
 	for _, x := range layout {
 		z := len(x.Value) + (2 * (opts.Padding + opts.HorizontalGap))
 		sizes[x.X] += z
@@ -80,6 +77,28 @@ func adjustVerticalWidth(layout []*layoutNode, border int, opts *Options) {
 		best = max(best, z+(2*border))
 	}
 	opts.Width = max(best, opts.Width)
+}
+
+func adjustVerticalCoordinates(layout []*layoutNode, depth, spacing int, opts *Options) {
+	var (
+		width       = opts.Width / spacing
+		height      = opts.Height / depth
+		borderWidth int
+	)
+	for _, n := range layout {
+		n.X = width * n.X
+		n.Y = height * n.Y
+	}
+	if opts.Border {
+		borderWidth++
+	}
+	ix := slices.IndexFunc(layout, func(x *layoutNode) bool {
+		return x.Root()
+	})
+
+	layout[ix].W = createSpan(borderWidth, opts.Width+borderWidth)
+	layout[ix].H = createSpan(borderWidth, height+borderWidth)
+	computeVerticalCoordinates(layout[ix], opts)
 }
 
 func computeVerticalCoordinates(node *layoutNode, opts *Options) {

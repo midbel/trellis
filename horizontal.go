@@ -42,7 +42,7 @@ func reverseHorizontalCoordinates(maker *layoutMaker, layout []*layoutNode) {
 	}
 }
 
-func adjustHorizontalSize(opts *Options, depth int, spacing int) {
+func adjustHorizontalSize(opts *Options, depth, spacing int) {
 	var (
 		sWidth  = (opts.Width / depth)
 		sHeight = (opts.Height / spacing)

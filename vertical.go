@@ -1,6 +1,7 @@
 package trellis
 
 import (
+	"fmt"
 	"io"
 	"slices"
 )
@@ -105,6 +106,15 @@ func adjustVerticalCoordinates(layout []*layoutNode, depth, spacing int, opts *O
 }
 
 func computeVerticalCoordinates(node *layoutNode, opts *Options) {
+	var (
+		width = node.W.Len()
+		value = node.Get(opts.Padding)
+	)
+	node.X = node.W.Start + getOffsetX(opts.Align, node.W.Len(), len(value))
+	node.Y = node.H.Start + node.H.Offset() - 1
+
+	fmt.Println(node.Value, node.X, node.Y, node.W.Len(), node.W.Center(), node.W)
+
 	var count int
 	for _, x := range node.Children {
 		count += x.Weight()
@@ -113,14 +123,14 @@ func computeVerticalCoordinates(node *layoutNode, opts *Options) {
 		count++
 	}
 	var (
-		width = node.W.Len() / count
-		rem   = node.W.Len() % count
-		start = node.W.Start
+		segment = width / count
+		rem     = width % count
+		start   = node.W.Start
 	)
 	for _, x := range node.Children {
 		n := x.Weight()
 
-		x.W = createSpan(start, start+(width*n))
+		x.W = createSpan(start, start+(segment*n))
 		if len(node.Children) == 1 {
 			x.W = node.W
 		}
@@ -132,7 +142,7 @@ func computeVerticalCoordinates(node *layoutNode, opts *Options) {
 		}
 		x.H = node.H.Next()
 		computeVerticalCoordinates(x, opts)
-		start += (width * n)
+		start += (segment * n)
 		if addOne {
 			start++
 		}
@@ -140,28 +150,9 @@ func computeVerticalCoordinates(node *layoutNode, opts *Options) {
 }
 
 func drawVerticalTree(grid *canvas, node *layoutNode, opts *Options) {
-	y := node.Y + node.H.Offset()
-	grid.Put(node.W.CenterValue(node.Value, opts.Padding), y, node.Get(opts.Padding))
-
-	var (
-		spans []span
-		y1    = node.Y + node.H.Len()
-		dist  = y1 - (y + 1)
-	)
+	var spans []span
 	for _, x := range node.Children {
-		if x.Leaf() {
-			if opts.Reverse {
-				grid.DrawVLine(x.W.Center(), node.Y-dist, dist+1)
-			} else {
-				grid.DrawVLine(x.W.Center(), y1, 1+node.H.Offset())
-			}
-		} else {
-			if opts.Reverse {
-				grid.DrawVLine(x.W.Center(), node.Y-dist, dist+1)
-			} else {
-				grid.DrawVLine(x.W.Center(), y1, dist+1)
-			}
-		}
+		grid.DrawVLine(x.W.Center(), x.H.Start, x.H.Offset())
 
 		spans = append(spans, x.W)
 		drawVerticalTree(grid, x, opts)
@@ -169,16 +160,13 @@ func drawVerticalTree(grid *canvas, node *layoutNode, opts *Options) {
 	if len(spans) >= 2 {
 		first, last := spans[0], spans[len(spans)-1]
 		if opts.Reverse {
-			grid.DrawHLine(first.Center(), node.Y, last.Center()-first.Center())
+			grid.DrawHLine(first.Center(), node.H.Start, first.Distance(last))
 		} else {
-			grid.DrawHLine(first.Center(), node.Y+node.H.Len(), last.Center()-first.Center())
+			grid.DrawHLine(first.Center(), node.H.End, first.Distance(last))
 		}
 	}
 	if !node.Leaf() {
-		if opts.Reverse {
-			grid.DrawVLine(node.W.Center(), node.Y+1, node.H.Offset()-1)
-		} else {
-			grid.DrawVLine(node.W.Center(), y+1, dist)
-		}
+		grid.DrawVLine(node.W.Center(), node.Y+1, node.H.Offset()+1)
 	}
+	grid.Put(node.X, node.Y, node.Get(opts.Padding))
 }

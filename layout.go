@@ -20,6 +20,10 @@ func (s span) CenterValue(value string, padding int) int {
 	return s.Start + offset
 }
 
+func (s span) Distance(other span) int {
+	return other.Center() - s.Center()
+}
+
 func (s span) Center() int {
 	return s.Start + s.Offset()
 }

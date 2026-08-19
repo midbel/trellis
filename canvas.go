@@ -52,6 +52,9 @@ func makeCanvas(width, height int, border bool) *canvas {
 func (c *canvas) DrawHLine(x, y, length int) {
 	tmp := make([]byte, length+1)
 	for i := range tmp {
+		if tmp[i] == connectBarAscii {
+			continue
+		}
 		tmp[i] = horizontalBarAscii
 		if i == 0 || i == length {
 			tmp[i] = connectBarAscii
@@ -63,10 +66,13 @@ func (c *canvas) DrawHLine(x, y, length int) {
 func (c *canvas) DrawVLine(x, y, length int) {
 	for i := 0; i < length; i++ {
 		at := y + i
-		if c.GetByte(x, at) == connectBarAscii {
+		if b := c.GetByte(x, at); b == connectBarAscii {
 			continue
+		} else if b == horizontalBarAscii {
+			c.PutByte(x, at, connectBarAscii)
+		} else {
+			c.PutByte(x, at, verticalBarAscii)
 		}
-		c.PutByte(x, at, verticalBarAscii)
 	}
 }
 

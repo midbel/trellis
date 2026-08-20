@@ -1,7 +1,6 @@
 package trellis
 
 import (
-	"fmt"
 	"io"
 	"slices"
 )
@@ -113,8 +112,6 @@ func computeVerticalCoordinates(node *layoutNode, opts *Options) {
 	node.X = node.W.Start + getOffsetX(opts.Align, node.W.Len(), len(value))
 	node.Y = node.H.Start + node.H.Offset() - 1
 
-	fmt.Println(node.Value, node.X, node.Y, node.W.Len(), node.W.Center(), node.W)
-
 	var count int
 	for _, x := range node.Children {
 		count += x.Weight()
@@ -150,23 +147,30 @@ func computeVerticalCoordinates(node *layoutNode, opts *Options) {
 }
 
 func drawVerticalTree(grid *canvas, node *layoutNode, opts *Options) {
-	var spans []span
+	grid.Put(node.X, node.Y, node.Get(opts.Padding))
 	for _, x := range node.Children {
-		grid.DrawVLine(x.W.Center(), x.H.Start, x.H.Offset())
-
-		spans = append(spans, x.W)
 		drawVerticalTree(grid, x, opts)
-	}
-	if len(spans) >= 2 {
-		first, last := spans[0], spans[len(spans)-1]
-		if opts.Reverse {
-			grid.DrawHLine(first.Center(), node.H.Start, first.Distance(last))
+
+		// draw connectors
+		var (
+			source = node.Anchor(opts.Padding)
+			target = x.Anchor(opts.Padding)
+		)
+		if target == source {
+			grid.DrawVLine(source, node.Y+1, x.Y-node.Y-1)
 		} else {
-			grid.DrawHLine(first.Center(), node.H.End, first.Distance(last))
+			grid.DrawVLine(source, node.Y+1, x.H.Start-node.Y)
+			grid.DrawVLine(target, x.H.Start, x.Y-x.H.Start)
+
+			var (
+				anchor = source
+				dist   = target - source
+			)
+			if dist < 0 {
+				anchor = target
+				dist = -dist
+			}
+			grid.DrawHLine(anchor, x.H.Start, dist)
 		}
 	}
-	if !node.Leaf() {
-		grid.DrawVLine(node.W.Center(), node.Y+1, node.H.Offset()+1)
-	}
-	grid.Put(node.X, node.Y, node.Get(opts.Padding))
 }

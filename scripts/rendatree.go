@@ -14,8 +14,8 @@ func main() {
 		Border:        false,
 		Position:      trellis.ParentAlignFirst,
 		Reverse:       false,
-		Align:         trellis.AlignCenter,
-		// Align: trellis.AlignLeft,
+		// Align:         trellis.AlignCenter,
+		Align: trellis.AlignLeft,
 	}
 	var kind string
 	flag.IntVar(&opts.Width, "w", 0, "width")
@@ -39,6 +39,7 @@ func main() {
 	sub2.Nodes = []*trellis.Node{
 		trellis.NewNode("xpath"),
 		trellis.NewNode("xslt"),
+		trellis.NewNode("relax"),
 	}
 	sub3 := trellis.NewNode("curly")
 	sub3.Nodes = []*trellis.Node{

@@ -57,6 +57,7 @@ type Options struct {
 	HorizontalGap   int
 	VerticalGap     int
 	Padding         int
+	PaddingChar     string
 	Align           Alignment
 	Position        ParentPosition
 	Border          bool
@@ -112,4 +113,41 @@ var defaultOptions = &Options{
 func (t *Options) Clone() *Options {
 	x := *t
 	return &x
+}
+
+func (t *Options) borderWidth() int {
+	if t.Border {
+		return 1
+	}
+	return 0
+}
+
+func (t *Options) paddedValue(str string) []byte {
+	if t.Padding <= 0 {
+		return []byte(str)
+	}
+	var (
+		char  = byte(' ')
+		value = []byte(str)
+		pad   = make([]byte, t.Padding)
+		tmp   = make([]byte, 0, t.Padding+len(str))
+	)
+	if t.PaddingChar != "" && len(t.PaddingChar) == 1 {
+		char = t.PaddingChar[0]
+	}
+	for i := range pad {
+		pad[i] = char
+	}
+	tmp = append(tmp, pad...)
+	tmp = append(tmp, value...)
+	tmp = append(tmp, pad...)
+	return tmp
+}
+
+func (t *Options) hGaps() int {
+	return t.HorizontalGap + t.HorizontalGap
+}
+
+func (t *Options) vGaps() int {
+	return t.VerticalGap + t.VerticalGap
 }

@@ -79,6 +79,11 @@ func (n *layoutNode) Weight() int {
 	return sum
 }
 
+func (n *layoutNode) Anchor(padding int) int {
+	x := n.Get(padding)
+	return n.X + len(x)/2
+}
+
 func (n *layoutNode) Get(padding int) []byte {
 	var (
 		value = []byte(n.Value)

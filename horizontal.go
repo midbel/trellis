@@ -2,6 +2,7 @@ package trellis
 
 import (
 	"io"
+	"slices"
 )
 
 type horizontal struct {
@@ -31,7 +32,11 @@ func (h horizontal) Render(tree *Tree, options *Options) error {
 
 	computeHorizontalCoordinates(layout, maker.Depth(), maker.Spacing(), opts)
 	grid := makeCanvas(opts.Width, opts.Height, opts.Border)
-	drawHorizontalTree(grid, layout, opts)
+
+	ix := slices.IndexFunc(layout, func(n *layoutNode) bool {
+		return n.Root()
+	})
+	drawHorizontalTree(grid, layout[ix], opts)
 	return grid.Render(h.w)
 }
 
@@ -76,78 +81,50 @@ func computeHorizontalCoordinates(layout []*layoutNode, depth, spacing int, opts
 		width   = opts.Width / depth
 		height  = opts.Height / spacing
 		yOffset = height / 2
-		gaps    = 2 * opts.HorizontalGap
 	)
 	for _, x := range layout {
 		var (
 			value  = x.Get(opts.Padding)
-			offset = getOffsetX(opts.Align, width-gaps, len(value))
+			offset = getOffsetX(opts.Align, width-opts.hGaps(), len(value))
 			startX = (x.X * width) + opts.HorizontalGap
 			startY = x.Y * height
 		)
 		x.X = startX + offset + opts.HorizontalGap
-		x.W = createSpan(startX, startX+width-gaps)
+		x.W = createSpan(startX, startX+width-opts.hGaps())
 		x.Y = startY + yOffset + opts.VerticalGap
 		x.H = createSpan(startY, startY+height-opts.VerticalGap)
 	}
 }
 
-func drawHorizontalTree(grid *canvas, layout []*layoutNode, opts *Options) {
-	var borderWidth int
-	if opts.Border {
-		borderWidth++
-	}
-	// draw horizontal connectors
-	for _, x := range layout {
+func drawHorizontalTree(grid *canvas, node *layoutNode, opts *Options) {
+	var (
+		value = opts.paddedValue(node.Value)
+		size  = len(value)
+	)
+	for _, x := range node.Children {
+		drawHorizontalTree(grid, x, opts)
+
 		var (
-			size  = x.W.Len()
-			start = x.W.Start + borderWidth
+			source = node.Y
+			target = x.Y
+			start  = node.X + size
 		)
-		if x.Leaf() {
-			if opts.Reverse {
-				size = x.W.End - x.X - opts.Padding + opts.HorizontalGap + 1
-				start = x.X + opts.Padding
-			} else {
-				size = x.X - x.W.Start + opts.HorizontalGap
-				start -= opts.HorizontalGap
-			}
-		} else if x.Root() {
-			if !opts.Reverse {
-				size = x.W.End - x.X - opts.Padding + opts.HorizontalGap + 1
-				start = x.X + opts.Padding
-			} else {
-				size = x.X - x.W.Start + opts.HorizontalGap
-				start -= opts.HorizontalGap
-			}
+		if source == target {
+			grid.DrawHLine(start, source+1, x.X-start-1)
 		} else {
-			start -= opts.HorizontalGap
-			size += 2 * opts.HorizontalGap
+			grid.DrawHLine(start, source+1, node.W.End-start+opts.HorizontalGap)
+			grid.DrawHLine(x.W.Start-opts.HorizontalGap, target+1, x.X-x.W.Start+opts.HorizontalGap-1)
+
+			var (
+				anchor = source
+				dist   = target - source
+			)
+			if dist < 0 {
+				dist = -dist
+				anchor = target
+			}
+			grid.DrawVLine(x.W.Start-opts.HorizontalGap, anchor+1, dist)
 		}
-		grid.DrawHLine(start, x.Y+borderWidth+x.H.Offset(), size)
 	}
-	// draw vertical connectors
-	for _, x := range layout {
-		if x.Leaf() || len(x.Children) == 1 {
-			continue
-		}
-		var (
-			first = x.Children[0]
-			last  = x.Children[len(x.Children)-1]
-			at    = x.W.Start + borderWidth
-		)
-		if !opts.Reverse {
-			at += x.W.Len() + opts.HorizontalGap
-		} else {
-			at -= opts.HorizontalGap
-		}
-		grid.DrawVLine(at, first.Y+1, last.Y-first.Y+1)
-	}
-	// draw values
-	for _, x := range layout {
-		var (
-			value = x.Get(opts.Padding)
-			start = x.X + borderWidth
-		)
-		grid.Put(start, x.Y+borderWidth, value)
-	}
+	grid.Put(node.X, node.Y+opts.borderWidth(), value)
 }

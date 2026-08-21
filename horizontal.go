@@ -110,10 +110,10 @@ func drawHorizontalTree(grid *canvas, node *layoutNode, opts *Options) {
 			start  = node.X + size
 		)
 		if source == target {
-			grid.DrawHLine(start, source+1, x.X-start-1)
+			grid.DrawHLine(start, source+opts.borderWidth(), x.X-start-opts.borderWidth())
 		} else {
-			grid.DrawHLine(start, source+1, node.W.End-start+opts.HorizontalGap)
-			grid.DrawHLine(x.W.Start-opts.HorizontalGap, target+1, x.X-x.W.Start+opts.HorizontalGap-1)
+			grid.DrawHLine(start, source+opts.borderWidth(), node.W.End-start+opts.HorizontalGap)
+			grid.DrawHLine(x.W.Start-opts.HorizontalGap, target+opts.borderWidth(), x.X-x.W.Start+opts.HorizontalGap-opts.borderWidth())
 
 			var (
 				anchor = source
@@ -123,7 +123,7 @@ func drawHorizontalTree(grid *canvas, node *layoutNode, opts *Options) {
 				dist = -dist
 				anchor = target
 			}
-			grid.DrawVLine(x.W.Start-opts.HorizontalGap, anchor+1, dist)
+			grid.DrawVLine(x.W.Start-opts.HorizontalGap, anchor+opts.borderWidth(), dist)
 		}
 	}
 	grid.Put(node.X, node.Y+opts.borderWidth(), value)

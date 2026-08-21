@@ -13,6 +13,10 @@ const (
 
 type Format uint8
 
+func ParseFormat(str string) (Format, error) {
+	return Regular, nil
+}
+
 const (
 	Regular Format = 1 << iota
 	Italic
@@ -26,6 +30,10 @@ func (f Format) Zero() bool {
 }
 
 type Alignment uint8
+
+func ParseAlignment(str string) (Alignment, error) {
+	return AlignCenter, nil
+}
 
 const (
 	AlignCenter Alignment = iota
@@ -42,6 +50,10 @@ const (
 )
 
 type ConnectorStyle uint8
+
+func ParseConnector(str string) (ConnectorStyle, error) {
+	return ConnectorAscii, nil
+}
 
 const (
 	ConnectorAscii ConnectorStyle = iota
@@ -72,6 +84,12 @@ func prepareOptions(options *Options) *Options {
 		opts = defaultOptions.Clone()
 	} else {
 		opts = opts.Clone()
+	}
+	if opts.HorizontalGap == 0 {
+		opts.HorizontalGap++
+	}
+	if opts.VerticalGap == 0 {
+		opts.VerticalGap++
 	}
 	if opts.Render == nil {
 		opts.Render = defaultRenderContent

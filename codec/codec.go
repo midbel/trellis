@@ -14,6 +14,7 @@ var (
 	ErrIdent     = errors.New("identifier expected")
 	ErrDirective = errors.New("unsupported directive")
 	ErrType      = errors.New("invalid value type")
+	ErrRoot      = errors.New("no root in document")
 )
 
 type Format uint8
@@ -63,10 +64,12 @@ func treeFromJson(r io.Reader) (*TreeSpec, error) {
 }
 
 func treeFromSexpr(r io.Reader) (*TreeSpec, error) {
-	var h handler
-	h.options = new(trellis.Options)
-	if err := sexpr.Process(r, &h); err != nil {
+	h := newHandler()
+	if err := sexpr.Process(r, h); err != nil {
 		return nil, err
+	}
+	if h.root == nil {
+		return nil, ErrRoot
 	}
 	spec := TreeSpec{
 		Type:    h.Type,
@@ -86,6 +89,18 @@ type handler struct {
 	options *trellis.Options
 	root    *trellis.Node
 	stack   []*context
+
+	setters map[string]func(any) error
+	flags   map[string]func()
+}
+
+func newHandler() *handler {
+	h := &handler{
+		options: new(trellis.Options),
+	}
+	h.setters = makeSetters(h.options)
+	h.flags = makeFlags(h.options)
+	return h
 }
 
 func (h *handler) BeginList() error {
@@ -158,24 +173,15 @@ func (h *handler) handleFlag(expr any) error {
 	if !ok {
 		return ErrIdent
 	}
-	switch name {
-	default:
-		return unknownDirective(string(name))
-	case "border":
-		h.options.Border = true
-	case "coordinates":
-		h.options.ShowCoordinates = true
-	case "reverse":
-		h.options.Reverse = true
-	case "padding":
-		h.options.Padding++
-	case "horizontalGap":
-		h.options.HorizontalGap++
-	case "verticalGap":
-		h.options.VerticalGap++
-	case "horizontal", "vertical", "compact":
+	if name == "vertical" || name == "horizontal" || name == "compact" {
 		h.Type = string(name)
+		return nil
 	}
+	set, ok := h.flags[string(name)]
+	if !ok {
+		return unknownDirective(string(name))
+	}
+	set()
 	return nil
 }
 
@@ -184,71 +190,18 @@ func (h *handler) handleOption(expr, value any) error {
 	if !ok {
 		return ErrIdent
 	}
-	var err error
-	switch name {
-	case "type":
-		err = setString(&h.Type, value)
-	case "width":
-		err = setInt(&h.options.Width, value)
-	case "height":
-		err = setInt(&h.options.Height, value)
-	case "padding":
-		err = setInt(&h.options.Padding, value)
-	case "paddingChar":
-		err = setString(&h.options.PaddingChar, value)
-	case "horizontalGap":
-		err = setInt(&h.options.HorizontalGap, value)
-	case "verticalGap":
-		err = setInt(&h.options.VerticalGap, value)
-	case "border":
-		err = setBool(&h.options.Border, value)
-	case "coordinates":
-		err = setBool(&h.options.ShowCoordinates, value)
-	case "reverse":
-		err = setBool(&h.options.Reverse, value)
-	default:
+	if name == "type" {
+		str, err := parseString(value)
+		if err == nil {
+			h.Type = str
+		}
+		return err
+	}
+	setter, ok := h.setters[string(name)]
+	if !ok {
 		return unknownDirective(string(name))
 	}
-	return err
-}
-
-func setBool(b *bool, value any) error {
-	x, ok := value.(bool)
-	if !ok {
-		return ErrType
-	}
-	*b = x
-	return nil
-}
-
-func setString(s *string, value any) error {
-	switch v := value.(type) {
-	case string:
-		*s = v
-	case sexpr.Ident:
-		*s = string(v)
-	default:
-		return ErrType
-	}
-	return nil
-}
-
-func setInt(i *int, value any) error {
-	switch v := value.(type) {
-	case int:
-		*i = v
-	case int8:
-		*i = int(v)
-	case int16:
-		*i = int(v)
-	case int32:
-		*i = int(v)
-	case int64:
-		*i = int(v)
-	default:
-		return ErrType
-	}
-	return nil
+	return setter(value)
 }
 
 func unknownDirective(name string) error {

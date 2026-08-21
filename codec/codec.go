@@ -120,7 +120,7 @@ func (h *handler) EndList() error {
 	h.stack = h.stack[:ix]
 	if len(ctx.values) == 0 {
 		if len(h.stack) == 0 {
-			return nil
+			return ErrRoot
 		}
 		parent := h.stack[len(h.stack)-1]
 		parent.children = append(parent.children, ctx.children...)
@@ -133,7 +133,7 @@ func (h *handler) EndList() error {
 	case string:
 		name = str
 	default:
-		name = "unknown"
+		return ErrType
 	}
 	n := trellis.NewNode(name)
 	n.Nodes = append(n.Nodes, ctx.children...)

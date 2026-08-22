@@ -1,7 +1,6 @@
 package trellis
 
 import (
-	"fmt"
 	"io"
 	"slices"
 )
@@ -138,7 +137,6 @@ func computeVerticalCoordinates(node *layoutNode, opts *Options) {
 }
 
 func drawVerticalTree(grid *canvas, node *layoutNode, opts *Options) {
-	fmt.Println(">>", node.Value, node.X, node.Y)
 	grid.Put(node.X, node.Y, node.Get(opts.Padding))
 	for _, x := range node.Children {
 		drawVerticalTree(grid, x, opts)

@@ -8,13 +8,22 @@ import (
 )
 
 func main() {
-	opts := trellis.Options{
+	layoutOpts := trellis.LayoutOptions{
 		VerticalGap:   trellis.DefaultVerticalGapSize,
 		HorizontalGap: trellis.DefaultHorizontalGapSize,
-		Border:        false,
 		Position:      trellis.ParentAlignFirst,
 		Reverse:       false,
-		Align:         trellis.AlignCenter,
+	}
+	styleOpts := trellis.StyleOptions{
+		Align: trellis.AlignCenter,
+	}
+	renderOpts := trellis.RenderOptions{
+		Border: false,
+	}
+	opts := trellis.Options{
+		LayoutOptions: layoutOpts,
+		StyleOptions:  styleOpts,
+		RenderOptions: renderOpts,
 	}
 	var kind string
 	flag.IntVar(&opts.Width, "w", 0, "width")

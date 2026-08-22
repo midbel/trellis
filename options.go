@@ -60,22 +60,34 @@ const (
 	ConnectorUnicode
 )
 
-type Options struct {
-	Width           int
-	Height          int
-	MinDepth        int
-	MaxDepth        int
+type LayoutOptions struct {
+	Width         int
+	Height        int
+	MinDepth      int
+	MaxDepth      int
+	HorizontalGap int
+	VerticalGap   int
+	Position      ParentPosition
+	Reverse       bool
+	Render        func(*Node, *Options) Content
+}
+
+type RenderOptions struct {
 	ShowCoordinates bool
-	HorizontalGap   int
-	VerticalGap     int
-	Padding         int
-	PaddingChar     string
-	Align           Alignment
-	Position        ParentPosition
 	Border          bool
-	Reverse         bool
-	Style           ConnectorStyle
-	Render          func(*Node, *Options) Content
+}
+
+type StyleOptions struct {
+	Align       Alignment
+	Padding     int
+	PaddingChar string
+	Style       ConnectorStyle
+}
+
+type Options struct {
+	LayoutOptions
+	RenderOptions
+	StyleOptions
 }
 
 func prepareOptions(options *Options) *Options {
@@ -119,13 +131,19 @@ func defaultRenderContent(node *Node, opts *Options) Content {
 }
 
 var defaultOptions = &Options{
-	VerticalGap:   DefaultVerticalGapSize,
-	HorizontalGap: DefaultHorizontalGapSize,
-	Padding:       1,
-	Style:         ConnectorAscii,
-	Align:         AlignCenter,
-	Position:      ParentAlignCenter,
-	Border:        true,
+	LayoutOptions: LayoutOptions{
+		VerticalGap:   DefaultVerticalGapSize,
+		HorizontalGap: DefaultHorizontalGapSize,
+		Position:      ParentAlignCenter,
+	},
+	StyleOptions: StyleOptions{
+		Style:   ConnectorAscii,
+		Padding: 1,
+		Align:   AlignCenter,
+	},
+	RenderOptions: RenderOptions{
+		Border: true,
+	},
 }
 
 func (t *Options) Clone() *Options {

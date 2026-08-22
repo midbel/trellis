@@ -7,7 +7,7 @@ type treemap struct {
 }
 
 func NewTreemap(w io.Writer) Renderer {
-	return compact{
+	return treemap{
 		w: w,
 	}
 }

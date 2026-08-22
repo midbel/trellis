@@ -98,8 +98,8 @@ func computeHorizontalCoordinates(layout []*layoutNode, depth, spacing int, opts
 
 func drawHorizontalTree(grid *canvas, node *layoutNode, opts *Options) {
 	var (
-		value = opts.paddedValue(node.Value)
-		size  = len(value)
+		label = opts.paddedValue(node.Value)
+		size  = len(label)
 	)
 	for _, x := range node.Children {
 		drawHorizontalTree(grid, x, opts)
@@ -108,23 +108,49 @@ func drawHorizontalTree(grid *canvas, node *layoutNode, opts *Options) {
 			source = node.Y
 			target = x.Y
 			start  = node.X + size
+			value  = label
 		)
-		if source == target {
-			grid.DrawHLine(start, source+opts.borderWidth(), x.X-start-opts.borderWidth())
-		} else {
-			grid.DrawHLine(start, source+opts.borderWidth(), node.W.End-start+opts.HorizontalGap)
-			grid.DrawHLine(x.W.Start-opts.HorizontalGap, target+opts.borderWidth(), x.X-x.W.Start+opts.HorizontalGap-opts.borderWidth())
+		if opts.Reverse {
+			value = opts.paddedValue(x.Value)
+			size = len(value)
+			start = x.X + size
 
-			var (
-				anchor = source
-				dist   = target - source
-			)
+			source, target = target, source
+		}
+		_ = start
+		if source == target {
+			dist := x.X - start - opts.borderWidth()
+			if opts.Reverse {
+				dist = node.X - start - opts.borderWidth()
+			}
+			grid.DrawHLine(start, source+opts.borderWidth(), dist)
+		} else {
+			dist := node.W.End - start + opts.HorizontalGap
+			if opts.Reverse {
+				dist = x.W.End - start + opts.HorizontalGap
+			}
+			grid.DrawHLine(start, source+opts.borderWidth(), dist)
+
+			dist = x.X - x.W.Start + opts.HorizontalGap - opts.borderWidth()
+			start = x.W.Start - opts.HorizontalGap
+			if opts.Reverse {
+				start = node.W.Start - opts.HorizontalGap
+				dist = node.X - node.W.Start + opts.HorizontalGap - opts.borderWidth()
+			}
+			grid.DrawHLine(start, target+opts.borderWidth(), dist)
+
+			anchor := source
+			dist = target - source
 			if dist < 0 {
 				dist = -dist
 				anchor = target
 			}
-			grid.DrawVLine(x.W.Start-opts.HorizontalGap, anchor+opts.borderWidth(), dist)
+			start = x.W.Start
+			if opts.Reverse {
+				start = node.W.Start
+			}
+			grid.DrawVLine(start-opts.HorizontalGap, anchor+opts.borderWidth(), dist)
 		}
 	}
-	grid.Put(node.X, node.Y+opts.borderWidth(), value)
+	grid.Put(node.X, node.Y+opts.borderWidth(), label)
 }

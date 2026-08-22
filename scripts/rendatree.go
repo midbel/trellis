@@ -14,8 +14,7 @@ func main() {
 		Border:        false,
 		Position:      trellis.ParentAlignFirst,
 		Reverse:       false,
-		// Align:         trellis.AlignCenter,
-		Align: trellis.AlignLeft,
+		Align:         trellis.AlignCenter,
 	}
 	var kind string
 	flag.IntVar(&opts.Width, "w", 0, "width")

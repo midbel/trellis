@@ -1,5 +1,16 @@
 package trellis
 
+import (
+	"errors"
+	"fmt"
+)
+
+var ErrUnknown = errors.New("unknown")
+
+func unknown(what, value string) error {
+	return fmt.Errorf("%s: %w %s", value, ErrUnknown, what)
+}
+
 const (
 	DefaultVerticalGapSize   = 2
 	DefaultHorizontalGapSize = 5
@@ -14,7 +25,20 @@ const (
 type Format uint8
 
 func ParseFormat(str string) (Format, error) {
-	return Regular, nil
+	switch str {
+	case "", "regular":
+		return Regular, nil
+	case "italic":
+		return Italic, nil
+	case "bold":
+		return Bold, nil
+	case "underline":
+		return Underline, nil
+	case "strike":
+		return Strike, nil
+	default:
+		return 0, unknown("format", str)
+	}
 }
 
 const (
@@ -32,7 +56,16 @@ func (f Format) Zero() bool {
 type Alignment uint8
 
 func ParseAlignment(str string) (Alignment, error) {
-	return AlignCenter, nil
+	switch str {
+	case "", "center":
+		return AlignCenter, nil
+	case "left":
+		return AlignLeft, nil
+	case "right":
+		return AlignRight, nil
+	default:
+		return 0, unknown("alignment", str)
+	}
 }
 
 const (
@@ -49,10 +82,30 @@ const (
 	ParentAlignLast
 )
 
+func ParsePosition(str string) (ParentPosition, error) {
+	switch str {
+	case "", "center":
+		return ParentAlignCenter, nil
+	case "top", "first":
+		return ParentAlignFirst, nil
+	case "bottom", "last":
+		return ParentAlignLast, nil
+	default:
+		return 0, unknown("position", str)
+	}
+}
+
 type ConnectorStyle uint8
 
 func ParseConnector(str string) (ConnectorStyle, error) {
-	return ConnectorAscii, nil
+	switch str {
+	case "", "ascii", "classic":
+		return ConnectorAscii, nil
+	case "unicode":
+		return ConnectorUnicode, nil
+	default:
+		return 0, unknown("connector", str)
+	}
 }
 
 const (

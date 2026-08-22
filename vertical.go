@@ -1,6 +1,7 @@
 package trellis
 
 import (
+	"fmt"
 	"io"
 	"slices"
 )
@@ -55,11 +56,7 @@ func reverseVerticalCoordinates(maker *layoutMaker, layout []*layoutNode) {
 }
 
 func adjustVerticalHeight(layout []*layoutNode, depth int, opts *Options) {
-	var border int
-	if opts.Border {
-		border++
-	}
-	best := ((opts.VerticalGap*2)+1)*depth + (2 * border)
+	best := ((opts.VerticalGap*2)+1)*depth + (2 * opts.borderWidth())
 	opts.Height = max(best, opts.Height)
 }
 
@@ -84,23 +81,18 @@ func adjustVerticalWidth(layout []*layoutNode, opts *Options) {
 
 func adjustVerticalCoordinates(layout []*layoutNode, depth, spacing int, opts *Options) {
 	var (
-		width       = opts.Width / spacing
-		height      = opts.Height / depth
-		borderWidth int
+		width  = opts.Width / spacing
+		height = opts.Height / depth
 	)
 	for _, n := range layout {
 		n.X = width * n.X
-		n.Y = height * n.Y
-	}
-	if opts.Border {
-		borderWidth++
+		n.Y = (height * n.Y) + opts.borderWidth()
+		n.H = createSpan(n.Y, (n.Y+height)-opts.borderWidth())
 	}
 	ix := slices.IndexFunc(layout, func(x *layoutNode) bool {
 		return x.Root()
 	})
-
-	layout[ix].W = createSpan(borderWidth, opts.Width+borderWidth)
-	layout[ix].H = createSpan(borderWidth, height+borderWidth)
+	layout[ix].W = createSpan(opts.borderWidth(), opts.Width+opts.borderWidth())
 	computeVerticalCoordinates(layout[ix], opts)
 }
 
@@ -137,7 +129,6 @@ func computeVerticalCoordinates(node *layoutNode, opts *Options) {
 			x.W.End++
 			addOne = true
 		}
-		x.H = node.H.Next()
 		computeVerticalCoordinates(x, opts)
 		start += (segment * n)
 		if addOne {
@@ -147,6 +138,7 @@ func computeVerticalCoordinates(node *layoutNode, opts *Options) {
 }
 
 func drawVerticalTree(grid *canvas, node *layoutNode, opts *Options) {
+	fmt.Println(">>", node.Value, node.X, node.Y)
 	grid.Put(node.X, node.Y, node.Get(opts.Padding))
 	for _, x := range node.Children {
 		drawVerticalTree(grid, x, opts)
@@ -157,20 +149,37 @@ func drawVerticalTree(grid *canvas, node *layoutNode, opts *Options) {
 			target = x.Anchor(opts.Padding)
 		)
 		if target == source {
-			grid.DrawVLine(source, node.Y+1, x.Y-node.Y-1)
+			var (
+				start = node.Y
+				dist  = x.Y - node.Y
+			)
+			if opts.Reverse {
+				start = x.Y
+				dist = node.Y - x.Y
+			}
+			grid.DrawVLine(source, start+opts.borderWidth(), dist-opts.borderWidth())
 		} else {
-			grid.DrawVLine(source, node.Y+1, x.H.Start-node.Y)
-			grid.DrawVLine(target, x.H.Start, x.Y-x.H.Start)
+			if opts.Reverse {
+				grid.DrawVLine(target, x.Y+opts.borderWidth(), node.H.Start-x.Y)
+				grid.DrawVLine(source, node.H.Start, node.Y-node.H.Start)
+			} else {
+				grid.DrawVLine(source, node.Y+opts.borderWidth(), x.H.Start-node.Y)
+				grid.DrawVLine(target, x.H.Start, x.Y-x.H.Start)
+			}
 
 			var (
+				start  = x.H.Start
 				anchor = source
 				dist   = target - source
 			)
+			if opts.Reverse {
+				start = node.H.Start
+			}
 			if dist < 0 {
 				anchor = target
 				dist = -dist
 			}
-			grid.DrawHLine(anchor, x.H.Start, dist)
+			grid.DrawHLine(anchor, start, dist)
 		}
 	}
 }

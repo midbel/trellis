@@ -13,10 +13,6 @@ type Content struct {
 	Underline bool
 }
 
-// type Canvas interface {
-// 	Render(io.Writer) error
-// }
-
 func HorizontalTree(w io.Writer, tree *Tree, opts *Options) error {
 	r := NewHorizontal(w)
 	return r.Render(tree, opts)
@@ -29,6 +25,16 @@ func VerticalTree(w io.Writer, tree *Tree, opts *Options) error {
 
 func CompactTree(w io.Writer, tree *Tree, opts *Options) error {
 	r := NewCompact(w)
+	return r.Render(tree, opts)
+}
+
+func SunburstTree(w io.Writer, tree *Tree, opts *Options) error {
+	r := NewSunburst(w)
+	return r.Render(tree, opts)
+}
+
+func RadialTree(w io.Writer, tree *Tree, opts *Options) error {
+	r := NewRadial(w)
 	return r.Render(tree, opts)
 }
 

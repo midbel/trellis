@@ -22,17 +22,6 @@ func main() {
 }
 
 func renderTree(spec *codec.TreeSpec) error {
-	// opts := trellis.Options{
-	// 	VerticalGap:   trellis.DefaultVerticalGapSize,
-	// 	HorizontalGap: trellis.DefaultHorizontalGapSize,
-	// 	Position:      trellis.ParentAlignFirst,
-	// 	Reverse:       false,
-	// 	Padding:       2,
-	// 	PaddingChar:   "_",
-	// 	// Align:         trellis.AlignCenter,
-	// 	Align:  trellis.AlignLeft,
-	// 	Border: true,
-	// }
 	switch spec.Type {
 	case "", "horizontal":
 		return trellis.HorizontalTree(os.Stdout, spec.Tree, spec.Options)

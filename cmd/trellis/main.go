@@ -5,8 +5,11 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strconv"
 
 	"github.com/midbel/cli"
+	"github.com/midbel/trellis"
+	"github.com/midbel/trellis/codec"
 )
 
 var errFail = errors.New("fail")
@@ -148,5 +151,42 @@ func (c inspectCommand) Run(args []string) error {
 	if set.NArg() != 1 {
 		return cli.ErrUsage
 	}
+	r, err := os.Open(set.Arg(0))
+	if err != nil {
+		cli.FailIO(err)
+	}
+	defer r.Close()
+
+	spec, err := codec.Tree(r, codec.Options{
+		Format: codec.FormatSexpr,
+	})
+	if err != nil {
+		cli.FailData(err)
+	}
+	table := cli.Table{
+		Headers: []string{
+			"value",
+			"ideal-x",
+			"ideal-y",
+			"computed-x",
+			"computed-y",
+			"width",
+			"height",
+		},
+	}
+	for _, n := range trellis.ComputeLayout(spec.Tree, spec.Options) {
+		row := []string{
+			n.Value,
+			strconv.Itoa(n.Ideal.X),
+			strconv.Itoa(n.Ideal.Y),
+			strconv.Itoa(n.Computed.X),
+			strconv.Itoa(n.Computed.Y),
+			"-",
+			"-",
+		}
+		table.Rows = append(table.Rows, row)
+	}
+	rdr := cli.NewTableRenderer(cli.Stdout)
+	rdr.Render(table)
 	return nil
 }

@@ -20,10 +20,10 @@ func makeFlags(opts *trellis.Options) map[string]func() {
 			opts.Padding++
 		},
 		"horizontalGap": func() {
-			opts.HorizontalGap++
+			opts.LevelGap++
 		},
 		"verticalGap": func() {
-			opts.VerticalGap++
+			opts.SiblingGap++
 		},
 	}
 }
@@ -34,8 +34,8 @@ func makeSetters(opts *trellis.Options) map[string]func(any) error {
 		"height":        assignValue(&opts.Height, parseInt),
 		"padding":       assignValue(&opts.Padding, parseInt),
 		"paddingChar":   assignValue(&opts.PaddingChar, parseString),
-		"horizontalGap": assignValue(&opts.HorizontalGap, parseInt),
-		"verticalGap":   assignValue(&opts.VerticalGap, parseInt),
+		"horizontalGap": assignValue(&opts.LevelGap, parseInt),
+		"verticalGap":   assignValue(&opts.SiblingGap, parseInt),
 		"border":        assignValue(&opts.Border, parseBool),
 		"reverse":       assignValue(&opts.Reverse, parseBool),
 		"coordinates":   assignValue(&opts.ShowCoordinates, parseBool),

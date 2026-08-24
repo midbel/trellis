@@ -101,6 +101,42 @@ func (n *layoutNode) Get(padding int) []byte {
 	return value
 }
 
+type Point struct {
+	X, Y int
+}
+
+type Coordinate struct {
+	*Node
+	Ideal    Point
+	Computed Point
+	Width    int
+	Height   int
+}
+
+func ComputeLayout(tree *Tree, options *Options) []Coordinate {
+	var (
+		opts   = prepareOptions(options)
+		maker  = makeLayout(opts.SiblingGap, opts.Align)
+		layout = maker.Make(tree.Root)
+	)
+	var nodes []Coordinate
+	for _, x := range layout {
+		c := Coordinate{
+			Node: x.Node,
+			Ideal: Point{
+				X: x.X,
+				Y: x.Y,
+			},
+			Computed: Point{
+				X: x.X,
+				Y: x.Y,
+			},
+		}
+		nodes = append(nodes, c)
+	}
+	return nodes
+}
+
 type layoutMaker struct {
 	nextLeafPosition int
 	gapSize          int

@@ -18,7 +18,7 @@ func NewHorizontal(w io.Writer) Renderer {
 func (h horizontal) Render(tree *Tree, options *Options) error {
 	var (
 		opts   = prepareOptions(options)
-		maker  = makeLayout(opts.VerticalGap, opts.Anchor)
+		maker  = makeLayout(opts.SiblingGap, opts.Anchor)
 		layout = maker.Make(tree.Root)
 	)
 	adjustHorizontalWidth(layout, maker.Depth(), opts)
@@ -63,7 +63,7 @@ func adjustHorizontalSize(opts *Options, depth, spacing int) {
 func adjustHorizontalWidth(layout []*layoutNode, depth int, opts *Options) {
 	var best int
 	for _, x := range layout {
-		n := len(x.Value) + (2 * (opts.Padding + opts.HorizontalGap))
+		n := len(x.Value) + (2 * (opts.Padding + opts.LevelGap))
 		best = max(best, n)
 	}
 	best *= depth
@@ -72,7 +72,7 @@ func adjustHorizontalWidth(layout []*layoutNode, depth int, opts *Options) {
 }
 
 func adjustHorizontalHeight(spacing int, opts *Options) {
-	best := spacing * (1 + opts.VerticalGap)
+	best := spacing * (1 + opts.SiblingGap)
 	opts.Height = max(best, opts.Height)
 }
 
@@ -88,9 +88,9 @@ func computeHorizontalCoordinates(layout []*layoutNode, depth, spacing int, opts
 			startX = x.X * width
 			startY = x.Y * height
 		)
-		x.W = createSpan(startX+opts.HorizontalGap, startX+width-opts.HorizontalGap)
+		x.W = createSpan(startX+opts.LevelGap, startX+width-opts.LevelGap)
 		x.X = x.W.Start + getOffsetX(opts.Align, x.W.Len(), len(value))
-		x.H = createSpan(startY, startY+height-opts.VerticalGap)
+		x.H = createSpan(startY, startY+height-opts.SiblingGap)
 		x.Y = x.H.Start + yOffset
 	}
 }
@@ -123,17 +123,17 @@ func drawHorizontalTree(grid *canvas, node *layoutNode, opts *Options) {
 			}
 			grid.DrawHLine(start, source+opts.borderWidth(), dist)
 		} else {
-			dist := node.W.End - start + opts.HorizontalGap
+			dist := node.W.End - start + opts.LevelGap
 			if opts.Reverse {
-				dist = x.W.End - start + opts.HorizontalGap
+				dist = x.W.End - start + opts.LevelGap
 			}
 			grid.DrawHLine(start, source+opts.borderWidth(), dist)
 
-			dist = x.X - x.W.Start + opts.HorizontalGap - opts.borderWidth()
-			start = x.W.Start - opts.HorizontalGap
+			dist = x.X - x.W.Start + opts.LevelGap - opts.borderWidth()
+			start = x.W.Start - opts.LevelGap
 			if opts.Reverse {
-				start = node.W.Start - opts.HorizontalGap
-				dist = node.X - node.W.Start + opts.HorizontalGap - opts.borderWidth()
+				start = node.W.Start - opts.LevelGap
+				dist = node.X - node.W.Start + opts.LevelGap - opts.borderWidth()
 			}
 			grid.DrawHLine(start, target+opts.borderWidth(), dist)
 
@@ -147,7 +147,7 @@ func drawHorizontalTree(grid *canvas, node *layoutNode, opts *Options) {
 			if opts.Reverse {
 				start = node.W.Start
 			}
-			grid.DrawVLine(start-opts.HorizontalGap, anchor+opts.borderWidth(), dist)
+			grid.DrawVLine(start-opts.LevelGap, anchor+opts.borderWidth(), dist)
 		}
 	}
 	grid.Put(node.X, node.Y+opts.borderWidth(), label)

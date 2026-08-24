@@ -9,10 +9,10 @@ import (
 
 func main() {
 	layoutOpts := trellis.LayoutOptions{
-		VerticalGap:   trellis.DefaultVerticalGapSize,
-		HorizontalGap: trellis.DefaultHorizontalGapSize,
-		Anchor:        trellis.AlignCenter,
-		Reverse:       false,
+		SiblingGap: trellis.DefaultSiblingGap,
+		LevelGap:   trellis.DefaultLevelGap,
+		Anchor:     trellis.AlignCenter,
+		Reverse:    false,
 	}
 	styleOpts := trellis.StyleOptions{
 		Align: trellis.AlignCenter,
@@ -28,8 +28,8 @@ func main() {
 	var kind string
 	flag.IntVar(&opts.Width, "w", 0, "width")
 	flag.IntVar(&opts.Height, "h", 0, "height")
-	flag.IntVar(&opts.VerticalGap, "g", opts.VerticalGap, "vertical gap")
-	flag.IntVar(&opts.HorizontalGap, "t", opts.HorizontalGap, "horizontal gap")
+	flag.IntVar(&opts.SiblingGap, "g", opts.SiblingGap, "vertical gap")
+	flag.IntVar(&opts.LevelGap, "t", opts.LevelGap, "horizontal gap")
 	flag.BoolVar(&opts.Border, "b", false, "add border")
 	flag.BoolVar(&opts.Reverse, "r", false, "reverse tree")
 	flag.IntVar(&opts.Padding, "i", 1, "value padding")

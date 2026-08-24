@@ -21,7 +21,7 @@ func (c compact) Render(tree *Tree, options *Options) error {
 	defer c.w.Flush()
 	var (
 		opts  = prepareOptions(options)
-		maker = makeLayout(opts.VerticalGap, opts.Anchor)
+		maker = makeLayout(opts.SiblingGap, opts.Anchor)
 		root  = maker.Single(tree.Root)
 	)
 	if opts.Padding == 0 {

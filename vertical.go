@@ -18,7 +18,7 @@ func NewVertical(w io.Writer) Renderer {
 func (v vertical) Render(tree *Tree, options *Options) error {
 	var (
 		opts   = prepareOptions(options)
-		maker  = makeLayout(opts.VerticalGap, opts.Anchor)
+		maker  = makeLayout(opts.SiblingGap, opts.Anchor)
 		layout = maker.Make(tree.Root)
 	)
 	adjustVerticalWidth(layout, opts)
@@ -55,7 +55,7 @@ func reverseVerticalCoordinates(maker *layoutMaker, layout []*layoutNode) {
 }
 
 func adjustVerticalHeight(layout []*layoutNode, depth int, opts *Options) {
-	best := ((opts.VerticalGap*2)+1)*depth + (2 * opts.borderWidth())
+	best := ((opts.SiblingGap*2)+1)*depth + (2 * opts.borderWidth())
 	opts.Height = max(best, opts.Height)
 }
 
@@ -69,7 +69,7 @@ func adjustVerticalWidth(layout []*layoutNode, opts *Options) {
 		border++
 	}
 	for _, x := range layout {
-		z := len(x.Value) + (2 * (opts.Padding + opts.HorizontalGap))
+		z := len(x.Value) + (2 * (opts.Padding + opts.LevelGap))
 		sizes[x.X] += z
 	}
 	for _, z := range sizes {

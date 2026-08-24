@@ -12,8 +12,14 @@ func unknown(what, value string) error {
 }
 
 const (
-	DefaultVerticalGapSize   = 2
-	DefaultHorizontalGapSize = 5
+	PaddingS = 1
+	PaddingM = 2
+	PaddingL = 4
+)
+
+const (
+	DefaultSiblingGap = 2
+	DefaultLevelGap   = 5
 )
 
 const (
@@ -100,15 +106,15 @@ const (
 )
 
 type LayoutOptions struct {
-	Width         int
-	Height        int
-	MinDepth      int
-	MaxDepth      int
-	HorizontalGap int
-	VerticalGap   int
-	Anchor        Alignment
-	Reverse       bool
-	Render        func(*Node, *Options) Content
+	Width      int
+	Height     int
+	MinDepth   int
+	MaxDepth   int
+	LevelGap   int
+	SiblingGap int
+	Anchor     Alignment
+	Reverse    bool
+	Render     func(*Node, *Options) Content
 }
 
 type RenderOptions struct {
@@ -136,11 +142,11 @@ func prepareOptions(options *Options) *Options {
 	} else {
 		opts = opts.Clone()
 	}
-	if opts.HorizontalGap == 0 {
-		opts.HorizontalGap++
+	if opts.LevelGap == 0 {
+		opts.LevelGap++
 	}
-	if opts.VerticalGap == 0 {
-		opts.VerticalGap++
+	if opts.SiblingGap == 0 {
+		opts.SiblingGap++
 	}
 	if opts.Render == nil {
 		opts.Render = defaultRenderContent
@@ -171,13 +177,13 @@ func defaultRenderContent(node *Node, opts *Options) Content {
 
 var defaultOptions = &Options{
 	LayoutOptions: LayoutOptions{
-		VerticalGap:   DefaultVerticalGapSize,
-		HorizontalGap: DefaultHorizontalGapSize,
-		Anchor:        AlignCenter,
+		SiblingGap: DefaultSiblingGap,
+		LevelGap:   DefaultLevelGap,
+		Anchor:     AlignCenter,
 	},
 	StyleOptions: StyleOptions{
 		Style:   ConnectorAscii,
-		Padding: 1,
+		Padding: PaddingS,
 		Align:   AlignCenter,
 	},
 	RenderOptions: RenderOptions{
@@ -220,9 +226,9 @@ func (t *Options) paddedValue(str string) []byte {
 }
 
 func (t *Options) hGaps() int {
-	return t.HorizontalGap + t.HorizontalGap
+	return t.LevelGap + t.LevelGap
 }
 
 func (t *Options) vGaps() int {
-	return t.VerticalGap + t.VerticalGap
+	return t.SiblingGap + t.SiblingGap
 }

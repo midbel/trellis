@@ -175,9 +175,9 @@ func flatten(node *layoutNode) []*layoutNode {
 
 func getOffsetX(align Alignment, width, size int) int {
 	switch align {
-	case AlignLeft:
+	case AlignStart:
 		return 0
-	case AlignRight:
+	case AlignBottom:
 		return width - size
 	default:
 		return (width - size) / 2

@@ -59,10 +59,10 @@ func ParseAlignment(str string) (Alignment, error) {
 	switch str {
 	case "", "center":
 		return AlignCenter, nil
-	case "left":
-		return AlignLeft, nil
-	case "right":
-		return AlignRight, nil
+	case "left", "start":
+		return AlignStart, nil
+	case "right", "end":
+		return AlignEnd, nil
 	default:
 		return 0, unknown("alignment", str)
 	}
@@ -70,8 +70,17 @@ func ParseAlignment(str string) (Alignment, error) {
 
 const (
 	AlignCenter Alignment = iota
+	AlignStart
+	AlignEnd
 	AlignLeft
 	AlignRight
+)
+
+const (
+	AlignLeft = AlignStart
+	AlignTop = AlignStart
+	AlignRight = AlignEnd
+	AlignBottom = AlignBottom
 )
 
 type ParentPosition uint8

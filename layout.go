@@ -105,10 +105,10 @@ type layoutMaker struct {
 	nextLeafPosition int
 	gapSize          int
 	maxDepth         int
-	align            ParentPosition
+	align            Alignment
 }
 
-func makeLayout(gap int, align ParentPosition) *layoutMaker {
+func makeLayout(gap int, align Alignment) *layoutMaker {
 	return &layoutMaker{
 		gapSize: gap,
 		align:   align,
@@ -147,9 +147,9 @@ func (m *layoutMaker) makeLayout(node *Node, depth int) *layoutNode {
 		sub.Y = m.nextLeafPosition
 		m.nextLeafPosition += m.gapSize
 	} else {
-		if m.align == ParentAlignFirst {
+		if m.align == AlignStart {
 			sub.Y = sub.Children[0].Y
-		} else if m.align == ParentAlignLast {
+		} else if m.align == AlignEnd {
 			sub.Y = sub.Children[len(sub.Children)-1].Y
 		} else {
 			var sum int

@@ -18,7 +18,7 @@ func NewHorizontal(w io.Writer) Renderer {
 func (h horizontal) Render(tree *Tree, options *Options) error {
 	var (
 		opts   = prepareOptions(options)
-		maker  = makeLayout(opts.VerticalGap, opts.Position)
+		maker  = makeLayout(opts.VerticalGap, opts.Anchor)
 		layout = maker.Make(tree.Root)
 	)
 	adjustHorizontalWidth(layout, maker.Depth(), opts)
@@ -85,14 +85,13 @@ func computeHorizontalCoordinates(layout []*layoutNode, depth, spacing int, opts
 	for _, x := range layout {
 		var (
 			value  = x.Get(opts.Padding)
-			offset = getOffsetX(opts.Align, width-opts.hGaps(), len(value))
-			startX = (x.X * width) + opts.HorizontalGap
+			startX = x.X * width
 			startY = x.Y * height
 		)
-		x.X = startX + offset + opts.HorizontalGap
-		x.W = createSpan(startX, startX+width-opts.hGaps())
-		x.Y = startY + yOffset + opts.VerticalGap
+		x.W = createSpan(startX+opts.HorizontalGap, startX+width-opts.HorizontalGap)
+		x.X = x.W.Start + getOffsetX(opts.Align, x.W.Len(), len(value))
 		x.H = createSpan(startY, startY+height-opts.VerticalGap)
+		x.Y = x.H.Start + yOffset
 	}
 }
 
@@ -117,7 +116,6 @@ func drawHorizontalTree(grid *canvas, node *layoutNode, opts *Options) {
 
 			source, target = target, source
 		}
-		_ = start
 		if source == target {
 			dist := x.X - start - opts.borderWidth()
 			if opts.Reverse {

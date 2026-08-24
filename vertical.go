@@ -18,7 +18,7 @@ func NewVertical(w io.Writer) Renderer {
 func (v vertical) Render(tree *Tree, options *Options) error {
 	var (
 		opts   = prepareOptions(options)
-		maker  = makeLayout(opts.VerticalGap, opts.Position)
+		maker  = makeLayout(opts.VerticalGap, opts.Anchor)
 		layout = maker.Make(tree.Root)
 	)
 	adjustVerticalWidth(layout, opts)

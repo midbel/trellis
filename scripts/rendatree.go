@@ -11,7 +11,7 @@ func main() {
 	layoutOpts := trellis.LayoutOptions{
 		VerticalGap:   trellis.DefaultVerticalGapSize,
 		HorizontalGap: trellis.DefaultHorizontalGapSize,
-		Position:      trellis.ParentAlignFirst,
+		Anchor:        trellis.AlignCenter,
 		Reverse:       false,
 	}
 	styleOpts := trellis.StyleOptions{

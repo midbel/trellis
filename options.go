@@ -59,9 +59,9 @@ func ParseAlignment(str string) (Alignment, error) {
 	switch str {
 	case "", "center":
 		return AlignCenter, nil
-	case "left", "start":
+	case "left", "start", "top":
 		return AlignStart, nil
-	case "right", "end":
+	case "right", "end", "bottom":
 		return AlignEnd, nil
 	default:
 		return 0, unknown("alignment", str)
@@ -72,37 +72,14 @@ const (
 	AlignCenter Alignment = iota
 	AlignStart
 	AlignEnd
-	AlignLeft
-	AlignRight
 )
 
 const (
-	AlignLeft = AlignStart
-	AlignTop = AlignStart
-	AlignRight = AlignEnd
-	AlignBottom = AlignBottom
+	AlignLeft   = AlignStart
+	AlignTop    = AlignStart
+	AlignRight  = AlignEnd
+	AlignBottom = AlignEnd
 )
-
-type ParentPosition uint8
-
-const (
-	ParentAlignCenter ParentPosition = iota
-	ParentAlignFirst
-	ParentAlignLast
-)
-
-func ParsePosition(str string) (ParentPosition, error) {
-	switch str {
-	case "", "center":
-		return ParentAlignCenter, nil
-	case "top", "first":
-		return ParentAlignFirst, nil
-	case "bottom", "last":
-		return ParentAlignLast, nil
-	default:
-		return 0, unknown("position", str)
-	}
-}
 
 type ConnectorStyle uint8
 
@@ -129,7 +106,7 @@ type LayoutOptions struct {
 	MaxDepth      int
 	HorizontalGap int
 	VerticalGap   int
-	Position      ParentPosition
+	Anchor        Alignment
 	Reverse       bool
 	Render        func(*Node, *Options) Content
 }
@@ -196,7 +173,7 @@ var defaultOptions = &Options{
 	LayoutOptions: LayoutOptions{
 		VerticalGap:   DefaultVerticalGapSize,
 		HorizontalGap: DefaultHorizontalGapSize,
-		Position:      ParentAlignCenter,
+		Anchor:        AlignCenter,
 	},
 	StyleOptions: StyleOptions{
 		Style:   ConnectorAscii,

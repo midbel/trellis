@@ -103,7 +103,19 @@ func computeVerticalCoordinates(node *layoutNode, opts *Options) {
 	node.X = node.W.Start + getOffsetX(opts.Align, node.W.Len(), len(value))
 	node.Y = node.H.Start + node.H.Offset() - 1
 
-	var count int
+	var (
+		count int
+		first int
+	)
+	if len(node.Children) > 0 {
+		for i := range node.Children {
+			if i == 0 {
+				first = node.Children[i].X
+			} else {
+				first = min(node.Children[i].X, first)
+			}
+		}
+	}
 	for _, x := range node.Children {
 		count += x.Weight()
 	}
@@ -117,6 +129,8 @@ func computeVerticalCoordinates(node *layoutNode, opts *Options) {
 	)
 	for _, x := range node.Children {
 		n := x.Weight()
+		// offset := first * segment
+		// fmt.Println(node.Value, x.Value, first, segment, offset)
 
 		x.W = createSpan(start, start+(segment*n))
 		if len(node.Children) == 1 {

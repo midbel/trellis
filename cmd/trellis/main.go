@@ -141,10 +141,26 @@ var inspectCmd = cli.Command{
 	Handler: &inspectCommand{},
 }
 
-type inspectCommand struct{}
+type inspectCommand struct {
+	Type    trellis.Orientation
+	Reverse bool
+	Width   int
+	Height  int
+	Spacing int
+}
 
 func (c inspectCommand) Run(args []string) error {
 	set := cli.NewFlagSet("inspect")
+	set.BoolVar(&c.Reverse, "r", false, "reverse chart")
+	set.IntVar(&c.Width, "w", 0, "width")
+	set.IntVar(&c.Height, "h", 0, "height")
+	set.Func("k", "type", func(str string) error {
+		o, err := trellis.ParseOrientation(str)
+		if err == nil {
+			c.Type = o
+		}
+		return err
+	})
 	if err := set.Parse(args); err != nil {
 		return err
 	}
@@ -174,15 +190,21 @@ func (c inspectCommand) Run(args []string) error {
 			"height",
 		},
 	}
-	for _, n := range trellis.ComputeLayout(spec.Tree, spec.Options) {
+	if c.Width > 0 {
+		spec.Width = c.Width
+	}
+	if c.Height > 0 {
+		spec.Height = c.Height
+	}
+	for _, n := range trellis.ComputeLayout(spec.Tree, c.Type, spec.Options) {
 		row := []string{
 			n.Value,
 			strconv.Itoa(n.Ideal.X),
 			strconv.Itoa(n.Ideal.Y),
 			strconv.Itoa(n.Computed.X),
 			strconv.Itoa(n.Computed.Y),
-			"-",
-			"-",
+			strconv.Itoa(n.Width),
+			strconv.Itoa(n.Height),
 		}
 		table.Rows = append(table.Rows, row)
 	}

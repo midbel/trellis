@@ -1,5 +1,7 @@
 package trellis
 
+import "fmt"
+
 type span struct {
 	Start int
 	End   int
@@ -101,6 +103,24 @@ func (n *layoutNode) Get(padding int) []byte {
 	return value
 }
 
+type Orientation uint8
+
+func ParseOrientation(orient string) (Orientation, error) {
+	switch orient {
+	case "", "h", "horizontal":
+		return HorizontalLayout, nil
+	case "v", "vertical":
+		return VerticalLayout, nil
+	default:
+		return HorizontalLayout, fmt.Errorf("%s: unknown orientation", orient)
+	}
+}
+
+const (
+	HorizontalLayout Orientation = iota
+	VerticalLayout
+)
+
 type Point struct {
 	X, Y int
 }
@@ -113,26 +133,37 @@ type Coordinate struct {
 	Height   int
 }
 
-func ComputeLayout(tree *Tree, options *Options) []Coordinate {
+func ComputeLayout(tree *Tree, orient Orientation, options *Options) []Coordinate {
 	var (
 		opts   = prepareOptions(options)
 		maker  = makeLayout(opts.SiblingGap, opts.Align)
 		layout = maker.Make(tree.Root)
+		nodes  []Coordinate
 	)
-	var nodes []Coordinate
-	for _, x := range layout {
+	for i := range layout {
 		c := Coordinate{
-			Node: x.Node,
+			Node: layout[i].Node,
 			Ideal: Point{
-				X: x.X,
-				Y: x.Y,
-			},
-			Computed: Point{
-				X: x.X,
-				Y: x.Y,
+				X: layout[i].X,
+				Y: layout[i].Y,
 			},
 		}
 		nodes = append(nodes, c)
+	}
+	switch orient {
+	case VerticalLayout:
+		for i := range layout {
+			layout[i].X, layout[i].Y = layout[i].Y, layout[i].X
+		}
+		adjustVerticalCoordinates(layout, maker.Depth(), maker.Spacing(), options)
+	default:
+		computeHorizontalCoordinates(layout, maker.Depth(), maker.Spacing(), options)
+	}
+	for i := range layout {
+		nodes[i].Computed.X = layout[i].X
+		nodes[i].Computed.Y = layout[i].Y
+		nodes[i].Width = layout[i].W.Len()
+		nodes[i].Height = layout[i].H.Len()
 	}
 	return nodes
 }

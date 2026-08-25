@@ -154,6 +154,7 @@ func ComputeLayout(tree *Tree, orient Orientation, options *Options) []Coordinat
 	case VerticalLayout:
 		for i := range layout {
 			layout[i].X, layout[i].Y = layout[i].Y, layout[i].X
+			nodes[i].Ideal.X, nodes[i].Ideal.Y = nodes[i].Ideal.Y, nodes[i].Ideal.X
 		}
 		adjustVerticalCoordinates(layout, maker.Depth(), maker.Spacing(), options)
 	default:

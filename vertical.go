@@ -1,7 +1,6 @@
 package trellis
 
 import (
-	"fmt"
 	"io"
 	"slices"
 )
@@ -79,6 +78,30 @@ func adjustVerticalWidth(layout []*layoutNode, opts *Options) {
 	opts.Width = max(best, opts.Width)
 }
 
+func adjustVerticalCoordinates2(layout []*layoutNode, depth, spacing int, opts *Options) {
+	var (
+		width  = opts.Width / spacing
+		height = opts.Height / depth
+	)
+	for _, n := range layout {
+		var (
+			startX = width * n.X
+			startY = height * n.Y
+		)
+		n.W = createSpan(startX, startX+width-opts.borderWidth())
+		n.H = createSpan(startY, startY+height-opts.borderWidth())
+
+		n.Y = startY + opts.borderWidth()
+		n.Y += n.H.Offset()
+
+		offset := getOffsetX(opts.Align, n.W.Len(), len(value))
+		if offset < 0 {
+			offset = 0
+		}
+		n.X = startX + offset + opts.borderWidth()
+	}
+}
+
 func adjustVerticalCoordinates(layout []*layoutNode, depth, spacing int, opts *Options) {
 	height := opts.Height / depth
 	for _, n := range layout {
@@ -113,7 +136,6 @@ func computeVerticalCoordinates(node *layoutNode, opts *Options) {
 		n := x.Weight()
 
 		x.W = createSpan(start, start+(segment*n))
-		fmt.Println(x.Value, x.X, x.W)
 		if len(node.Children) == 1 {
 			x.W = node.W
 		}

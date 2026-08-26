@@ -78,7 +78,7 @@ func adjustVerticalWidth(layout []*layoutNode, opts *Options) {
 	opts.Width = max(best, opts.Width)
 }
 
-func adjustVerticalCoordinates2(layout []*layoutNode, depth, spacing int, opts *Options) {
+func adjustVerticalCoordinates(layout []*layoutNode, depth, spacing int, opts *Options) {
 	var (
 		width  = opts.Width / spacing
 		height = opts.Height / depth
@@ -87,8 +87,10 @@ func adjustVerticalCoordinates2(layout []*layoutNode, depth, spacing int, opts *
 		var (
 			startX = width * n.X
 			startY = height * n.Y
+			value  = n.Get(opts.Padding)
+			dist = width * opts.SiblingGap
 		)
-		n.W = createSpan(startX, startX+width-opts.borderWidth())
+		n.W = createSpan(startX, startX+dist-opts.borderWidth())
 		n.H = createSpan(startY, startY+height-opts.borderWidth())
 
 		n.Y = startY + opts.borderWidth()
@@ -102,7 +104,7 @@ func adjustVerticalCoordinates2(layout []*layoutNode, depth, spacing int, opts *
 	}
 }
 
-func adjustVerticalCoordinates(layout []*layoutNode, depth, spacing int, opts *Options) {
+func adjustVerticalCoordinates3(layout []*layoutNode, depth, spacing int, opts *Options) {
 	height := opts.Height / depth
 	for _, n := range layout {
 		n.Y = (height * n.Y) + opts.borderWidth()

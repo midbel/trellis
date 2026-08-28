@@ -88,10 +88,10 @@ func adjustVerticalCoordinates(layout []*layoutNode, depth, spacing int, opts *O
 			startX = width * n.X
 			startY = height * n.Y
 			value  = n.Get(opts.Padding)
-			dist = width * opts.SiblingGap
+			dist   = width * opts.SiblingGap
 		)
-		n.W = createSpan(startX, startX+dist-opts.borderWidth())
-		n.H = createSpan(startY, startY+height-opts.borderWidth())
+		n.W = NewSpan(startX, startX+dist-opts.borderWidth())
+		n.H = NewSpan(startY, startY+height-opts.borderWidth())
 
 		n.Y = startY + opts.borderWidth()
 		n.Y += n.H.Offset()
@@ -108,12 +108,12 @@ func adjustVerticalCoordinates3(layout []*layoutNode, depth, spacing int, opts *
 	height := opts.Height / depth
 	for _, n := range layout {
 		n.Y = (height * n.Y) + opts.borderWidth()
-		n.H = createSpan(n.Y, (n.Y+height)-opts.borderWidth())
+		n.H = NewSpan(n.Y, (n.Y+height)-opts.borderWidth())
 	}
 	ix := slices.IndexFunc(layout, func(x *layoutNode) bool {
 		return x.Root()
 	})
-	layout[ix].W = createSpan(opts.borderWidth(), opts.Width+opts.borderWidth())
+	layout[ix].W = NewSpan(opts.borderWidth(), opts.Width+opts.borderWidth())
 	computeVerticalCoordinates(layout[ix], opts)
 }
 
@@ -137,7 +137,7 @@ func computeVerticalCoordinates(node *layoutNode, opts *Options) {
 	for _, x := range node.Children {
 		n := x.Weight()
 
-		x.W = createSpan(start, start+(segment*n))
+		x.W = NewSpan(start, start+(segment*n))
 		if len(node.Children) == 1 {
 			x.W = node.W
 		}
@@ -151,52 +151,6 @@ func computeVerticalCoordinates(node *layoutNode, opts *Options) {
 		start += (segment * n)
 		if addOne {
 			start++
-		}
-	}
-}
-
-func drawVerticalTree(grid *canvas, node *layoutNode, opts *Options) {
-	grid.Put(node.X, node.Y, node.Get(opts.Padding))
-	for _, x := range node.Children {
-		drawVerticalTree(grid, x, opts)
-
-		// draw connectors
-		var (
-			source = node.Anchor(opts.Padding)
-			target = x.Anchor(opts.Padding)
-		)
-		if target == source {
-			var (
-				start = node.Y
-				dist  = x.Y - node.Y
-			)
-			if opts.Reverse {
-				start = x.Y
-				dist = node.Y - x.Y
-			}
-			grid.DrawVLine(source, start+opts.borderWidth(), dist-opts.borderWidth())
-		} else {
-			if opts.Reverse {
-				grid.DrawVLine(target, x.Y+opts.borderWidth(), node.H.Start-x.Y)
-				grid.DrawVLine(source, node.H.Start, node.Y-node.H.Start)
-			} else {
-				grid.DrawVLine(source, node.Y+opts.borderWidth(), x.H.Start-node.Y)
-				grid.DrawVLine(target, x.H.Start, x.Y-x.H.Start)
-			}
-
-			var (
-				start  = x.H.Start
-				anchor = source
-				dist   = target - source
-			)
-			if opts.Reverse {
-				start = node.H.Start
-			}
-			if dist < 0 {
-				anchor = target
-				dist = -dist
-			}
-			grid.DrawHLine(anchor, start, dist)
 		}
 	}
 }

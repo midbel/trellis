@@ -13,6 +13,10 @@ type Content struct {
 	Underline bool
 }
 
+func (c Content) String() string {
+	return string(c.Value)
+}
+
 func HorizontalTree(w io.Writer, tree *Tree, opts *Options) error {
 	r := NewHorizontal(w)
 	return r.Render(tree, opts)

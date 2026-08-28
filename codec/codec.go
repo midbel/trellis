@@ -65,7 +65,7 @@ func treeFromJson(r io.Reader) (*TreeSpec, error) {
 
 func treeFromSexpr(r io.Reader) (*TreeSpec, error) {
 	h := newHandler()
-	if err := sexpr.Process(r, h); err != nil {
+	if err := sexpr.Process(r, h, nil); err != nil {
 		return nil, err
 	}
 	if h.root == nil {

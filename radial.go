@@ -13,5 +13,7 @@ func NewRadial(w io.Writer) Renderer {
 }
 
 func (r radial) Render(tree *Tree, options *Options) error {
+	opts := prepareOptions(options)
+	_ = opts
 	return nil
 }

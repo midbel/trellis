@@ -39,6 +39,8 @@ func makeSetters(opts *trellis.Options) map[string]func(any) error {
 		"border":        assignValue(&opts.Border, parseBool),
 		"reverse":       assignValue(&opts.Reverse, parseBool),
 		"coordinates":   assignValue(&opts.ShowCoordinates, parseBool),
+		"align-x":       assignValue(&opts.AlignX, parseAlignment),
+		"align-y":       assignValue(&opts.AlignY, parseAlignment),
 	}
 }
 
@@ -50,6 +52,17 @@ func assignValue[T any](dst *T, parse func(any) (T, error)) func(any) error {
 		}
 		*dst = v
 		return nil
+	}
+}
+
+func parseAlignment(value any) (trellis.Alignment, error) {
+	switch v := value.(type) {
+	case sexpr.Ident:
+		return trellis.ParseAlignment(string(v))
+	case string:
+		return trellis.ParseAlignment(v)
+	default:
+		return 0, ErrType
 	}
 }
 

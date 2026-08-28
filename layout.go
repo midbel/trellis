@@ -1,20 +1,250 @@
 package trellis
 
-import "fmt"
+import (
+	"strings"
+)
 
-type span struct {
+type Layout interface {
+	Compute(*Tree, *Options) []*Item
+}
+
+type Point struct {
+	X, Y int
+}
+
+func (p Point) Swap() Point {
+	p.X, p.Y = p.Y, p.X
+	return p
+}
+
+type CoordinateMap struct {
+	Width       int
+	Height      int
+	Coordinates []Coordinate
+}
+
+type Coordinate struct {
+	Value    string
+	Ideal    Point
+	Computed Point
+	Width    Span
+	Height   Span
+}
+
+func ComputeLayout(tree *Tree, options *Options) CoordinateMap {
+	var (
+		opts = prepareOptions(options)
+		mk   = Ideal()
+		is   = mk.Compute(tree, opts)
+		res  CoordinateMap
+	)
+	for i := range is {
+		c := Coordinate{
+			Value: strings.TrimSpace(is[i].String()),
+			Ideal: Point{
+				X: is[i].Default.X,
+				Y: is[i].Default.Y,
+			},
+			Computed: Point{
+				X: is[i].X,
+				Y: is[i].Y,
+			},
+			Width:  is[i].W,
+			Height: is[i].H,
+		}
+		res.Coordinates = append(res.Coordinates, c)
+	}
+	res.Width = opts.Width
+	res.Height = opts.Height
+	return res
+}
+
+type Item struct {
+	Content
+
+	Default Point
+	Point
+	W Span
+	H Span
+
+	Children []*Item
+	root     bool
+}
+
+func maxFromItems(is []*Item, get func(*Item) int) int {
+	var res int
+	for i := range is {
+		res = max(get(is[i]), res)
+	}
+	return res
+}
+
+func (i *Item) FirstLeaf() *Item {
+	if i.Leaf() {
+		return i
+	}
+	return i.Children[0].FirstLeaf()
+}
+
+func (i *Item) LastLeaf() *Item {
+	if i.Leaf() {
+		return i
+	}
+	n := i.Len() - 1
+	return i.Children[n].LastLeaf()
+}
+
+func (i *Item) Leaf() bool {
+	return i.Len() == 0
+}
+
+func (i *Item) Root() bool {
+	return i.root
+}
+
+func (i *Item) Len() int {
+	return len(i.Children)
+}
+
+func (i *Item) Weight() int {
+	if i.Leaf() {
+		return 1
+	}
+	var sum int
+	for _, x := range i.Children {
+		sum += x.Weight()
+	}
+	return sum
+}
+
+func Ideal() Layout {
+	var i ideal
+	return i
+}
+
+func Proportional() Layout {
+	var p proportional
+	return p
+}
+
+type ideal struct{}
+
+func (i ideal) Compute(tree *Tree, opts *Options) []*Item {
+	switch opts.Orient {
+	case HorizontalLayout:
+		return i.horizontal(tree, opts)
+	default:
+		return i.vertical(tree, opts)
+	}
+}
+
+func (i ideal) vertical(tree *Tree, opts *Options) []*Item {
+	is := i.prepare(tree, opts)
+	for i := range is {
+		is[i].Point = is[i].Swap()
+		is[i].Default = is[i].Point
+	}
+	var (
+		spacing = maxFromItems(is, func(i *Item) int { return i.X })
+		level   = maxFromItems(is, func(i *Item) int { return i.Y })
+		width   = opts.Width / spacing
+		height  = opts.Height / (level + 1)
+	)
+	for i := range is {
+		var (
+			startX = (width * is[i].Default.X) + opts.borderWidth()
+			startY = (height * is[i].Default.Y) + opts.borderWidth()
+		)
+		is[i].W = NewSpan(startX, startX+width-opts.borderWidth())
+		is[i].H = NewSpan(startY, startY+height-opts.borderWidth())
+
+		is[i].Y = is[i].H.Start
+		is[i].X = startX
+	}
+	return is
+}
+
+func (i ideal) horizontal(tree *Tree, opts *Options) []*Item {
+	is := i.prepare(tree, opts)
+	var (
+		spacing = maxFromItems(is, func(i *Item) int { return i.Y })
+		level   = maxFromItems(is, func(i *Item) int { return i.X })
+		width   = opts.Width / (level + 1)
+	)
+	for i := range is {
+		var (
+			startX = (is[i].Default.X * width) + opts.borderWidth()
+			startY = (is[i].Default.Y * opts.Height / spacing) + opts.borderWidth()
+			endY   int
+		)
+		is[i].X = startX
+		is[i].Y = startY
+		is[i].W = NewSpan(startX, startX+width-opts.borderWidth())
+
+		var (
+			first = is[i].FirstLeaf()
+			last  = is[i].LastLeaf()
+		)
+		startY = first.Default.Y * opts.Height / spacing
+		endY = (last.Default.Y + opts.SiblingGap) * opts.Height / spacing
+
+		startY += opts.borderWidth()
+		endY -= opts.borderWidth()
+		if endY <= startY {
+			endY = startY + 1
+		}
+		is[i].H = NewSpan(startY, endY)
+	}
+	return is
+}
+
+func (ideal) prepare(tree *Tree, opts *Options) []*Item {
+	var (
+		mk = defaultTreeLayout()
+		is = mk.Make(tree.Root, opts)
+	)
+	if opts.Reverse {
+		level := mk.Depth() - 1
+		for i := range is {
+			is[i].Default.X = level - is[i].X
+			is[i].Point = is[i].Default
+		}
+	}
+	return is
+}
+
+type proportional struct{}
+
+func (p proportional) Compute(tree *Tree, opts *Options) []*Item {
+	switch opts.Orient {
+	case HorizontalLayout:
+		return p.horizontal(tree, opts)
+	default:
+		return p.vertical(tree, opts)
+	}
+}
+
+func (proportional) vertical(tree *Tree, opts *Options) []*Item {
+	return nil
+}
+
+func (proportional) horizontal(tree *Tree, opts *Options) []*Item {
+	return nil
+}
+
+type Span struct {
 	Start int
 	End   int
 }
 
-func createSpan(start, end int) span {
-	return span{
+func NewSpan(start, end int) Span {
+	return Span{
 		Start: start,
 		End:   end,
 	}
 }
 
-func (s span) CenterValue(value string, padding int) int {
+func (s Span) CenterValue(value string, padding int) int {
 	var (
 		size   = len([]byte(value)) + (2 * (padding))
 		offset = (s.Len() - size) / 2
@@ -22,28 +252,84 @@ func (s span) CenterValue(value string, padding int) int {
 	return s.Start + offset
 }
 
-func (s span) Distance(other span) int {
-	return other.Center() - s.Center()
-}
-
-func (s span) Center() int {
-	return s.Start + s.Offset()
-}
-
-func (s span) Offset() int {
+func (s Span) Offset() int {
 	return s.Len() / 2
 }
 
-func (s span) Len() int {
+func (s Span) Len() int {
 	return s.End - s.Start
 }
 
-func (s span) Next() span {
-	sp := span{
-		Start: s.End + 1,
-		End:   s.End + 1 + s.Len(),
+func (s Span) Next() Span {
+	return NewSpan(s.End+1, s.End+1+s.Len())
+}
+
+type treeLayout struct {
+	siblingsSpacing int
+	levelSpacing    int
+}
+
+func defaultTreeLayout() *treeLayout {
+	return &treeLayout{}
+}
+
+func (m *treeLayout) Single(node *Node, opts *Options) *Item {
+	return m.makeLayout(node, 0, opts)
+}
+
+func (m *treeLayout) Make(node *Node, opts *Options) []*Item {
+	res := m.makeLayout(node, 0, opts)
+	return m.flatten(res)
+}
+
+func (m *treeLayout) Depth() int {
+	return m.levelSpacing + 1
+}
+
+func (m *treeLayout) Spacing() int {
+	return m.siblingsSpacing
+}
+
+func (m *treeLayout) makeLayout(node *Node, depth int, opts *Options) *Item {
+	sub := Item{
+		Content: opts.Render(node, opts),
+		root:    depth == 0,
 	}
-	return sp
+	sub.X = depth
+	depth++
+	for _, n := range node.Nodes {
+		child := m.makeLayout(n, depth, opts)
+		sub.Children = append(sub.Children, child)
+	}
+	if node.Leaf() {
+		sub.Y = m.siblingsSpacing
+		m.siblingsSpacing += opts.SiblingGap
+	} else {
+		if opts.Align == AlignStart {
+			sub.Y = sub.Children[0].Y
+		} else if opts.Align == AlignEnd {
+			sub.Y = sub.Children[len(sub.Children)-1].Y
+		} else {
+			var sum int
+			for i := range sub.Children {
+				sum += sub.Children[i].Y
+			}
+			sub.Y = sum / (len(sub.Children))
+		}
+	}
+	sub.Default = sub.Point
+	m.levelSpacing = max(depth-1, m.levelSpacing)
+	return &sub
+}
+
+func (m *treeLayout) flatten(node *Item) []*Item {
+	list := []*Item{
+		node,
+	}
+	for _, n := range node.Children {
+		list = append(list, m.flatten(n)...)
+	}
+	return list
 }
 
 type layoutNode struct {
@@ -52,8 +338,8 @@ type layoutNode struct {
 	X    int
 	Y    int
 
-	W span
-	H span
+	W Span
+	H Span
 
 	Children []*layoutNode
 }
@@ -101,72 +387,6 @@ func (n *layoutNode) Get(padding int) []byte {
 		value = tmp
 	}
 	return value
-}
-
-type Orientation uint8
-
-func ParseOrientation(orient string) (Orientation, error) {
-	switch orient {
-	case "", "h", "horizontal":
-		return HorizontalLayout, nil
-	case "v", "vertical":
-		return VerticalLayout, nil
-	default:
-		return HorizontalLayout, fmt.Errorf("%s: unknown orientation", orient)
-	}
-}
-
-const (
-	HorizontalLayout Orientation = iota
-	VerticalLayout
-)
-
-type Point struct {
-	X, Y int
-}
-
-type Coordinate struct {
-	*Node
-	Ideal    Point
-	Computed Point
-	Width    int
-	Height   int
-}
-
-func ComputeLayout(tree *Tree, orient Orientation, options *Options) []Coordinate {
-	var (
-		opts   = prepareOptions(options)
-		maker  = makeLayout(opts.SiblingGap, opts.Align)
-		layout = maker.Make(tree.Root)
-		nodes  []Coordinate
-	)
-	for i := range layout {
-		c := Coordinate{
-			Node: layout[i].Node,
-			Ideal: Point{
-				X: layout[i].X,
-				Y: layout[i].Y,
-			},
-		}
-		nodes = append(nodes, c)
-	}
-	switch orient {
-	case VerticalLayout:
-		for i := range layout {
-			layout[i].X, layout[i].Y = layout[i].Y, layout[i].X
-			nodes[i].Ideal.X, nodes[i].Ideal.Y = nodes[i].Ideal.Y, nodes[i].Ideal.X
-		}
-		adjustVerticalCoordinates(layout, maker.Depth(), maker.Spacing(), options)
-	default:
-		computeHorizontalCoordinates(layout, maker.Depth(), maker.Spacing(), options)
-	}
-	for i := range layout {
-		nodes[i].Computed.X = layout[i].X
-		nodes[i].Computed.Y = layout[i].Y
-		nodes[i].Width = layout[i].W.Len()
-		nodes[i].Height = layout[i].H.Len()
-	}
-	return nodes
 }
 
 type layoutMaker struct {

@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"slices"
 	"strconv"
 
 	"github.com/midbel/cli"
@@ -179,13 +180,17 @@ func (c inspectCommand) Run(args []string) error {
 	if err != nil {
 		cli.FailData(err)
 	}
-	table := cli.Table{
+	tbl1 := cli.Table{
 		Headers: []string{
 			"value",
 			"ideal-x",
 			"ideal-y",
 			"computed-x",
 			"computed-y",
+			"start-x",
+			"end-x",
+			"start-y",
+			"end-y",
 			"width",
 			"height",
 		},
@@ -196,19 +201,54 @@ func (c inspectCommand) Run(args []string) error {
 	if c.Height > 0 {
 		spec.Height = c.Height
 	}
-	for _, n := range trellis.ComputeLayout(spec.Tree, c.Type, spec.Options) {
+	if c.Type > 0 {
+		spec.Orient = c.Type
+	}
+	res := trellis.ComputeLayout(spec.Tree, spec.Options)
+
+	tbl2 := cli.Table{
+		Rows: [][]string{
+			{"Width", strconv.Itoa(res.Width)},
+			{"Height", strconv.Itoa(res.Height)},
+		},
+	}
+
+	slices.SortFunc(res.Coordinates, func(c1, c2 trellis.Coordinate) int {
+		var diff int
+		switch c.Type {
+		case trellis.VerticalLayout:
+			diff = c1.Ideal.Y - c2.Ideal.Y
+			if diff == 0 {
+				diff = c1.Ideal.X - c2.Ideal.X
+			}
+		default:
+			diff = c1.Ideal.X - c2.Ideal.X
+			if diff == 0 {
+				diff = c1.Ideal.Y - c2.Ideal.Y
+			}
+		}
+		return diff
+	})
+
+	for _, n := range res.Coordinates {
 		row := []string{
 			n.Value,
 			strconv.Itoa(n.Ideal.X),
 			strconv.Itoa(n.Ideal.Y),
 			strconv.Itoa(n.Computed.X),
 			strconv.Itoa(n.Computed.Y),
-			strconv.Itoa(n.Width),
-			strconv.Itoa(n.Height),
+			strconv.Itoa(n.Width.Start),
+			strconv.Itoa(n.Width.End),
+			strconv.Itoa(n.Height.Start),
+			strconv.Itoa(n.Height.End),
+			strconv.Itoa(n.Width.Len()),
+			strconv.Itoa(n.Height.Len()),
 		}
-		table.Rows = append(table.Rows, row)
+		tbl1.Rows = append(tbl1.Rows, row)
 	}
 	rdr := cli.NewTableRenderer(cli.Stdout)
-	rdr.Render(table)
+	rdr.Render(tbl1)
+	rdr.Empty()
+	rdr.Render(tbl2)
 	return nil
 }

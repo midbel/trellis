@@ -100,3 +100,90 @@ func (c *canvas) Render(w io.Writer) error {
 	}
 	return nil
 }
+
+func drawVerticalTree(grid *canvas, node *layoutNode, opts *Options) {
+	grid.Put(node.X, node.Y, node.Get(opts.Padding))
+	for _, x := range node.Children {
+		drawVerticalTree(grid, x, opts)
+
+		// draw connectors
+		var (
+			source = node.Anchor(opts.Padding)
+			target = x.Anchor(opts.Padding)
+		)
+		if target == source {
+			var (
+				start = node.Y
+				dist  = x.Y - node.Y
+			)
+			if opts.Reverse {
+				start = x.Y
+				dist = node.Y - x.Y
+			}
+			grid.DrawVLine(source, start+opts.borderWidth(), dist-opts.borderWidth())
+		} else {
+			if opts.Reverse {
+				grid.DrawVLine(target, x.Y+opts.borderWidth(), node.H.Start-x.Y)
+				grid.DrawVLine(source, node.H.Start, node.Y-node.H.Start)
+			} else {
+				grid.DrawVLine(source, node.Y+opts.borderWidth(), x.H.Start-node.Y)
+				grid.DrawVLine(target, x.H.Start, x.Y-x.H.Start)
+			}
+
+			var (
+				start  = x.H.Start
+				anchor = source
+				dist   = target - source
+			)
+			if opts.Reverse {
+				start = node.H.Start
+			}
+			if dist < 0 {
+				anchor = target
+				dist = -dist
+			}
+			grid.DrawHLine(anchor, start, dist)
+		}
+	}
+}
+
+func drawHorizontalTree(grid *canvas, node *Item, opts *Options) {
+	start := node.X + len(node.Value)
+	for _, x := range node.Children {
+		var (
+			source = x.Y
+			target = node.Y
+		)
+		if source == target {
+			if opts.Reverse {
+				start = x.X + len(x.Value)
+				grid.DrawHLine(start, source, node.W.Start-start-1)
+			} else {
+				grid.DrawHLine(start, source, x.W.Start-start-1)
+			}
+		} else {
+			var (
+				distance = x.W.Start - start
+				left     int
+				right    int
+			)
+			if mid := distance / 2; mid+mid == distance {
+				left, right = mid, mid
+			} else {
+				left, right = mid+1, mid
+			}
+			grid.DrawHLine(start, node.Y, left)
+			grid.DrawHLine(start+left, x.Y, right-1)
+
+			anchor := source
+			distance = target - source
+			if distance < 0 {
+				distance = -distance
+				anchor = target
+			}
+			grid.DrawVLine(start+left, anchor, distance)
+		}
+		drawHorizontalTree(grid, x, opts)
+	}
+	grid.Put(node.X, node.Y, node.Value)
+}

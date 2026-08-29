@@ -1,6 +1,7 @@
 package trellis
 
 import (
+	"slices"
 	"strings"
 )
 
@@ -94,6 +95,38 @@ func (i *Item) LastLeaf() *Item {
 	return i.Children[n].LastLeaf()
 }
 
+func (i *Item) AlignY(align Alignment) {
+	switch align {
+	case AlignStart:
+		i.Y = i.H.Start
+	case AlignEnd:
+		i.Y = i.H.End
+	default:
+		i.Y = i.H.Start + i.H.Offset()
+	}
+}
+
+func (i *Item) AlignX(align Alignment) {
+	switch align {
+	case AlignStart:
+		i.X = i.W.Start
+	case AlignEnd:
+		i.X = i.W.End
+	default:
+		i.X = i.W.Start + i.W.Offset()
+	}
+}
+
+func (i *Item) MoveY(delta int) {
+	i.Y += delta
+	i.H.Start += delta
+	i.H.End += delta
+
+	for _, c := range i.Children {
+		c.MoveY(delta)
+	}
+}
+
 func (i *Item) Leaf() bool {
 	return i.Len() == 0
 }
@@ -165,37 +198,67 @@ func (i ideal) vertical(tree *Tree, opts *Options) []*Item {
 }
 
 func (i ideal) horizontal(tree *Tree, opts *Options) []*Item {
-	is := i.prepare(tree, opts)
 	var (
+		is      = i.prepare(tree, opts)
 		spacing = maxFromItems(is, func(i *Item) int { return i.Y })
 		level   = maxFromItems(is, func(i *Item) int { return i.X })
-		width   = opts.Width / (level + 1)
 	)
-	for i := range is {
-		var (
-			startX = (is[i].Default.X * width) + opts.borderWidth()
-			startY = (is[i].Default.Y * opts.Height / spacing) + opts.borderWidth()
-			endY   int
-		)
-		is[i].X = startX
-		is[i].Y = startY
-		is[i].W = NewSpan(startX, startX+width-opts.borderWidth())
-
-		var (
-			first = is[i].FirstLeaf()
-			last  = is[i].LastLeaf()
-		)
-		startY = first.Default.Y * opts.Height / spacing
-		endY = (last.Default.Y + opts.SiblingGap) * opts.Height / spacing
-
-		startY += opts.borderWidth()
-		endY -= opts.borderWidth()
-		if endY <= startY {
-			endY = startY + 1
-		}
-		is[i].H = NewSpan(startY, endY)
+	ix := slices.IndexFunc(is, func(it *Item) bool {
+		return it.Root()
+	})
+	if ix < 0 {
+		return nil
 	}
+	i.computeHorizontalCoordinates(is[ix], opts, spacing, level)
 	return is
+}
+
+func (i ideal) computeHorizontalCoordinates(node *Item, opts *Options, spacing, level int) {
+	var (
+		width  = opts.Width / (level + 1)
+		maxLen int
+	)
+	for _, x := range node.Children {
+		if !x.Leaf() {
+			i.computeHorizontalCoordinates(x, opts, spacing, level)
+			continue
+		}
+		var (
+			startX = (x.Default.X * width)
+			startY = (x.Default.Y * opts.Height / spacing)
+			endY   = ((x.Default.Y + opts.SiblingGap) * opts.Height) / spacing
+		)
+		x.X = startX
+		x.Y = startY
+		x.W = NewSpan(startX, startX+width)
+		x.H = NewSpan(startY, endY)
+
+		if x.H.Len() < opts.SiblingGap+1 {
+			x.H.End = x.H.Start + opts.SiblingGap + 1
+		}
+		x.AlignX(opts.AlignX)
+		x.AlignY(opts.AlignY)
+
+		maxLen = max(maxLen, x.H.Len())
+	}
+
+	boundary := node.Children[0].H.End
+	for _, c := range node.Children[1:] {
+		if c.H.Start < boundary {
+			c.MoveY(boundary - c.H.Start + 1)
+		}
+		boundary = c.H.End
+	}
+	var (
+		first = node.FirstLeaf()
+		last  = node.LastLeaf()
+	)
+	node.X = node.Default.X * width
+	node.Y = node.Default.Y * opts.Height / spacing
+	node.W = NewSpan(node.X, node.X+width)
+	node.H = NewSpan(first.H.Start, last.H.End)
+	node.AlignX(opts.AlignX)
+	node.AlignY(opts.AlignY)
 }
 
 func (ideal) prepare(tree *Tree, opts *Options) []*Item {

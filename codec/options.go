@@ -19,10 +19,10 @@ func makeFlags(opts *trellis.Options) map[string]func() {
 		"padding": func() {
 			opts.Padding++
 		},
-		"horizontalGap": func() {
+		"horizontal-gap": func() {
 			opts.LevelGap++
 		},
-		"verticalGap": func() {
+		"vertical-gap": func() {
 			opts.SiblingGap++
 		},
 	}
@@ -30,17 +30,17 @@ func makeFlags(opts *trellis.Options) map[string]func() {
 
 func makeSetters(opts *trellis.Options) map[string]func(any) error {
 	return map[string]func(any) error{
-		"width":         assignValue(&opts.Width, parseInt),
-		"height":        assignValue(&opts.Height, parseInt),
-		"padding":       assignValue(&opts.Padding, parseInt),
-		"paddingChar":   assignValue(&opts.PaddingChar, parseString),
-		"horizontalGap": assignValue(&opts.LevelGap, parseInt),
-		"verticalGap":   assignValue(&opts.SiblingGap, parseInt),
-		"border":        assignValue(&opts.Border, parseBool),
-		"reverse":       assignValue(&opts.Reverse, parseBool),
-		"coordinates":   assignValue(&opts.ShowCoordinates, parseBool),
-		"align-x":       assignValue(&opts.AlignX, parseAlignment),
-		"align-y":       assignValue(&opts.AlignY, parseAlignment),
+		"width":          assignValue(&opts.Width, parseInt),
+		"height":         assignValue(&opts.Height, parseInt),
+		"padding":        assignValue(&opts.Padding, parseInt),
+		"paddingChar":    assignValue(&opts.PaddingChar, parseString),
+		"horizontal-gap": assignValue(&opts.LevelGap, parseInt),
+		"vertical-gap":   assignValue(&opts.SiblingGap, parseInt),
+		"border":         assignValue(&opts.Border, parseBool),
+		"reverse":        assignValue(&opts.Reverse, parseBool),
+		"coordinates":    assignValue(&opts.ShowCoordinates, parseBool),
+		"align-x":        assignValue(&opts.AlignX, parseAlignment),
+		"align-y":        assignValue(&opts.AlignY, parseAlignment),
 	}
 }
 

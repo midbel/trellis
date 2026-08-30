@@ -1,6 +1,7 @@
 package trellis
 
 import (
+	"fmt"
 	"slices"
 	"strings"
 )
@@ -117,6 +118,16 @@ func (i *Item) AlignX(align Alignment) {
 	}
 }
 
+func (i *Item) MoveX(delta int) {
+	i.X += delta
+	i.W.Start += delta
+	i.W.End += delta
+
+	for _, c := range i.Children {
+		c.MoveX(delta)
+	}
+}
+
 func (i *Item) MoveY(delta int) {
 	i.Y += delta
 	i.H.Start += delta
@@ -180,21 +191,64 @@ func (i ideal) vertical(tree *Tree, opts *Options) []*Item {
 	var (
 		spacing = maxFromItems(is, func(i *Item) int { return i.X })
 		level   = maxFromItems(is, func(i *Item) int { return i.Y })
-		width   = opts.Width / spacing
-		height  = opts.Height / (level + 1)
 	)
-	for i := range is {
-		var (
-			startX = (width * is[i].Default.X) + opts.borderWidth()
-			startY = (height * is[i].Default.Y) + opts.borderWidth()
-		)
-		is[i].W = NewSpan(startX, startX+width-opts.borderWidth())
-		is[i].H = NewSpan(startY, startY+height-opts.borderWidth())
-
-		is[i].Y = is[i].H.Start
-		is[i].X = startX
+	ix := slices.IndexFunc(is, func(it *Item) bool {
+		return it.Root()
+	})
+	if ix < 0 {
+		return nil
 	}
+	fmt.Println(spacing, level)
+	i.computeVerticalCoordinates(is[ix], opts, spacing, level)
 	return is
+}
+
+func (i ideal) computeVerticalCoordinates(node *Item, opts *Options, spacing, level int) {
+	var (
+		height = opts.Height / (level + 1)
+		maxLen int
+	)
+	for _, x := range node.Children {
+		if !x.Leaf() {
+			i.computeVerticalCoordinates(x, opts, spacing, level)
+			continue
+		}
+		var (
+			startY = (x.Default.Y * height)
+			startX = (x.Default.X * opts.Width / spacing)
+			endX   = ((x.Default.X + opts.SiblingGap) * opts.Width) / spacing
+		)
+		x.X = startX
+		x.Y = startY
+		x.W = NewSpan(startX, endX)
+		x.H = NewSpan(startY, startY+height)
+
+		if x.W.Len() < opts.SiblingGap+1 {
+			x.W.End = x.W.Start + opts.SiblingGap + 1
+		}
+		x.AlignX(opts.AlignX)
+		x.AlignY(opts.AlignY)
+
+		maxLen = max(maxLen, x.W.Len())
+	}
+
+	boundary := node.Children[0].W.End
+	for _, c := range node.Children[1:] {
+		if c.W.Start < boundary {
+			c.MoveX(boundary - c.W.Start + 1)
+		}
+		boundary = c.W.End
+	}
+	var (
+		first = node.FirstLeaf()
+		last  = node.LastLeaf()
+	)
+	node.X = node.Default.X * opts.Width / spacing
+	node.Y = node.Default.Y * height
+	node.W = NewSpan(first.W.Start, last.W.End)
+	node.H = NewSpan(node.Y, node.Y+height)
+	node.AlignX(opts.AlignX)
+	node.AlignY(opts.AlignY)
 }
 
 func (i ideal) horizontal(tree *Tree, opts *Options) []*Item {

@@ -6,13 +6,6 @@ type Renderer interface {
 	Render(*Tree, *Options) error
 }
 
-type Content struct {
-	Value     []byte
-	Bold      bool
-	Italic    bool
-	Underline bool
-}
-
 func (c Content) String() string {
 	return string(c.Value)
 }

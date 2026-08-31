@@ -173,12 +173,16 @@ func Proportional() Layout {
 type ideal struct{}
 
 func (i ideal) Compute(tree *Tree, opts *Options) []*Item {
+	var items []*Item
 	switch opts.Orient {
 	case HorizontalLayout:
-		return i.horizontal(tree, opts)
+		items = i.horizontal(tree, opts)
 	default:
-		return i.vertical(tree, opts)
+		items = i.vertical(tree, opts)
 	}
+	opts.Width = maxFromItems(items, func(i *Item) int { return i.W.End })
+	opts.Height = maxFromItems(items, func(i *Item) int { return i.H.End })
+	return items
 }
 
 func (i ideal) vertical(tree *Tree, opts *Options) []*Item {
@@ -198,6 +202,7 @@ func (i ideal) vertical(tree *Tree, opts *Options) []*Item {
 		return nil
 	}
 	i.computeVerticalCoordinates(is[ix], opts, spacing, level)
+
 	return is
 }
 

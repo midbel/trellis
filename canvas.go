@@ -21,16 +21,19 @@ func NewCanvas(width, height int) *Canvas {
 	}
 }
 
-func (c *Canvas) At(x, y int) Content {
+func (c *Canvas) Put(x, y int, content Content) error {
 	if x < 0 || x >= c.Width || y < 0 || y >= c.Height {
-		return Content{}
-	}
-	return c.cells[y*c.Width+x]
-}
-
-func (c *Canvas) Put(x, y int, content Content) {
-	if x < 0 || x >= c.Width || y < 0 || y >= c.Height {
-		return
+		return nil
 	}
 	c.cells[y*c.Width+x] = content
+	return nil
+}
+
+func (c *Canvas) Render(sc *Screen) error {
+	for i, ct := range c.cells {
+		y := i / c.Width
+		x := i % c.Width
+		sc.Put(x, y, ct)
+	}
+	return nil
 }

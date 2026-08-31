@@ -208,8 +208,8 @@ func (c inspectCommand) Run(args []string) error {
 
 	tbl2 := cli.Table{
 		Rows: [][]string{
-			{"Width", strconv.Itoa(res.Width)},
-			{"Height", strconv.Itoa(res.Height)},
+			{"Width", strconv.Itoa(spec.Width), strconv.Itoa(res.Width)},
+			{"Height", strconv.Itoa(spec.Height), strconv.Itoa(res.Height)},
 		},
 	}
 

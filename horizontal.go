@@ -2,7 +2,6 @@ package trellis
 
 import (
 	"io"
-	"slices"
 )
 
 type horizontal struct {
@@ -21,11 +20,15 @@ func (h horizontal) Render(tree *Tree, options *Options) error {
 	var (
 		layout = Ideal()
 		items  = layout.Compute(tree, opts)
+		canvas = NewCanvas(opts.Width, opts.Height)
+		screen = NewScreen(opts.Width, opts.Height)
 	)
 
-	ix := slices.IndexFunc(items, func(n *Item) bool {
-		return n.Root()
-	})
-	_ = ix
-	return nil
+	for i := range items {
+		canvas.Put(items[i].X, items[i].Y, items[i].Content)
+	}
+	if err := canvas.Render(screen); err != nil {
+		return err
+	}
+	return screen.Render(h.w)
 }

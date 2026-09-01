@@ -9,6 +9,11 @@ type Layout interface {
 	Compute(*Tree, *Options) []*Item
 }
 
+type Segment struct {
+	Start Point
+	End   Point
+}
+
 type Point struct {
 	X, Y int
 }
@@ -16,6 +21,14 @@ type Point struct {
 func (p Point) Swap() Point {
 	p.X, p.Y = p.Y, p.X
 	return p
+}
+
+func (p Point) IsAbove(other Point) bool {
+	return p.Y >= other.Y
+}
+
+func (p Point) IsLeft(other Point) bool {
+	return p.X <= other.X
 }
 
 type CoordinateMap struct {
@@ -58,6 +71,55 @@ func ComputeLayout(tree *Tree, options *Options) CoordinateMap {
 	res.Width = opts.Width
 	res.Height = opts.Height
 	return res
+}
+
+func horizontalPath(from, to *Item) []Segment {
+	var (
+		start  Point
+		end    Point
+		offset int
+	)
+	if !from.Point.IsLeft(to.Point) {
+		from, to = to, from
+	} else {
+	}
+	start, end = from.Point, to.Point
+	offset = len(from.Value)
+	if start.Y == end.Y {
+		s := Segment{
+			Start: start,
+			End:   end,
+		}
+		s.Start.X += offset
+		s.End.X--
+		return []Segment{s}
+	}
+	f := Segment{
+		Start: start,
+		End:   start,
+	}
+	f.Start.X += offset
+	f.End.X = from.W.End
+
+	t := Segment{
+		Start: end,
+		End:   end,
+	}
+	t.Start.X = to.W.Start
+	t.End.X--
+
+	var v Segment
+	if f.End.IsAbove(t.Start) {
+		v.Start, v.End = f.End, t.Start
+	} else {
+		v.Start, v.End = t.Start, f.End
+	}
+
+	return []Segment{f, v, t}
+}
+
+func verticalPath(from, to *Item) []Point {
+	return nil
 }
 
 type Item struct {
@@ -111,9 +173,9 @@ func (i *Item) AlignX(align Alignment) {
 	case AlignStart:
 		i.X = i.W.Start
 	case AlignEnd:
-		i.X = i.W.End
+		i.X = i.W.End - len(i.Value)
 	default:
-		i.X = i.W.Start + i.W.Offset()
+		i.X = i.W.Start + i.W.Offset() - (len(i.Value) / 2)
 	}
 }
 
@@ -149,15 +211,8 @@ func (i *Item) Len() int {
 	return len(i.Children)
 }
 
-func (i *Item) Weight() int {
-	if i.Leaf() {
-		return 1
-	}
-	var sum int
-	for _, x := range i.Children {
-		sum += x.Weight()
-	}
-	return sum
+func (i *Item) Size() int {
+	return len(i.Value)
 }
 
 func Ideal() Layout {

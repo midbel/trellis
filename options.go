@@ -18,12 +18,6 @@ const (
 	DefaultLevelGap   = 5
 )
 
-const (
-	connectBarAscii    = '+'
-	verticalBarAscii   = '|'
-	horizontalBarAscii = '-'
-)
-
 type LayoutOptions struct {
 	Orient     Orientation
 	Width      int

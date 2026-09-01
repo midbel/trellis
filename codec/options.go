@@ -1,6 +1,8 @@
 package codec
 
 import (
+	"fmt"
+
 	"github.com/midbel/sexpr"
 	"github.com/midbel/trellis"
 )
@@ -32,7 +34,7 @@ func makeSetters(opts *trellis.Options) map[string]func(any) error {
 	return map[string]func(any) error{
 		"width":          assignValue(&opts.Width, parseInt),
 		"height":         assignValue(&opts.Height, parseInt),
-		"padding":        assignValue(&opts.Padding, parseInt),
+		"padding":        assignValue(&opts.Padding, parsePadding),
 		"paddingChar":    assignValue(&opts.PaddingChar, parseString),
 		"horizontal-gap": assignValue(&opts.LevelGap, parseInt),
 		"vertical-gap":   assignValue(&opts.SiblingGap, parseInt),
@@ -52,6 +54,29 @@ func assignValue[T any](dst *T, parse func(any) (T, error)) func(any) error {
 		}
 		*dst = v
 		return nil
+	}
+}
+
+func parsePadding(value any) (int, error) {
+	get := func(pad string) (int, error) {
+		switch pad {
+		case "small":
+			return trellis.PaddingS, nil
+		case "medium":
+			return trellis.PaddingM, nil
+		case "large":
+			return trellis.PaddingL, nil
+		default:
+			return 0, fmt.Errorf("padding: unsupported value %q", pad)
+		}
+	}
+	switch v := value.(type) {
+	case string:
+		return get(v)
+	case sexpr.Ident:
+		return get(string(v))
+	default:
+		return parseInt(value)
 	}
 }
 

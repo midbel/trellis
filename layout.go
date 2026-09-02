@@ -138,7 +138,7 @@ func verticalPath(from, to *Item) []Segment {
 		}
 		s.Start.Y++
 		s.End.Y--
-		return []Segment{s.Swap()}
+		return []Segment{s}
 	}
 	f := Segment{
 		Start: start,
@@ -160,7 +160,7 @@ func verticalPath(from, to *Item) []Segment {
 	} else {
 		v.Start, v.End = t.Start, f.End
 	}
-	return []Segment{f.Swap(), v, t.Swap()}
+	return []Segment{f, v, t}
 }
 
 type Item struct {

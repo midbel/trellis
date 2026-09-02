@@ -97,8 +97,8 @@ var defaultOptions = &Options{
 	StyleOptions: StyleOptions{
 		Style:   ConnectorAscii,
 		Padding: PaddingS,
-		AlignX: AlignCenter,
-		AlignY: AlignCenter,
+		AlignX:  AlignCenter,
+		AlignY:  AlignCenter,
 	},
 	RenderOptions: RenderOptions{
 		Border: true,
@@ -142,7 +142,7 @@ func (t *Options) paddedValue(str string) []byte {
 func (t *Options) Align() Alignment {
 	if t.Orient == HorizontalLayout {
 		return t.AlignX
-	} 
+	}
 	return t.AlignY
 }
 

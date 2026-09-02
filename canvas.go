@@ -48,10 +48,17 @@ func Connector(segments []Segment) []*Item {
 }
 
 func verticalConnector(seg Segment) []*Item {
-	var list []*Item
-	for y := seg.Start.Y; y >= seg.End.Y; y-- {
+	var (
+		list  []*Item
+		start = seg.Start
+		end   = seg.End
+	)
+	if start.IsAbove(end) {
+		start, end = end, start
+	}
+	for y := start.Y; y >= end.Y; y-- {
 		char := verticalBarAscii
-		if y == seg.Start.Y || y == seg.End.Y {
+		if y == start.Y || y == start.Y {
 			char = connectBarAscii
 		}
 		content := Content{
@@ -61,7 +68,7 @@ func verticalConnector(seg Segment) []*Item {
 		i := &Item{
 			Content: content,
 			Point: Point{
-				X: seg.Start.X,
+				X: start.X,
 				Y: y,
 			},
 		}
@@ -71,10 +78,17 @@ func verticalConnector(seg Segment) []*Item {
 }
 
 func horizontalConnector(seg Segment) []*Item {
-	var list []*Item
-	for x := seg.Start.X; x <= seg.End.X; x++ {
+	var (
+		list  []*Item
+		start = seg.Start
+		end   = seg.End
+	)
+	if end.IsLeft(start) {
+		start, end = end, start
+	}
+	for x := start.X; x <= end.X; x++ {
 		char := horizontalBarAscii
-		if x == seg.Start.X || x == seg.End.X {
+		if x == start.X || x == end.X {
 			char = connectBarAscii
 		}
 		content := Content{
@@ -85,7 +99,7 @@ func horizontalConnector(seg Segment) []*Item {
 			Content: content,
 			Point: Point{
 				X: x,
-				Y: seg.Start.Y,
+				Y: start.Y,
 			},
 		}
 		list = append(list, i)

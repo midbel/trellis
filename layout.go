@@ -14,6 +14,11 @@ type Segment struct {
 	End   Point
 }
 
+func (s Segment) Swap() Segment {
+	s.Start, s.End = s.End, s.Start
+	return s
+}
+
 type Point struct {
 	X, Y int
 }
@@ -24,7 +29,7 @@ func (p Point) Swap() Point {
 }
 
 func (p Point) IsAbove(other Point) bool {
-	return p.Y >= other.Y
+	return p.Y <= other.Y
 }
 
 func (p Point) IsLeft(other Point) bool {
@@ -74,17 +79,14 @@ func ComputeLayout(tree *Tree, options *Options) CoordinateMap {
 }
 
 func horizontalPath(from, to *Item) []Segment {
-	var (
-		start  Point
-		end    Point
-		offset int
-	)
 	if !from.Point.IsLeft(to.Point) {
 		from, to = to, from
-	} else {
 	}
-	start, end = from.Point, to.Point
-	offset = len(from.Value)
+	var (
+		start  = from.Point
+		end    = to.Point
+		offset = len(from.Value)
+	)
 	if start.Y == end.Y {
 		s := Segment{
 			Start: start,
@@ -118,8 +120,47 @@ func horizontalPath(from, to *Item) []Segment {
 	return []Segment{f, v, t}
 }
 
-func verticalPath(from, to *Item) []Point {
-	return nil
+func verticalPath(from, to *Item) []Segment {
+	if !from.Point.IsAbove(to.Point) {
+		from, to = to, from
+	}
+	var (
+		start = from.Point
+		end   = to.Point
+	)
+	start.X += from.Size() / 2
+	end.X += to.Size() / 2
+
+	if start.X == end.X {
+		s := Segment{
+			Start: start,
+			End:   end,
+		}
+		s.Start.Y++
+		s.End.Y--
+		return []Segment{s.Swap()}
+	}
+	f := Segment{
+		Start: start,
+		End:   start,
+	}
+	f.Start.Y++
+	f.End.Y = from.H.End
+
+	t := Segment{
+		Start: end,
+		End:   end,
+	}
+	t.Start.Y = to.H.Start
+	t.End.Y--
+
+	var v Segment
+	if f.End.IsLeft(t.Start) {
+		v.Start, v.End = f.End, t.Start
+	} else {
+		v.Start, v.End = t.Start, f.End
+	}
+	return []Segment{f.Swap(), v, t.Swap()}
 }
 
 type Item struct {

@@ -513,9 +513,9 @@ func (m *treeLayout) makeLayout(node *Node, depth int, opts *Options) *Item {
 		sub.Y = m.siblingsSpacing
 		m.siblingsSpacing += opts.SiblingGap
 	} else {
-		if opts.Align == AlignStart {
+		if opts.Align() == AlignStart {
 			sub.Y = sub.Children[0].Y
-		} else if opts.Align == AlignEnd {
+		} else if opts.Align() == AlignEnd {
 			sub.Y = sub.Children[len(sub.Children)-1].Y
 		} else {
 			var sum int

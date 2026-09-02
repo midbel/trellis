@@ -26,7 +26,6 @@ type LayoutOptions struct {
 	MaxDepth   int
 	LevelGap   int
 	SiblingGap int
-	Anchor     Alignment
 	Reverse    bool
 	Render     func(*Node, *Options) Content
 }
@@ -37,7 +36,6 @@ type RenderOptions struct {
 }
 
 type StyleOptions struct {
-	Align       Alignment
 	AlignY      Alignment
 	AlignX      Alignment
 	Padding     int
@@ -95,12 +93,12 @@ var defaultOptions = &Options{
 	LayoutOptions: LayoutOptions{
 		SiblingGap: DefaultSiblingGap,
 		LevelGap:   DefaultLevelGap,
-		Anchor:     AlignCenter,
 	},
 	StyleOptions: StyleOptions{
 		Style:   ConnectorAscii,
 		Padding: PaddingS,
-		Align:   AlignCenter,
+		AlignX: AlignCenter,
+		AlignY: AlignCenter,
 	},
 	RenderOptions: RenderOptions{
 		Border: true,
@@ -139,6 +137,13 @@ func (t *Options) paddedValue(str string) []byte {
 	tmp = append(tmp, value...)
 	tmp = append(tmp, pad...)
 	return tmp
+}
+
+func (t *Options) Align() Alignment {
+	if t.Orient == HorizontalLayout {
+		return t.AlignX
+	} 
+	return t.AlignY
 }
 
 func (t *Options) levelGaps() int {

@@ -139,10 +139,12 @@ func (c *Canvas) Render(sc *Screen) error {
 func replaceConnector(source, target byte) byte {
 	switch {
 	case source == connectBarAscii || target == connectBarAscii:
-	case source == verticalBarAscii && source == horizontalBarAscii:
+		return connectBarAscii
+	case source == verticalBarAscii && target == horizontalBarAscii:
+		return connectBarAscii
 	case source == horizontalBarAscii && target == verticalBarAscii:
+		return connectBarAscii
 	default:
 		return target
 	}
-	return connectBarAscii
 }

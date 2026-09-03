@@ -101,13 +101,13 @@ func horizontalPath(from, to *Item, opts *Options) []Segment {
 		End:   start,
 	}
 	f.Start.X += offset
-	f.End.X = from.W.End
+	f.End.X = from.W.End + opts.Margin
 
 	t := Segment{
 		Start: end,
 		End:   end,
 	}
-	t.Start.X = to.W.Start
+	t.Start.X = to.W.Start - opts.Margin
 	t.End.X--
 
 	var v Segment
@@ -381,10 +381,10 @@ func (i ideal) computeHorizontalCoordinates(node *Item, opts *Options, spacing, 
 			startY = (x.Default.Y * opts.Height / spacing)
 			endY   = ((x.Default.Y + opts.Spacing) * opts.Height) / spacing
 		)
-		x.X = startX 
-		x.Y = startY
-		x.W = NewSpan(startX, startX+width)
-		x.H = NewSpan(startY, endY)
+		x.X = startX + opts.Margin
+		x.Y = startY + opts.Margin
+		x.W = NewSpan(startX+opts.Margin, startX+width-opts.Margin)
+		x.H = NewSpan(startY+opts.Margin, endY-opts.Margin)
 
 		if x.H.Len() < opts.Spacing+1 {
 			x.H.End = x.H.Start + opts.Spacing + 1
@@ -395,12 +395,12 @@ func (i ideal) computeHorizontalCoordinates(node *Item, opts *Options, spacing, 
 		maxLen = max(maxLen, x.H.Len())
 	}
 
-	boundary := node.Children[0].H.End
+	boundary := node.Children[0].H.End + opts.Margin
 	for _, c := range node.Children[1:] {
 		if c.H.Start < boundary {
-			c.MoveY(boundary - c.H.Start + 1)
+			c.MoveY(boundary - c.H.Start - opts.Margin + 1)
 		}
-		boundary = c.H.End
+		boundary = c.H.End + opts.Margin
 	}
 	var (
 		first = node.FirstLeaf()
@@ -408,7 +408,8 @@ func (i ideal) computeHorizontalCoordinates(node *Item, opts *Options, spacing, 
 	)
 	node.X = node.Default.X * width
 	node.Y = node.Default.Y * opts.Height / spacing
-	node.W = NewSpan(node.X, node.X+width)
+	node.W = NewSpan(node.X+opts.Margin, node.X+width-opts.Margin)
+	node.X += opts.Margin
 	node.H = NewSpan(first.H.Start, last.H.End)
 	node.AlignX(opts.AlignX)
 	node.AlignY(opts.AlignY)

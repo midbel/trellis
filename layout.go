@@ -78,7 +78,7 @@ func ComputeLayout(tree *Tree, options *Options) CoordinateMap {
 	return res
 }
 
-func horizontalPath(from, to *Item) []Segment {
+func horizontalPath(from, to *Item, opts *Options) []Segment {
 	if !from.Point.IsLeft(to.Point) {
 		from, to = to, from
 	}
@@ -120,7 +120,7 @@ func horizontalPath(from, to *Item) []Segment {
 	return []Segment{f, v, t}
 }
 
-func verticalPath(from, to *Item) []Segment {
+func verticalPath(from, to *Item, opts *Options) []Segment {
 	if !from.Point.IsAbove(to.Point) {
 		from, to = to, from
 	}
@@ -315,15 +315,15 @@ func (i ideal) computeVerticalCoordinates(node *Item, opts *Options, spacing, le
 		var (
 			startY = (x.Default.Y * height)
 			startX = (x.Default.X * opts.Width / spacing)
-			endX   = ((x.Default.X + opts.SiblingGap) * opts.Width) / spacing
+			endX   = ((x.Default.X + opts.Spacing) * opts.Width) / spacing
 		)
 		x.X = startX
 		x.Y = startY
 		x.W = NewSpan(startX, endX)
 		x.H = NewSpan(startY, startY+height)
 
-		if x.W.Len() < opts.SiblingGap+1 {
-			x.W.End = x.W.Start + opts.SiblingGap + 1
+		if x.W.Len() < opts.Spacing+1 {
+			x.W.End = x.W.Start + opts.Spacing + 1
 		}
 		x.AlignX(opts.AlignX)
 		x.AlignY(opts.AlignY)
@@ -377,17 +377,17 @@ func (i ideal) computeHorizontalCoordinates(node *Item, opts *Options, spacing, 
 			continue
 		}
 		var (
-			startX = (x.Default.X * width)
+			startX = x.Default.X * width
 			startY = (x.Default.Y * opts.Height / spacing)
-			endY   = ((x.Default.Y + opts.SiblingGap) * opts.Height) / spacing
+			endY   = ((x.Default.Y + opts.Spacing) * opts.Height) / spacing
 		)
-		x.X = startX
+		x.X = startX 
 		x.Y = startY
 		x.W = NewSpan(startX, startX+width)
 		x.H = NewSpan(startY, endY)
 
-		if x.H.Len() < opts.SiblingGap+1 {
-			x.H.End = x.H.Start + opts.SiblingGap + 1
+		if x.H.Len() < opts.Spacing+1 {
+			x.H.End = x.H.Start + opts.Spacing + 1
 		}
 		x.AlignX(opts.AlignX)
 		x.AlignY(opts.AlignY)
@@ -511,7 +511,7 @@ func (m *treeLayout) makeLayout(node *Node, depth int, opts *Options) *Item {
 	}
 	if node.Leaf() {
 		sub.Y = m.siblingsSpacing
-		m.siblingsSpacing += opts.SiblingGap
+		m.siblingsSpacing += opts.Spacing
 	} else {
 		if opts.Align() == AlignStart {
 			sub.Y = sub.Children[0].Y

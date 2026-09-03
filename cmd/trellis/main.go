@@ -43,96 +43,12 @@ func main() {
 
 func prepare() *cli.CommandTrie {
 	root := cli.New()
-	root.Register(single("horizontal"), &horizontalCmd)
-	root.Register(single("vertical"), &verticalCmd)
-	root.Register(single("compact"), &compactCmd)
-	root.Register(single("treemap"), &treemapCmd)
 	root.Register(single("inspect"), &inspectCmd)
 	return root
 }
 
 func single(str string) []string {
 	return []string{str}
-}
-
-var horizontalCmd = cli.Command{
-	Name:    "horizontal",
-	Summary: "",
-	Usage:   "horizontal <file>",
-	Handler: &horizontalCommand{},
-}
-
-type horizontalCommand struct{}
-
-func (c horizontalCommand) Run(args []string) error {
-	set := cli.NewFlagSet("horizontal")
-	if err := set.Parse(args); err != nil {
-		return err
-	}
-	if set.NArg() != 1 {
-		return cli.ErrUsage
-	}
-	return nil
-}
-
-var verticalCmd = cli.Command{
-	Name:    "vertical",
-	Summary: "",
-	Usage:   "vertical <file>",
-	Handler: &verticalCommand{},
-}
-
-type verticalCommand struct{}
-
-func (c verticalCommand) Run(args []string) error {
-	set := cli.NewFlagSet("vertical")
-	if err := set.Parse(args); err != nil {
-		return err
-	}
-	if set.NArg() != 1 {
-		return cli.ErrUsage
-	}
-	return nil
-}
-
-var compactCmd = cli.Command{
-	Name:    "compact",
-	Summary: "",
-	Usage:   "compact <file>",
-	Handler: &compactCommand{},
-}
-
-type compactCommand struct{}
-
-func (c compactCommand) Run(args []string) error {
-	set := cli.NewFlagSet("compact")
-	if err := set.Parse(args); err != nil {
-		return err
-	}
-	if set.NArg() != 1 {
-		return cli.ErrUsage
-	}
-	return nil
-}
-
-var treemapCmd = cli.Command{
-	Name:    "treemap",
-	Summary: "",
-	Usage:   "treemap <file>",
-	Handler: &treemapCommand{},
-}
-
-type treemapCommand struct{}
-
-func (c treemapCommand) Run(args []string) error {
-	set := cli.NewFlagSet("treemap")
-	if err := set.Parse(args); err != nil {
-		return err
-	}
-	if set.NArg() != 1 {
-		return cli.ErrUsage
-	}
-	return nil
 }
 
 var inspectCmd = cli.Command{
@@ -210,6 +126,9 @@ func (c inspectCommand) Run(args []string) error {
 		Rows: [][]string{
 			{"Width", strconv.Itoa(spec.Width), strconv.Itoa(res.Width)},
 			{"Height", strconv.Itoa(spec.Height), strconv.Itoa(res.Height)},
+			{"Spacing", "", strconv.Itoa(spec.Options.Spacing)},
+			{"Margin", "", strconv.Itoa(spec.Options.Margin)},
+			{"Padding", "", strconv.Itoa(spec.Options.Padding)},
 		},
 	}
 

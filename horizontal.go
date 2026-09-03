@@ -27,7 +27,7 @@ func (h horizontal) Render(tree *Tree, options *Options) error {
 	for i := range items {
 		canvas.Put(items[i].X, items[i].Y, items[i].Content)
 		for _, x := range items[i].Children {
-			paths := horizontalPath(items[i], x)
+			paths := horizontalPath(items[i], x, opts)
 			for _, it := range Connector(paths) {
 				canvas.Put(it.X, it.Y, it.Content)
 			}

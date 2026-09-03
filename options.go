@@ -14,20 +14,19 @@ const (
 )
 
 const (
-	DefaultSiblingGap = 2
-	DefaultLevelGap   = 5
+	DefaultSpacing = 2
+	DefaultMargin  = 1
 )
 
 type LayoutOptions struct {
-	Orient     Orientation
-	Width      int
-	Height     int
-	MinDepth   int
-	MaxDepth   int
-	LevelGap   int
-	SiblingGap int
-	Reverse    bool
-	Render     func(*Node, *Options) Content
+	Orient   Orientation
+	Width    int
+	Height   int
+	MinDepth int
+	MaxDepth int
+	Spacing  int
+	Reverse  bool
+	Render   func(*Node, *Options) Content
 }
 
 type RenderOptions struct {
@@ -38,6 +37,7 @@ type RenderOptions struct {
 type StyleOptions struct {
 	AlignY      Alignment
 	AlignX      Alignment
+	Margin      int
 	Padding     int
 	PaddingChar string
 	Style       ConnectorStyle
@@ -56,11 +56,11 @@ func prepareOptions(options *Options) *Options {
 	} else {
 		opts = opts.Clone()
 	}
-	if opts.LevelGap == 0 {
-		opts.LevelGap++
+	if opts.Margin == 0 {
+		opts.Margin++
 	}
-	if opts.SiblingGap == 0 {
-		opts.SiblingGap++
+	if opts.Spacing == 0 {
+		opts.Spacing++
 	}
 	if opts.Render == nil {
 		opts.Render = defaultRenderContent
@@ -91,11 +91,11 @@ func defaultRenderContent(node *Node, opts *Options) Content {
 
 var defaultOptions = &Options{
 	LayoutOptions: LayoutOptions{
-		SiblingGap: DefaultSiblingGap,
-		LevelGap:   DefaultLevelGap,
+		Spacing: DefaultSpacing,
 	},
 	StyleOptions: StyleOptions{
 		Style:   ConnectorAscii,
+		Margin:  DefaultMargin,
 		Padding: PaddingS,
 		AlignX:  AlignCenter,
 		AlignY:  AlignCenter,
@@ -144,14 +144,6 @@ func (t *Options) Align() Alignment {
 		return t.AlignX
 	}
 	return t.AlignY
-}
-
-func (t *Options) levelGaps() int {
-	return t.LevelGap + t.LevelGap
-}
-
-func (t *Options) siblingsGaps() int {
-	return t.SiblingGap + t.SiblingGap
 }
 
 func unknown(what, value string) error {

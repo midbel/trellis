@@ -28,12 +28,12 @@ func (p Point) Swap() Point {
 	return p
 }
 
-func (p Point) IsAbove(other Point) bool {
+func (p Point) BeforeY(other Point) bool {
 	return p.Y <= other.Y
 }
 
-func (p Point) IsLeft(other Point) bool {
-	return p.X <= other.X
+func (p Point) BeforeX(other Point) bool {
+	return p.X < other.X
 }
 
 type CoordinateMap struct {
@@ -79,7 +79,7 @@ func ComputeLayout(root *Node, options *Options) CoordinateMap {
 }
 
 func horizontalPath(from, to *Item, opts *Options) []Segment {
-	if !from.Point.IsLeft(to.Point) {
+	if !from.Point.BeforeX(to.Point) {
 		from, to = to, from
 	}
 	var (
@@ -111,7 +111,7 @@ func horizontalPath(from, to *Item, opts *Options) []Segment {
 	t.End.X--
 
 	var v Segment
-	if f.End.IsAbove(t.Start) {
+	if f.End.BeforeY(t.Start) {
 		v.Start, v.End = f.End, t.Start
 	} else {
 		v.Start, v.End = t.Start, f.End
@@ -121,7 +121,7 @@ func horizontalPath(from, to *Item, opts *Options) []Segment {
 }
 
 func verticalPath(from, to *Item, opts *Options) []Segment {
-	if !from.Point.IsAbove(to.Point) {
+	if !from.Point.BeforeY(to.Point) {
 		from, to = to, from
 	}
 	var (
@@ -155,7 +155,7 @@ func verticalPath(from, to *Item, opts *Options) []Segment {
 	t.End.Y--
 
 	var v Segment
-	if f.End.IsLeft(t.Start) {
+	if f.End.BeforeX(t.Start) {
 		v.Start, v.End = f.End, t.Start
 	} else {
 		v.Start, v.End = t.Start, f.End

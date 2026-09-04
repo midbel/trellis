@@ -57,7 +57,7 @@ func verticalConnector(seg Segment) []*Item {
 		start = seg.Start
 		end   = seg.End
 	)
-	if start.IsAbove(end) {
+	if start.BeforeY(end) {
 		start, end = end, start
 	}
 	for y := start.Y; y >= end.Y; y-- {
@@ -87,7 +87,7 @@ func horizontalConnector(seg Segment) []*Item {
 		start = seg.Start
 		end   = seg.End
 	)
-	if end.IsLeft(start) {
+	if end.BeforeX(start) {
 		start, end = end, start
 	}
 	for x := start.X; x <= end.X; x++ {

@@ -362,7 +362,7 @@ func (i ideal) horizontal(root *Node, opts *Options) []*Item {
 }
 
 func (i ideal) computeHorizontalCoordinates(node *Item, opts *Options, spacing, level int) {
-	width  := opts.Width / (level + 1)
+	width := opts.Width / (level + 1)
 	for _, x := range node.Children {
 		if !x.Leaf() {
 			i.computeHorizontalCoordinates(x, opts, spacing, level)

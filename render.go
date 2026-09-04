@@ -1,6 +1,9 @@
 package trellis
 
-import "io"
+import (
+	"bufio"
+	"io"
+)
 
 type Renderer interface {
 	Render(*Node, *Options) error
@@ -114,6 +117,20 @@ func (h horizontal) Render(root *Node, options *Options) error {
 		return err
 	}
 	return screen.Render(h.w)
+}
+
+type compact struct {
+	w *bufio.Writer
+}
+
+func NewCompact(w io.Writer) Renderer {
+	return compact{
+		w: w,
+	}
+}
+
+func (c compact) Render(root *Node, options *Options) error {
+	return nil
 }
 
 type treemap struct {

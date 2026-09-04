@@ -19,9 +19,8 @@ const (
 )
 
 type LayoutOptions struct {
-	Orient   Orientation
-	Width    int
-	Height   int
+	Orient Orientation
+	Dimension
 	MinDepth int
 	MaxDepth int
 	Spacing  int // Distance between sibling allocation regions.
@@ -49,7 +48,23 @@ type Options struct {
 	StyleOptions
 }
 
-func prepareOptions(options *Options) *Options {
+func (o *Options) Validate() error {
+	if err := o.Dimension.Validate(); err != nil {
+		return err
+	}
+	if o.Margin < 0 {
+		return fmt.Errorf("margin can not be negative")
+	}
+	if o.Padding < 0 {
+		return fmt.Errorf("padding can not be negative")
+	}
+	if o.Spacing < 0 {
+		return fmt.Errorf("spacing can not be negative")
+	}
+	return nil
+}
+
+func prepareOptions(options *Options) (*Options, error) {
 	opts := options
 	if opts == nil {
 		opts = defaultOptions.Clone()
@@ -65,7 +80,7 @@ func prepareOptions(options *Options) *Options {
 	if opts.Render == nil {
 		opts.Render = defaultRenderContent
 	}
-	return opts
+	return opts, opts.Validate()
 }
 
 func defaultRenderContent(node *Node, opts *Options) Content {

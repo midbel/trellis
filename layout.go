@@ -23,12 +23,15 @@ type Coordinate struct {
 	Height   Span
 }
 
-func ComputeLayout(root *Node, options *Options) CoordinateMap {
+func ComputeLayout(root *Node, options *Options) (CoordinateMap, error) {
+	opts, err := prepareOptions(options)
+	if err != nil {
+		return CoordinateMap{}, err
+	}
 	var (
-		opts = prepareOptions(options)
-		mk   = Ideal()
-		is   = mk.Compute(root, opts)
-		res  CoordinateMap
+		mk  = Ideal()
+		is  = mk.Compute(root, opts)
+		res CoordinateMap
 	)
 	for i := range is {
 		c := Coordinate{
@@ -48,7 +51,7 @@ func ComputeLayout(root *Node, options *Options) CoordinateMap {
 	}
 	res.Width = opts.Width
 	res.Height = opts.Height
-	return res
+	return res, nil
 }
 
 type Segment struct {
@@ -61,7 +64,7 @@ func (s Segment) DistanceX() int {
 }
 
 func (s Segment) DistanceY() int {
-	return s.End.Y - s.End.Y
+	return s.End.Y - s.Start.Y
 }
 
 func (s Segment) One(other Segment) bool {

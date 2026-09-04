@@ -59,7 +59,10 @@ func NewVertical(w io.Writer) Renderer {
 }
 
 func (v vertical) Render(root *Node, options *Options) error {
-	opts := prepareOptions(options)
+	opts, err := prepareOptions(options)
+	if err != nil {
+		return err
+	}
 	opts.Orient = VerticalLayout
 	var (
 		layout = Ideal()
@@ -94,7 +97,10 @@ func NewHorizontal(w io.Writer) Renderer {
 }
 
 func (h horizontal) Render(root *Node, options *Options) error {
-	opts := prepareOptions(options)
+	opts, err := prepareOptions(options)
+	if err != nil {
+		return err
+	}
 	opts.Orient = HorizontalLayout
 	var (
 		layout = Ideal()

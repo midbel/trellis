@@ -1,5 +1,7 @@
 package trellis
 
+import "fmt"
+
 const (
 	connectBarAscii    byte = '+'
 	verticalBarAscii   byte = '|'
@@ -9,6 +11,16 @@ const (
 type Dimension struct {
 	Width  int
 	Height int
+}
+
+func (d Dimension) Validate() error {
+	if d.Width <= 0 {
+		return fmt.Errorf("width can not be equal to 0 or negative")
+	}
+	if d.Height <= 0 {
+		return fmt.Errorf("height can not be equal to 0 or negative")
+	}
+	return nil
 }
 
 func (d Dimension) Valid(x, y int) bool {

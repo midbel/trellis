@@ -24,7 +24,7 @@ type LayoutOptions struct {
 	Height   int
 	MinDepth int
 	MaxDepth int
-	Spacing  int
+	Spacing  int // Distance between sibling allocation regions. 
 	Reverse  bool
 	Render   func(*Node, *Options) Content
 }
@@ -37,8 +37,8 @@ type RenderOptions struct {
 type StyleOptions struct {
 	AlignY      Alignment
 	AlignX      Alignment
-	Margin      int
-	Padding     int
+	Margin      int // Space outside the node, mainly reserved for connectors
+	Padding     int // Space inside the node's visual box
 	PaddingChar string
 	Style       ConnectorStyle
 }

@@ -111,7 +111,7 @@ func parseInt(value any) (int, error) {
 func parseBool(value any) (bool, error) {
 	x, ok := value.(bool)
 	if !ok {
-		return x, ErrType
+		return false, ErrType
 	}
 	return x, nil
 }

@@ -15,13 +15,6 @@ func (d Dimension) Valid(x, y int) bool {
 	return x >= 0 && x < d.Width && y >= 0 && y < d.Height
 }
 
-type ContentKind uint8
-
-const (
-	KindValue ContentKind = iota
-	KindConnector
-)
-
 type Style struct {
 	Bold      bool
 	Italic    bool
@@ -29,10 +22,8 @@ type Style struct {
 }
 
 type Content struct {
-	Value     []byte
+	Value []byte
 	Style
-
-	kind ContentKind
 }
 
 func (c Content) String() string {
@@ -113,6 +104,10 @@ func (c *Canvas) putConnector(x, y int, ch byte) {
 }
 
 func (c *Canvas) verticalConnector(seg Segment) {
+	if seg.DistanceY() == 1 {
+		c.putConnector(seg.Start.X, seg.Start.Y, verticalBarAscii)
+		return
+	}
 	var (
 		start = seg.Start
 		end   = seg.End
@@ -130,6 +125,10 @@ func (c *Canvas) verticalConnector(seg Segment) {
 }
 
 func (c *Canvas) horizontalConnector(seg Segment) {
+	if seg.DistanceX() == 1 {
+		c.putConnector(seg.Start.X, seg.Start.Y, horizontalBarAscii)
+		return
+	}
 	var (
 		start = seg.Start
 		end   = seg.End

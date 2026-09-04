@@ -12,7 +12,7 @@ func NewTreemap(w io.Writer) Renderer {
 	}
 }
 
-func (m treemap) Render(tree *Tree, options *Options) error {
+func (m treemap) Render(root *Node, options *Options) error {
 	opts := prepareOptions(options)
 	_ = opts
 	return nil

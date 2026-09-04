@@ -15,6 +15,6 @@ func NewCompact(w io.Writer) Renderer {
 	}
 }
 
-func (c compact) Render(tree *Tree, options *Options) error {
+func (c compact) Render(root *Node, options *Options) error {
 	return nil
 }

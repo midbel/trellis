@@ -31,6 +31,10 @@ type Content struct {
 	kind ContentKind
 }
 
+func (c Content) String() string {
+	return string(c.Value)
+}
+
 func Connector(segments []Segment) []*Item {
 	var (
 		list []*Item

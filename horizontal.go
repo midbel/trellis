@@ -14,12 +14,12 @@ func NewHorizontal(w io.Writer) Renderer {
 	}
 }
 
-func (h horizontal) Render(tree *Tree, options *Options) error {
+func (h horizontal) Render(root *Node, options *Options) error {
 	opts := prepareOptions(options)
 	opts.Orient = HorizontalLayout
 	var (
 		layout = Ideal()
-		items  = layout.Compute(tree, opts)
+		items  = layout.Compute(root, opts)
 		canvas = NewCanvas(opts.Width, opts.Height)
 		screen = NewScreen(opts.Width, opts.Height)
 	)

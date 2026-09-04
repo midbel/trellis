@@ -3,36 +3,32 @@ package trellis
 import "io"
 
 type Renderer interface {
-	Render(*Tree, *Options) error
+	Render(*Node, *Options) error
 }
 
-func (c Content) String() string {
-	return string(c.Value)
-}
-
-func HorizontalTree(w io.Writer, tree *Tree, opts *Options) error {
+func HorizontalTree(w io.Writer, root *Node, opts *Options) error {
 	r := NewHorizontal(w)
-	return r.Render(tree, opts)
+	return r.Render(root, opts)
 }
 
-func VerticalTree(w io.Writer, tree *Tree, opts *Options) error {
+func VerticalTree(w io.Writer, root *Node, opts *Options) error {
 	r := NewVertical(w)
-	return r.Render(tree, opts)
+	return r.Render(root, opts)
 }
 
-func CompactTree(w io.Writer, tree *Tree, opts *Options) error {
+func CompactTree(w io.Writer, root *Node, opts *Options) error {
 	r := NewCompact(w)
-	return r.Render(tree, opts)
+	return r.Render(root, opts)
 }
 
-func SunburstTree(w io.Writer, tree *Tree, opts *Options) error {
+func SunburstTree(w io.Writer, root *Node, opts *Options) error {
 	r := NewSunburst(w)
-	return r.Render(tree, opts)
+	return r.Render(root, opts)
 }
 
-func RadialTree(w io.Writer, tree *Tree, opts *Options) error {
+func RadialTree(w io.Writer, root *Node, opts *Options) error {
 	r := NewRadial(w)
-	return r.Render(tree, opts)
+	return r.Render(root, opts)
 }
 
 type Node struct {

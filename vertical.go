@@ -14,12 +14,12 @@ func NewVertical(w io.Writer) Renderer {
 	}
 }
 
-func (v vertical) Render(tree *Tree, options *Options) error {
+func (v vertical) Render(root *Node, options *Options) error {
 	opts := prepareOptions(options)
 	opts.Orient = VerticalLayout
 	var (
 		layout = Ideal()
-		items  = layout.Compute(tree, opts)
+		items  = layout.Compute(root, opts)
 		canvas = NewCanvas(opts.Width, opts.Height)
 		screen = NewScreen(opts.Width, opts.Height)
 	)

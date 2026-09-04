@@ -12,6 +12,6 @@ func NewSunburst(w io.Writer) Renderer {
 	}
 }
 
-func (s sunburst) Render(tree *Tree, options *Options) error {
+func (s sunburst) Render(root *Node, options *Options) error {
 	return nil
 }

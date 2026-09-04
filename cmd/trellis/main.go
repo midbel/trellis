@@ -120,7 +120,7 @@ func (c inspectCommand) Run(args []string) error {
 	if c.Type > 0 {
 		spec.Orient = c.Type
 	}
-	res := trellis.ComputeLayout(spec.Tree, spec.Options)
+	res := trellis.ComputeLayout(spec.Tree.Root, spec.Options)
 
 	tbl2 := cli.Table{
 		Rows: [][]string{

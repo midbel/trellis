@@ -6,7 +6,7 @@ import (
 )
 
 type Layout interface {
-	Compute(*Tree, *Options) []*Item
+	Compute(*Node, *Options) []*Item
 }
 
 type Segment struct {
@@ -50,11 +50,11 @@ type Coordinate struct {
 	Height   Span
 }
 
-func ComputeLayout(tree *Tree, options *Options) CoordinateMap {
+func ComputeLayout(root *Node, options *Options) CoordinateMap {
 	var (
 		opts = prepareOptions(options)
 		mk   = Ideal()
-		is   = mk.Compute(tree, opts)
+		is   = mk.Compute(root, opts)
 		res  CoordinateMap
 	)
 	for i := range is {
@@ -268,21 +268,21 @@ func Proportional() Layout {
 
 type ideal struct{}
 
-func (i ideal) Compute(tree *Tree, opts *Options) []*Item {
+func (i ideal) Compute(root *Node, opts *Options) []*Item {
 	var items []*Item
 	switch opts.Orient {
 	case HorizontalLayout:
-		items = i.horizontal(tree, opts)
+		items = i.horizontal(root, opts)
 	default:
-		items = i.vertical(tree, opts)
+		items = i.vertical(root, opts)
 	}
 	opts.Width = maxFromItems(items, func(i *Item) int { return i.W.End })
 	opts.Height = maxFromItems(items, func(i *Item) int { return i.H.End })
 	return items
 }
 
-func (i ideal) vertical(tree *Tree, opts *Options) []*Item {
-	is := i.prepare(tree, opts)
+func (i ideal) vertical(root *Node, opts *Options) []*Item {
+	is := i.prepare(root, opts)
 	for i := range is {
 		is[i].Point = is[i].Swap()
 		is[i].Default = is[i].Point
@@ -350,9 +350,9 @@ func (i ideal) computeVerticalCoordinates(node *Item, opts *Options, spacing, le
 	node.AlignY(opts.AlignY)
 }
 
-func (i ideal) horizontal(tree *Tree, opts *Options) []*Item {
+func (i ideal) horizontal(root *Node, opts *Options) []*Item {
 	var (
-		is      = i.prepare(tree, opts)
+		is      = i.prepare(root, opts)
 		spacing = maxFromItems(is, func(i *Item) int { return i.Y })
 		level   = maxFromItems(is, func(i *Item) int { return i.X })
 	)
@@ -415,10 +415,10 @@ func (i ideal) computeHorizontalCoordinates(node *Item, opts *Options, spacing, 
 	node.AlignY(opts.AlignY)
 }
 
-func (ideal) prepare(tree *Tree, opts *Options) []*Item {
+func (ideal) prepare(root *Node, opts *Options) []*Item {
 	var (
 		mk = defaultTreeLayout()
-		is = mk.Make(tree.Root, opts)
+		is = mk.Make(root, opts)
 	)
 	if opts.Reverse {
 		level := mk.Depth() - 1
@@ -432,20 +432,20 @@ func (ideal) prepare(tree *Tree, opts *Options) []*Item {
 
 type proportional struct{}
 
-func (p proportional) Compute(tree *Tree, opts *Options) []*Item {
+func (p proportional) Compute(root *Node, opts *Options) []*Item {
 	switch opts.Orient {
 	case HorizontalLayout:
-		return p.horizontal(tree, opts)
+		return p.horizontal(root, opts)
 	default:
-		return p.vertical(tree, opts)
+		return p.vertical(root, opts)
 	}
 }
 
-func (proportional) vertical(tree *Tree, opts *Options) []*Item {
+func (proportional) vertical(root *Node, opts *Options) []*Item {
 	return nil
 }
 
-func (proportional) horizontal(tree *Tree, opts *Options) []*Item {
+func (proportional) horizontal(root *Node, opts *Options) []*Item {
 	return nil
 }
 

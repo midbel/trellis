@@ -37,31 +37,6 @@ func (s *Screen) Put(x, y int, b byte) {
 			return
 		}
 		s.bytes[y][x] = b
-		// if content.kind == KindValue {
-		// 	s.putValue(x, y, content)
-		// } else if content.kind == KindConnector {
-		// 	s.putConnector(x, y, content)
-		// }
-	}
-}
-
-func (s *Screen) putConnector(x, y int, content Content) {
-	if x >= 0 && x < len(s.bytes[y]) {
-		source := s.bytes[y][x]
-		if source == connectBarAscii {
-			return
-		}
-		content.Value[0] = replaceConnector(source, content.Value[0])
-		s.bytes[y][x] = content.Value[0]
-	}
-}
-
-func (s *Screen) putValue(x, y int, content Content) {
-	for _, b := range content.Value {
-		if x >= 0 && x < len(s.bytes[y]) {
-			s.bytes[y][x] = b
-			x++
-		}
 	}
 }
 

@@ -22,11 +22,15 @@ const (
 	KindConnector
 )
 
-type Content struct {
-	Value     []byte
+type Style struct {
 	Bold      bool
 	Italic    bool
 	Underline bool
+}
+
+type Content struct {
+	Value     []byte
+	Style
 
 	kind ContentKind
 }
@@ -54,11 +58,10 @@ func NewCanvas(width, height int) *Canvas {
 	}
 }
 
-func (c *Canvas) Put(x, y int, content Content) error {
+func (c *Canvas) Put(x, y int, content Content) {
 	for i, b := range content.Value {
 		c.put(x+i, y, b)
 	}
-	return nil
 }
 
 func (c *Canvas) Connect(seg Segment) {
@@ -90,6 +93,25 @@ func (c *Canvas) put(x, y int, ch byte) {
 	c.cells[y*c.dim.Width+x] = newChar(ch)
 }
 
+func (c *Canvas) putConnector(x, y int, ch byte) {
+	if !c.dim.Valid(x, y) {
+		return
+	}
+	cell := c.cells[y*c.dim.Width+x]
+	if cell != nil {
+		b := cell.Byte()
+		if b == connectBarAscii && ch == connectBarAscii {
+			return
+		}
+		if b == verticalBarAscii && ch == horizontalBarAscii {
+			ch = connectBarAscii
+		} else if b == horizontalBarAscii && ch == verticalBarAscii {
+			ch = connectBarAscii
+		}
+	}
+	c.put(x, y, ch)
+}
+
 func (c *Canvas) verticalConnector(seg Segment) {
 	var (
 		start = seg.Start
@@ -103,7 +125,7 @@ func (c *Canvas) verticalConnector(seg Segment) {
 		if y == start.Y || y == end.Y {
 			ch = connectBarAscii
 		}
-		c.put(start.X, y, ch)
+		c.putConnector(start.X, y, ch)
 	}
 }
 
@@ -120,20 +142,7 @@ func (c *Canvas) horizontalConnector(seg Segment) {
 		if x == start.X || x == end.X {
 			ch = connectBarAscii
 		}
-		c.put(x, start.Y, ch)
-	}
-}
-
-func replaceConnector(source, target byte) byte {
-	switch {
-	case source == connectBarAscii || target == connectBarAscii:
-		return connectBarAscii
-	case source == verticalBarAscii && target == horizontalBarAscii:
-		return connectBarAscii
-	case source == horizontalBarAscii && target == verticalBarAscii:
-		return connectBarAscii
-	default:
-		return target
+		c.putConnector(x, start.Y, ch)
 	}
 }
 

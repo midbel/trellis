@@ -39,7 +39,7 @@ var dispatch = map[Format]func(io.Reader) (*TreeSpec, error){
 
 type TreeSpec struct {
 	Type string
-	*trellis.Tree
+	*trellis.Node
 	*trellis.Options
 }
 
@@ -73,7 +73,7 @@ func treeFromSexpr(r io.Reader) (*TreeSpec, error) {
 	}
 	spec := TreeSpec{
 		Type:    h.Type,
-		Tree:    trellis.NewTree(h.root),
+		Node:    h.root,
 		Options: h.options,
 	}
 	return &spec, nil

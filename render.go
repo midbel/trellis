@@ -45,13 +45,3 @@ func NewNode(value string) *Node {
 func (n *Node) Leaf() bool {
 	return len(n.Nodes) == 0
 }
-
-type Tree struct {
-	Root *Node
-}
-
-func NewTree(node *Node) *Tree {
-	return &Tree{
-		Root: node,
-	}
-}

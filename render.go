@@ -1,7 +1,6 @@
 package trellis
 
 import (
-	"bufio"
 	"io"
 )
 
@@ -73,8 +72,8 @@ func (v vertical) Render(root *Node, options *Options) error {
 		canvas.Put(items[i].X, items[i].Y, items[i].Content)
 		for _, x := range items[i].Children {
 			paths := verticalPath(items[i], x, opts)
-			for _, it := range Connector(paths) {
-				canvas.Put(it.X, it.Y, it.Content)
+			for _, p := range paths {
+				canvas.Connect(p)
 			}
 		}
 	}
@@ -108,8 +107,8 @@ func (h horizontal) Render(root *Node, options *Options) error {
 		canvas.Put(items[i].X, items[i].Y, items[i].Content)
 		for _, x := range items[i].Children {
 			paths := horizontalPath(items[i], x, opts)
-			for _, it := range Connector(paths) {
-				canvas.Put(it.X, it.Y, it.Content)
+			for _, p := range paths {
+				canvas.Connect(p)
 			}
 		}
 	}
@@ -120,7 +119,7 @@ func (h horizontal) Render(root *Node, options *Options) error {
 }
 
 type compact struct {
-	w *bufio.Writer
+	w io.Writer
 }
 
 func NewCompact(w io.Writer) Renderer {

@@ -27,20 +27,21 @@ func NewScreen(width, height int) *Screen {
 	return sc
 }
 
-func (s *Screen) Put(x, y int, content Content) {
+func (s *Screen) Put(x, y int, b byte) {
 	if y >= 0 && y < len(s.bytes) {
 		if x < 0 || x >= len(s.bytes[y]) {
 			return
 		}
-		if len(content.Value) == 0 && s.bytes[y][x] == 0 {
+		if b == 0 && s.bytes[y][x] == 0 {
 			s.bytes[y][x] = s.filler
 			return
 		}
-		if content.kind == KindValue {
-			s.putValue(x, y, content)
-		} else if content.kind == KindConnector {
-			s.putConnector(x, y, content)
-		}
+		s.bytes[y][x] = b
+		// if content.kind == KindValue {
+		// 	s.putValue(x, y, content)
+		// } else if content.kind == KindConnector {
+		// 	s.putConnector(x, y, content)
+		// }
 	}
 }
 

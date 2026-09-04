@@ -24,7 +24,7 @@ type LayoutOptions struct {
 	Height   int
 	MinDepth int
 	MaxDepth int
-	Spacing  int // Distance between sibling allocation regions. 
+	Spacing  int // Distance between sibling allocation regions.
 	Reverse  bool
 	Render   func(*Node, *Options) Content
 }

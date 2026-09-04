@@ -14,13 +14,29 @@ type Segment struct {
 	End   Point
 }
 
+func (s Segment) One(other Segment) bool {
+	return s.Start.Equal(other.Start) && s.End.Equal(other.End)
+}
+
 func (s Segment) Swap() Segment {
 	s.Start, s.End = s.End, s.Start
 	return s
 }
 
+func (s Segment) Horizontal() bool {
+	return s.Start.Y == s.End.Y
+}
+
+func (s Segment) Vertical() bool {
+	return s.Start.X == s.End.X
+}
+
 type Point struct {
 	X, Y int
+}
+
+func (p Point) Equal(other Point) bool {
+	return p.X == other.X && p.Y == other.Y
 }
 
 func (p Point) Swap() Point {

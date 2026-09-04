@@ -303,10 +303,7 @@ func (i ideal) vertical(root *Node, opts *Options) []*Item {
 }
 
 func (i ideal) computeVerticalCoordinates(node *Item, opts *Options, spacing, level int) {
-	var (
-		height = opts.Height / (level + 1)
-		maxLen int
-	)
+	height := opts.Height / (level + 1)
 	for _, x := range node.Children {
 		if !x.Leaf() {
 			i.computeVerticalCoordinates(x, opts, spacing, level)
@@ -327,8 +324,6 @@ func (i ideal) computeVerticalCoordinates(node *Item, opts *Options, spacing, le
 		}
 		x.AlignX(opts.AlignX)
 		x.AlignY(opts.AlignY)
-
-		maxLen = max(maxLen, x.W.Len())
 	}
 
 	boundary := node.Children[0].W.End
@@ -367,10 +362,7 @@ func (i ideal) horizontal(root *Node, opts *Options) []*Item {
 }
 
 func (i ideal) computeHorizontalCoordinates(node *Item, opts *Options, spacing, level int) {
-	var (
-		width  = opts.Width / (level + 1)
-		maxLen int
-	)
+	width  := opts.Width / (level + 1)
 	for _, x := range node.Children {
 		if !x.Leaf() {
 			i.computeHorizontalCoordinates(x, opts, spacing, level)
@@ -391,8 +383,6 @@ func (i ideal) computeHorizontalCoordinates(node *Item, opts *Options, spacing, 
 		}
 		x.AlignX(opts.AlignX)
 		x.AlignY(opts.AlignY)
-
-		maxLen = max(maxLen, x.H.Len())
 	}
 
 	boundary := node.Children[0].H.End + opts.Margin

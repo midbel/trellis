@@ -160,6 +160,7 @@ func (h *handler) Atom(atom any) error {
 func (h *handler) Directive(expr []any) error {
 	switch len(expr) {
 	default:
+		return fmt.Errorf("directive malformed")
 	case 1:
 		return h.handleFlag(expr[0])
 	case 2:

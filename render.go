@@ -45,3 +45,115 @@ func NewNode(value string) *Node {
 func (n *Node) Leaf() bool {
 	return len(n.Nodes) == 0
 }
+
+type vertical struct {
+	w io.Writer
+}
+
+func NewVertical(w io.Writer) Renderer {
+	return vertical{
+		w: w,
+	}
+}
+
+func (v vertical) Render(root *Node, options *Options) error {
+	opts := prepareOptions(options)
+	opts.Orient = VerticalLayout
+	var (
+		layout = Ideal()
+		items  = layout.Compute(root, opts)
+		canvas = NewCanvas(opts.Width, opts.Height)
+		screen = NewScreen(opts.Width, opts.Height)
+	)
+
+	for i := range items {
+		canvas.Put(items[i].X, items[i].Y, items[i].Content)
+		for _, x := range items[i].Children {
+			paths := verticalPath(items[i], x, opts)
+			for _, it := range Connector(paths) {
+				canvas.Put(it.X, it.Y, it.Content)
+			}
+		}
+	}
+	if err := canvas.Render(screen); err != nil {
+		return err
+	}
+	return screen.Render(v.w)
+}
+
+type horizontal struct {
+	w io.Writer
+}
+
+func NewHorizontal(w io.Writer) Renderer {
+	return horizontal{
+		w: w,
+	}
+}
+
+func (h horizontal) Render(root *Node, options *Options) error {
+	opts := prepareOptions(options)
+	opts.Orient = HorizontalLayout
+	var (
+		layout = Ideal()
+		items  = layout.Compute(root, opts)
+		canvas = NewCanvas(opts.Width, opts.Height)
+		screen = NewScreen(opts.Width, opts.Height)
+	)
+
+	for i := range items {
+		canvas.Put(items[i].X, items[i].Y, items[i].Content)
+		for _, x := range items[i].Children {
+			paths := horizontalPath(items[i], x, opts)
+			for _, it := range Connector(paths) {
+				canvas.Put(it.X, it.Y, it.Content)
+			}
+		}
+	}
+	if err := canvas.Render(screen); err != nil {
+		return err
+	}
+	return screen.Render(h.w)
+}
+
+type treemap struct {
+	w io.Writer
+}
+
+func NewTreemap(w io.Writer) Renderer {
+	return treemap{
+		w: w,
+	}
+}
+
+func (m treemap) Render(root *Node, options *Options) error {
+	return nil
+}
+
+type sunburst struct {
+	w io.Writer
+}
+
+func NewSunburst(w io.Writer) Renderer {
+	return sunburst{
+		w: w,
+	}
+}
+
+func (s sunburst) Render(root *Node, options *Options) error {
+	return nil
+}
+
+type radial struct {
+	w io.Writer
+}
+
+func NewRadial(w io.Writer) Renderer {
+	return radial{
+		w: w,
+	}
+}
+
+func (r radial) Render(root *Node, options *Options) error {
+	return nil
+}

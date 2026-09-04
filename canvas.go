@@ -62,7 +62,7 @@ func verticalConnector(seg Segment) []*Item {
 	}
 	for y := start.Y; y >= end.Y; y-- {
 		char := verticalBarAscii
-		if y == start.Y || y == start.Y {
+		if y == start.Y || y == end.Y {
 			char = connectBarAscii
 		}
 		content := Content{

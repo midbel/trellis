@@ -71,10 +71,10 @@ func (v vertical) Render(root *Node, options *Options) error {
 		screen = NewScreen(opts.Width, opts.Height)
 	)
 
-	for i := range items {
-		canvas.Put(items[i].Position.X, items[i].Position.Y, items[i].Content)
-		for _, x := range items[i].Children {
-			paths := verticalPath(items[i], x, opts)
+	for _, i := range items {
+		canvas.Put(i.Position.X, i.Position.Y, i.Content)
+		for _, x := range i.Children {
+			paths := verticalPath(i, x, opts)
 			for _, p := range paths {
 				canvas.Connect(p)
 			}
@@ -109,10 +109,10 @@ func (h horizontal) Render(root *Node, options *Options) error {
 		screen = NewScreen(opts.Width, opts.Height)
 	)
 
-	for i := range items {
-		canvas.Put(items[i].Position.X, items[i].Position.Y, items[i].Content)
-		for _, x := range items[i].Children {
-			paths := horizontalPath(items[i], x, opts)
+	for _, i := range items {
+		canvas.Put(i.Position.X, i.Position.Y, i.Content)
+		for _, x := range i.Children {
+			paths := horizontalPath(i, x, opts)
 			for _, p := range paths {
 				canvas.Connect(p)
 			}
@@ -147,9 +147,12 @@ func (c compact) Render(root *Node, options *Options) error {
 		items  = layout.Compute(root, opts)
 		canvas = NewCanvas(opts.Width, opts.Height)
 		screen = NewScreen(opts.Width, opts.Height)
+		spacing = opts.Spacing
 	)
-	for i := range items {
-		canvas.Put(items[i].Position.X, items[i].Position.Y, items[i].Content)
+	for _, i := range items {
+		canvas.Put(i.Position.X, i.Position.Y, i.Content)
+		x := i.Position.X - spacing + 1
+		canvas.HalfOpenHorizontalLine(x, i.Position.Y, spacing+1)
 	}
 	if err := canvas.Render(screen); err != nil {
 		return err

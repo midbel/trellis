@@ -335,23 +335,25 @@ func (i ideal) Compute(root *Node, opts *Options) []*Item {
 }
 
 func (i ideal) compactLayout(root *Node, opts *Options) []*Item {
-	spacing := opts.Spacing
-	opts.Spacing = 1
+	clone := opts.Clone()
+	clone.Spacing = 1
 
-	items := i.prepare(root, opts)
+	items := i.prepare(root, clone)
 	for i := 1; i < len(items); i++ {
 		for items[i].Position.Y <= items[i-1].Position.Y {
 			items[i].Position.Y++
 		}
-		items[i].Position.X += spacing
+		// items[i].Position.X += spacing
 		opts.Height = items[i].Position.Y
+		items[i].W = NewSpan(items[i].Position.X, items[i].Position.X + opts.Width)
+		items[i].H = NewSpan(items[i].Position.Y, items[i].Position.Y+1)
 	}
 	opts.Height++
 
 	ix := slices.IndexFunc(items, func(i *Item) bool {
 		return i.Root()
 	})
-	rearrangeCompactChildren(items[ix], spacing)
+	rearrangeCompactChildren(items[ix], opts.Spacing)
 	return items
 }
 

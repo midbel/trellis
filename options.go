@@ -75,7 +75,7 @@ func prepareOptions(options *Options) (*Options, error) {
 	return opts, opts.Validate()
 }
 
-func applyDefaults(options *Options) {
+func applyDefaults(opts *Options) {
 	if opts.Margin == 0 {
 		opts.Margin++
 	}
@@ -84,7 +84,7 @@ func applyDefaults(options *Options) {
 	}
 	if opts.Render == nil {
 		opts.Render = defaultRenderContent
-	}	
+	}
 }
 
 func defaultRenderContent(node *Node, opts *Options) Content {

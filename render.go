@@ -143,10 +143,9 @@ func (c compact) Render(root *Node, options *Options) error {
 	opts.AlignX = AlignStart
 	opts.Orient = CompactLayout
 	var (
-		layout = Ideal()
-		items  = layout.Compute(root, opts)
-		canvas = NewCanvas(opts.Width, opts.Height)
-		screen = NewScreen(opts.Width, opts.Height)
+		items   = compactLayout(root, opts)
+		canvas  = NewCanvas(opts.Width, opts.Height)
+		screen  = NewScreen(opts.Width, opts.Height)
 		spacing = opts.Spacing
 	)
 	for _, i := range items {

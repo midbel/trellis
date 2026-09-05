@@ -324,44 +324,12 @@ func (i ideal) Compute(root *Node, opts *Options) []*Item {
 	switch opts.Orient {
 	case HorizontalLayout:
 		items = i.horizontalLayout(root, opts)
-	case VerticalLayout:
-		items = i.verticalLayout(root, opts)
 	default:
-		return i.compactLayout(root, opts)
+		items = i.verticalLayout(root, opts)
 	}
 	opts.Width = maxFromItems(items, func(i *Item) int { return i.W.End })
 	opts.Height = maxFromItems(items, func(i *Item) int { return i.H.End })
 	return items
-}
-
-func (i ideal) compactLayout(root *Node, opts *Options) []*Item {
-	clone := opts.Clone()
-	clone.Spacing = 1
-
-	items := i.prepare(root, clone)
-	for i := 1; i < len(items); i++ {
-		for items[i].Position.Y <= items[i-1].Position.Y {
-			items[i].Position.Y++
-		}
-		// items[i].Position.X += spacing
-		opts.Height = items[i].Position.Y
-		items[i].W = NewSpan(items[i].Position.X, items[i].Position.X + opts.Width)
-		items[i].H = NewSpan(items[i].Position.Y, items[i].Position.Y+1)
-	}
-	opts.Height++
-
-	ix := slices.IndexFunc(items, func(i *Item) bool {
-		return i.Root()
-	})
-	rearrangeCompactChildren(items[ix], opts.Spacing)
-	return items
-}
-
-func rearrangeCompactChildren(node *Item, spacing int) {
-	for i := range node.Children {
-		node.Children[i].Position.X = node.Position.X + spacing
-		rearrangeCompactChildren(node.Children[i], spacing)
-	}
 }
 
 func (i ideal) verticalLayout(root *Node, opts *Options) []*Item {
@@ -543,6 +511,40 @@ func (proportional) vertical(root *Node, opts *Options) []*Item {
 
 func (proportional) horizontal(root *Node, opts *Options) []*Item {
 	return nil
+}
+
+func compactLayout(root *Node, opts *Options) []*Item {
+	clone := opts.Clone()
+	clone.Spacing = 1
+
+	var (
+		mk    = defaultTreeLayout()
+		items = mk.Make(root, clone)
+	)
+
+	for i := 1; i < len(items); i++ {
+		for items[i].Position.Y <= items[i-1].Position.Y {
+			items[i].Position.Y++
+		}
+		// items[i].Position.X += spacing
+		opts.Height = items[i].Position.Y
+		items[i].W = NewSpan(items[i].Position.X, items[i].Position.X+opts.Width)
+		items[i].H = NewSpan(items[i].Position.Y, items[i].Position.Y+1)
+	}
+	opts.Height++
+
+	ix := slices.IndexFunc(items, func(i *Item) bool {
+		return i.Root()
+	})
+	rearrangeCompactChildren(items[ix], opts.Spacing)
+	return items
+}
+
+func rearrangeCompactChildren(node *Item, spacing int) {
+	for i := range node.Children {
+		node.Children[i].Position.X = node.Position.X + spacing
+		rearrangeCompactChildren(node.Children[i], spacing)
+	}
 }
 
 type Span struct {

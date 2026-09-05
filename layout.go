@@ -190,13 +190,37 @@ func verticalPath(from, to *Item, opts *Options) []Segment {
 	return []Segment{f, v, t}
 }
 
+type Rect struct {
+	X      int
+	Y      int
+	Width  int
+	Height int
+}
+
+func (r Rect) StartX() int {
+	return r.X
+}
+
+func (r Rect) EndX() int {
+	return r.X + r.Width
+}
+
+func (r Rect) StartY() int {
+	return r.Y
+}
+
+func (r Rect) EndY() int {
+	return r.Y + r.Height
+}
+
 type Item struct {
 	Content
 
 	Default Point
 	Point
-	W Span
-	H Span
+	Bounds Rect
+	W      Span
+	H      Span
 
 	Children []*Item
 	root     bool
@@ -324,16 +348,22 @@ func (i ideal) vertical(root *Node, opts *Options) []*Item {
 	if ix < 0 {
 		return nil
 	}
-	i.computeVerticalCoordinates(is[ix], opts, spacing, level)
-
+	computeVerticalCoordinates(is[ix], opts, spacing, level)
 	return is
 }
 
-func (i ideal) computeVerticalCoordinates(node *Item, opts *Options, spacing, level int) {
+func computeVerticalCoordinates(node *Item, opts *Options, spacing, level int) {
 	height := opts.Height / (level + 1)
+
+	computeVerticalChildren(node, opts, spacing, level, height)
+	resolveVerticalChildren(node)
+	computeVerticalNode(node, opts, spacing, height)
+}
+
+func computeVerticalChildren(node *Item, opts *Options, spacing, level, height int) {
 	for _, x := range node.Children {
 		if !x.Leaf() {
-			i.computeVerticalCoordinates(x, opts, spacing, level)
+			computeVerticalCoordinates(x, opts, spacing, level)
 			continue
 		}
 		var (
@@ -352,7 +382,9 @@ func (i ideal) computeVerticalCoordinates(node *Item, opts *Options, spacing, le
 		x.AlignX(opts.AlignX)
 		x.AlignY(opts.AlignY)
 	}
+}
 
+func resolveVerticalChildren(node *Item) {
 	boundary := node.Children[0].W.End
 	for _, c := range node.Children[1:] {
 		if c.W.Start < boundary {
@@ -360,6 +392,9 @@ func (i ideal) computeVerticalCoordinates(node *Item, opts *Options, spacing, le
 		}
 		boundary = c.W.End
 	}
+}
+
+func computeVerticalNode(node *Item, opts *Options, spacing, height int) {
 	var (
 		first = node.FirstLeaf()
 		last  = node.LastLeaf()
@@ -384,15 +419,22 @@ func (i ideal) horizontal(root *Node, opts *Options) []*Item {
 	if ix < 0 {
 		return nil
 	}
-	i.computeHorizontalCoordinates(is[ix], opts, spacing, level)
+	computeHorizontalCoordinates(is[ix], opts, spacing, level)
 	return is
 }
 
-func (i ideal) computeHorizontalCoordinates(node *Item, opts *Options, spacing, level int) {
+func computeHorizontalCoordinates(node *Item, opts *Options, spacing, level int) {
 	width := opts.Width / (level + 1)
+
+	computeHorizontalChildren(node, opts, spacing, level, width)
+	resolveHorizontalChildren(node, opts)
+	computeHorizontalNode(node, opts, spacing, width)
+}
+
+func computeHorizontalChildren(node *Item, opts *Options, spacing, level, width int) {
 	for _, x := range node.Children {
 		if !x.Leaf() {
-			i.computeHorizontalCoordinates(x, opts, spacing, level)
+			computeHorizontalCoordinates(x, opts, spacing, level)
 			continue
 		}
 		var (
@@ -411,7 +453,9 @@ func (i ideal) computeHorizontalCoordinates(node *Item, opts *Options, spacing, 
 		x.AlignX(opts.AlignX)
 		x.AlignY(opts.AlignY)
 	}
+}
 
+func resolveHorizontalChildren(node *Item, opts *Options) {
 	boundary := node.Children[0].H.End + opts.Margin
 	for _, c := range node.Children[1:] {
 		if c.H.Start < boundary {
@@ -419,6 +463,9 @@ func (i ideal) computeHorizontalCoordinates(node *Item, opts *Options, spacing, 
 		}
 		boundary = c.H.End + opts.Margin
 	}
+}
+
+func computeHorizontalNode(node *Item, opts *Options, spacing, width int) {
 	var (
 		first = node.FirstLeaf()
 		last  = node.LastLeaf()

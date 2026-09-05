@@ -72,7 +72,7 @@ func (v vertical) Render(root *Node, options *Options) error {
 	)
 
 	for i := range items {
-		canvas.Put(items[i].X, items[i].Y, items[i].Content)
+		canvas.Put(items[i].Position.X, items[i].Position.Y, items[i].Content)
 		for _, x := range items[i].Children {
 			paths := verticalPath(items[i], x, opts)
 			for _, p := range paths {
@@ -110,7 +110,7 @@ func (h horizontal) Render(root *Node, options *Options) error {
 	)
 
 	for i := range items {
-		canvas.Put(items[i].X, items[i].Y, items[i].Content)
+		canvas.Put(items[i].Position.X, items[i].Position.Y, items[i].Content)
 		for _, x := range items[i].Children {
 			paths := horizontalPath(items[i], x, opts)
 			for _, p := range paths {

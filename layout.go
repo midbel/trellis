@@ -323,16 +323,46 @@ func (i ideal) Compute(root *Node, opts *Options) []*Item {
 	var items []*Item
 	switch opts.Orient {
 	case HorizontalLayout:
-		items = i.horizontal(root, opts)
+		items = i.horizontalLayout(root, opts)
+	case VerticalLayout:
+		items = i.verticalLayout(root, opts)
 	default:
-		items = i.vertical(root, opts)
+		return i.compactLayout(root, opts)
 	}
 	opts.Width = maxFromItems(items, func(i *Item) int { return i.W.End })
 	opts.Height = maxFromItems(items, func(i *Item) int { return i.H.End })
 	return items
 }
 
-func (i ideal) vertical(root *Node, opts *Options) []*Item {
+func (i ideal) compactLayout(root *Node, opts *Options) []*Item {
+	spacing := opts.Spacing
+	opts.Spacing = 1
+
+	items := i.prepare(root, opts)
+	for i := 1; i < len(items); i++ {
+		for items[i].Position.Y <= items[i-1].Position.Y {
+			items[i].Position.Y++
+		}
+		items[i].Position.X += spacing
+		opts.Height = items[i].Position.Y
+	}
+	opts.Height++
+
+	ix := slices.IndexFunc(items, func(i *Item) bool {
+		return i.Root()
+	})
+	rearrangeCompactChildren(items[ix], spacing)
+	return items
+}
+
+func rearrangeCompactChildren(node *Item, spacing int) {
+	for i := range node.Children {
+		node.Children[i].Position.X = node.Position.X + spacing
+		rearrangeCompactChildren(node.Children[i], spacing)
+	}
+}
+
+func (i ideal) verticalLayout(root *Node, opts *Options) []*Item {
 	is := i.prepare(root, opts)
 	for i := range is {
 		is[i].Position = is[i].Position.Swap()
@@ -407,7 +437,7 @@ func computeVerticalNode(node *Item, opts *Options, spacing, height int) {
 	node.AlignY(opts.AlignY)
 }
 
-func (i ideal) horizontal(root *Node, opts *Options) []*Item {
+func (i ideal) horizontalLayout(root *Node, opts *Options) []*Item {
 	var (
 		is      = i.prepare(root, opts)
 		spacing = maxFromItems(is, func(i *Item) int { return i.Position.Y })

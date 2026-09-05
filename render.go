@@ -135,7 +135,26 @@ func NewCompact(w io.Writer) Renderer {
 }
 
 func (c compact) Render(root *Node, options *Options) error {
-	return nil
+	opts, err := prepareOptions(options)
+	if err != nil {
+		return err
+	}
+	opts.AlignY = AlignStart
+	opts.AlignX = AlignStart
+	opts.Orient = CompactLayout
+	var (
+		layout = Ideal()
+		items  = layout.Compute(root, opts)
+		canvas = NewCanvas(opts.Width, opts.Height)
+		screen = NewScreen(opts.Width, opts.Height)
+	)
+	for i := range items {
+		canvas.Put(items[i].Position.X, items[i].Position.Y, items[i].Content)
+	}
+	if err := canvas.Render(screen); err != nil {
+		return err
+	}
+	return screen.Render(c.w)
 }
 
 type treemap struct {

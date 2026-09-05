@@ -10,6 +10,8 @@ func ParseOrientation(orient string) (Orientation, error) {
 		return HorizontalLayout, nil
 	case "v", "vertical":
 		return VerticalLayout, nil
+	case "c", "compact":
+		return CompactLayout, nil
 	default:
 		return HorizontalLayout, fmt.Errorf("%s: unknown orientation", orient)
 	}
@@ -18,6 +20,7 @@ func ParseOrientation(orient string) (Orientation, error) {
 const (
 	HorizontalLayout Orientation = iota
 	VerticalLayout
+	CompactLayout
 )
 
 type Format uint8

@@ -67,6 +67,14 @@ func (c *Canvas) Put(x, y int, content Content) {
 	}
 }
 
+func (c *Canvas) VerticalBar(x, y int) {
+	c.putConnector(x, y, verticalBarAscii)
+}
+
+func (c *Canvas) HorizontalBar(x, y int) {
+	c.putConnector(x, y, horizontalBarAscii)
+}
+
 func (c *Canvas) HalfOpenHorizontalLine(x, y, size int) {
 	ch := connectBarAscii
 	if size == 1 {

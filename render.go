@@ -150,8 +150,14 @@ func (c compact) Render(root *Node, options *Options) error {
 	)
 	for _, i := range items {
 		canvas.Put(i.Position.X, i.Position.Y, i.Content)
-		x := i.Position.X - spacing + 1
-		canvas.HalfOpenHorizontalLine(x, i.Position.Y, i.Position.X-x-1)
+		var (
+			x = i.Position.X - spacing + 1
+			z = i.Position.X - x
+		)
+		if opts.Padding == 0 {
+			z--
+		}
+		canvas.HalfOpenHorizontalLine(x, i.Position.Y, z)
 	}
 	if err := canvas.Render(screen); err != nil {
 		return err

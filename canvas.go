@@ -74,8 +74,8 @@ func (c *Canvas) HalfOpenHorizontalLine(x, y, size int) {
 	}
 	c.putConnector(x, y, ch)
 	size--
-	x++
 	for range size {
+		x++
 		c.putConnector(x, y, horizontalBarAscii)
 	}
 }

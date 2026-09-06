@@ -1,12 +1,26 @@
 package trellis
 
 import (
+	"fmt"
 	"slices"
 	"strings"
 )
 
-type Layout interface {
-	Compute(*Node, *Options) []*Item
+type LayoutFunc func(*Node, *Options) []*Item
+
+func Layout(orient Orientation) (LayoutFunc, error) {
+	var fn LayoutFunc
+	switch orient {
+	case HorizontalLayout:
+		fn = stdHorizontalLayout
+	case VerticalLayout:
+		fn = stdVerticalLayout
+	case CompactLayout:
+		fn = compactLayout
+	default:
+		return nil, fmt.Errorf("unsupported layout")
+	}
+	return fn, nil
 }
 
 type CoordinateMap struct {
@@ -28,10 +42,15 @@ func ComputeLayout(root *Node, options *Options) (CoordinateMap, error) {
 		return CoordinateMap{}, err
 	}
 	var (
-		mk  = Ideal()
-		is  = mk.Compute(root, opts)
+		is  []*Item
 		res CoordinateMap
+		fn LayoutFunc
 	)
+	fn, err = Layout(options.Orient)
+	if err != nil {
+		return res, err
+	}
+	is = fn(root, options)
 	for i := range is {
 		c := Coordinate{
 			Value: strings.TrimSpace(is[i].String()),
@@ -199,8 +218,12 @@ func applyMargins(rect Rect, margin int) Rect {
 	if margin == 0 {
 		return rect
 	}
-	rect.Width -= margin + margin
-	rect.Height -= margin + margin
+	if rect.Width > margin+margin {
+		rect.Width -= margin + margin
+	}
+	if rect.Height > margin+margin {
+		rect.Height -= margin + margin
+	}
 	rect.X += margin
 	rect.Y += margin
 	return rect
@@ -280,7 +303,7 @@ func (i *Item) AlignX(align Alignment) {
 	case AlignStart:
 		i.Position.X = i.Bounds.StartX()
 	case AlignEnd:
-		i.Position.X = i.Bounds.StartX() - len(i.Value)
+		i.Position.X = i.Bounds.EndX() - len(i.Value)
 	default:
 		i.Position.X = i.Bounds.StartX() + i.Bounds.OffsetX() - (len(i.Value) / 2)
 	}
@@ -320,33 +343,11 @@ func (i *Item) Size() int {
 	return len(i.Value)
 }
 
-func Ideal() Layout {
-	var i ideal
-	return i
-}
-
-func Proportional() Layout {
-	var p proportional
-	return p
-}
-
-type ideal struct{}
-
-func (i ideal) Compute(root *Node, opts *Options) []*Item {
-	var items []*Item
-	switch opts.Orient {
-	case HorizontalLayout:
-		items = i.horizontalLayout(root, opts)
-	default:
-		items = i.verticalLayout(root, opts)
-	}
-	opts.Width = maxFromItems(items, func(i *Item) int { return i.Bounds.EndX() })
-	opts.Height = maxFromItems(items, func(i *Item) int { return i.Bounds.EndY() })
-	return items
-}
-
-func (i ideal) verticalLayout(root *Node, opts *Options) []*Item {
-	is := i.prepare(root, opts)
+func stdVerticalLayout(root *Node, opts *Options) []*Item {
+	var (
+		mk = defaultTreeLayout()
+		is = mk.Make(root, opts)
+	)
 	for i := range is {
 		is[i].Position = is[i].Position.Swap()
 		is[i].Ideal = is[i].Position
@@ -362,6 +363,9 @@ func (i ideal) verticalLayout(root *Node, opts *Options) []*Item {
 		return nil
 	}
 	computeVerticalCoordinates(is[ix], opts, spacing, level)
+
+	opts.Width = maxFromItems(is, func(i *Item) int { return i.Bounds.EndX() })
+	opts.Height = maxFromItems(is, func(i *Item) int { return i.Bounds.EndY() })
 	return is
 }
 
@@ -432,9 +436,10 @@ func computeVerticalNode(node *Item, opts *Options, spacing, height int) {
 	node.AlignY(opts.AlignY)
 }
 
-func (i ideal) horizontalLayout(root *Node, opts *Options) []*Item {
+func stdHorizontalLayout(root *Node, opts *Options) []*Item {
 	var (
-		is      = i.prepare(root, opts)
+		mk      = defaultTreeLayout()
+		is      = mk.Make(root, opts)
 		spacing = maxFromItems(is, func(i *Item) int { return i.Position.Y })
 		level   = maxFromItems(is, func(i *Item) int { return i.Position.X })
 	)
@@ -445,6 +450,8 @@ func (i ideal) horizontalLayout(root *Node, opts *Options) []*Item {
 		return nil
 	}
 	computeHorizontalCoordinates(is[ix], opts, spacing, level)
+	opts.Width = maxFromItems(is, func(i *Item) int { return i.Bounds.EndX() })
+	opts.Height = maxFromItems(is, func(i *Item) int { return i.Bounds.EndY() })
 	return is
 }
 
@@ -515,40 +522,6 @@ func computeHorizontalNode(node *Item, opts *Options, spacing, width int) {
 	node.AlignY(opts.AlignY)
 }
 
-func (ideal) prepare(root *Node, opts *Options) []*Item {
-	var (
-		mk = defaultTreeLayout()
-		is = mk.Make(root, opts)
-	)
-	if opts.Reverse {
-		level := mk.Depth() - 1
-		for i := range is {
-			is[i].Ideal.X = level - is[i].Position.X
-			is[i].Position = is[i].Ideal
-		}
-	}
-	return is
-}
-
-type proportional struct{}
-
-func (p proportional) Compute(root *Node, opts *Options) []*Item {
-	switch opts.Orient {
-	case HorizontalLayout:
-		return p.horizontal(root, opts)
-	default:
-		return p.vertical(root, opts)
-	}
-}
-
-func (proportional) vertical(root *Node, opts *Options) []*Item {
-	return nil
-}
-
-func (proportional) horizontal(root *Node, opts *Options) []*Item {
-	return nil
-}
-
 func compactLayout(root *Node, opts *Options) []*Item {
 	clone := opts.Clone()
 	clone.Spacing = 1
@@ -557,6 +530,12 @@ func compactLayout(root *Node, opts *Options) []*Item {
 		mk    = defaultTreeLayout()
 		items = mk.Make(root, clone)
 	)
+	items[0].Bounds = Rect{
+		Width:  opts.Width,
+		Height: opts.Height,
+		X:      items[0].Position.X,
+		Y:      items[0].Position.Y,
+	}
 
 	for i := 1; i < len(items); i++ {
 		for items[i].Position.Y <= items[i-1].Position.Y {
@@ -600,8 +579,18 @@ func (m *treeLayout) Single(node *Node, opts *Options) *Item {
 }
 
 func (m *treeLayout) Make(node *Node, opts *Options) []*Item {
-	res := m.makeLayout(node, 0, opts)
-	return m.flatten(res)
+	var (
+		root = m.makeLayout(node, 0, opts)
+		res  = m.flatten(root)
+	)
+	if opts.Reverse {
+		level := m.Depth() - 1
+		for i := range res {
+			res[i].Ideal.X = level - res[i].Position.X
+			res[i].Position = res[i].Ideal
+		}
+	}
+	return res
 }
 
 func (m *treeLayout) Depth() int {

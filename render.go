@@ -65,8 +65,7 @@ func (v vertical) Render(root *Node, options *Options) error {
 	}
 	opts.Orient = VerticalLayout
 	var (
-		layout = Ideal()
-		items  = layout.Compute(root, opts)
+		items  = stdVerticalLayout(root, opts)
 		canvas = NewCanvas(opts.Width, opts.Height)
 		screen = NewScreen(opts.Width, opts.Height)
 	)
@@ -103,8 +102,7 @@ func (h horizontal) Render(root *Node, options *Options) error {
 	}
 	opts.Orient = HorizontalLayout
 	var (
-		layout = Ideal()
-		items  = layout.Compute(root, opts)
+		items  = stdHorizontalLayout(root, opts)
 		canvas = NewCanvas(opts.Width, opts.Height)
 		screen = NewScreen(opts.Width, opts.Height)
 	)

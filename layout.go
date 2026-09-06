@@ -126,13 +126,13 @@ func horizontalPath(from, to *Item, opts *Options) []Segment {
 		End:   start,
 	}
 	f.Start.X += offset
-	f.End.X = from.Bounds.EndX()
+	f.End.X = from.Bounds.EndX() + opts.Margin
 
 	t := Segment{
 		Start: end,
 		End:   end,
 	}
-	t.Start.X = to.Bounds.StartX()
+	t.Start.X = to.Bounds.StartX() - opts.Margin
 	t.End.X--
 
 	var v Segment
@@ -170,13 +170,13 @@ func verticalPath(from, to *Item, opts *Options) []Segment {
 		End:   start,
 	}
 	f.Start.Y++
-	f.End.Y = from.Bounds.EndY()
+	f.End.Y = from.Bounds.EndY() + opts.Margin
 
 	t := Segment{
 		Start: end,
 		End:   end,
 	}
-	t.Start.Y = to.Bounds.StartY()
+	t.Start.Y = to.Bounds.StartY() - opts.Margin
 	t.End.Y--
 
 	var v Segment
@@ -193,6 +193,17 @@ type Rect struct {
 	Y      int
 	Width  int
 	Height int
+}
+
+func applyMargins(rect Rect, margin int) Rect {
+	if margin == 0 {
+		return rect
+	}
+	rect.Width -= margin + margin
+	rect.Height -= margin + margin
+	rect.X += margin
+	rect.Y += margin
+	return rect
 }
 
 func (r Rect) StartX() int {
@@ -381,6 +392,7 @@ func computeVerticalChildren(node *Item, opts *Options, spacing, level, height i
 			Width:  endX - startX,
 			Height: height,
 		}
+		x.Bounds = applyMargins(x.Bounds, opts.Margin)
 
 		if x.Bounds.Width < opts.Spacing+1 {
 			x.Bounds.Width += opts.Spacing + 1
@@ -407,12 +419,15 @@ func computeVerticalNode(node *Item, opts *Options, spacing, height int) {
 	)
 	node.Position.X = node.Ideal.X * opts.Width / spacing
 	node.Position.Y = node.Ideal.Y * height
+
 	node.Bounds = Rect{
 		X:      first.Bounds.StartX(),
 		Y:      node.Position.Y,
 		Width:  last.Bounds.EndX() - first.Bounds.StartX(),
 		Height: height,
 	}
+	node.Bounds = applyMargins(node.Bounds, opts.Margin)
+
 	node.AlignX(opts.AlignX)
 	node.AlignY(opts.AlignY)
 }
@@ -460,6 +475,7 @@ func computeHorizontalChildren(node *Item, opts *Options, spacing, level, width 
 			Width:  width,
 			Height: endY - startY,
 		}
+		x.Bounds = applyMargins(x.Bounds, opts.Margin)
 
 		if x.Bounds.Height < opts.Spacing+1 {
 			x.Bounds.Height += opts.Spacing + 1
@@ -493,6 +509,8 @@ func computeHorizontalNode(node *Item, opts *Options, spacing, width int) {
 		Width:  width,
 		Height: last.Bounds.EndY() - first.Bounds.StartY(),
 	}
+	node.Bounds = applyMargins(node.Bounds, opts.Margin)
+
 	node.AlignX(opts.AlignX)
 	node.AlignY(opts.AlignY)
 }

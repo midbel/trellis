@@ -526,10 +526,13 @@ func compactLayout(root *Node, opts *Options) []*Item {
 		for items[i].Position.Y <= items[i-1].Position.Y {
 			items[i].Position.Y++
 		}
-		// items[i].Position.X += spacing
 		opts.Height = items[i].Position.Y
-		items[i].W = NewSpan(items[i].Position.X, items[i].Position.X+opts.Width)
-		items[i].H = NewSpan(items[i].Position.Y, items[i].Position.Y+1)
+		items[i].Bounds = Rect{
+			X:      items[i].Position.X,
+			Y:      items[i].Position.Y,
+			Width:  opts.Width - items[i].Position.X,
+			Height: 1,
+		}
 	}
 	opts.Height++
 

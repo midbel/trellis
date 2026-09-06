@@ -408,7 +408,7 @@ func computeVerticalNode(node *Item, opts *Options, spacing, height int) {
 	node.Position.X = node.Ideal.X * opts.Width / spacing
 	node.Position.Y = node.Ideal.Y * height
 	node.Bounds = Rect{
-		X:      node.Position.X,
+		X:      first.Bounds.StartX(),
 		Y:      node.Position.Y,
 		Width:  last.Bounds.EndX() - first.Bounds.StartX(),
 		Height: height,
@@ -489,7 +489,7 @@ func computeHorizontalNode(node *Item, opts *Options, spacing, width int) {
 
 	node.Bounds = Rect{
 		X:      node.Position.X,
-		Y:      node.Position.Y,
+		Y:      first.Bounds.StartY(),
 		Width:  width,
 		Height: last.Bounds.EndY() - first.Bounds.StartY(),
 	}

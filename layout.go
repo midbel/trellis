@@ -19,8 +19,7 @@ type Coordinate struct {
 	Value    string
 	Ideal    Point
 	Computed Point
-	Width    Span
-	Height   Span
+	Bounds   Rect
 }
 
 func ComputeLayout(root *Node, options *Options) (CoordinateMap, error) {
@@ -44,8 +43,7 @@ func ComputeLayout(root *Node, options *Options) (CoordinateMap, error) {
 				X: is[i].Position.X,
 				Y: is[i].Position.Y,
 			},
-			Width:  is[i].W,
-			Height: is[i].H,
+			Bounds: is[i].Bounds,
 		}
 		res.Coordinates = append(res.Coordinates, c)
 	}
@@ -128,13 +126,13 @@ func horizontalPath(from, to *Item, opts *Options) []Segment {
 		End:   start,
 	}
 	f.Start.X += offset
-	f.End.X = from.W.End + opts.Margin
+	f.End.X = from.Bounds.EndX()
 
 	t := Segment{
 		Start: end,
 		End:   end,
 	}
-	t.Start.X = to.W.Start - opts.Margin
+	t.Start.X = to.Bounds.StartX()
 	t.End.X--
 
 	var v Segment
@@ -172,13 +170,13 @@ func verticalPath(from, to *Item, opts *Options) []Segment {
 		End:   start,
 	}
 	f.Start.Y++
-	f.End.Y = from.H.End
+	f.End.Y = from.Bounds.EndY()
 
 	t := Segment{
 		Start: end,
 		End:   end,
 	}
-	t.Start.Y = to.H.Start
+	t.Start.Y = to.Bounds.StartY()
 	t.End.Y--
 
 	var v Segment
@@ -213,14 +211,20 @@ func (r Rect) EndY() int {
 	return r.Y + r.Height
 }
 
+func (r Rect) OffsetX() int {
+	return r.Width / 2
+}
+
+func (r Rect) OffsetY() int {
+	return r.Height / 2
+}
+
 type Item struct {
 	Content
 
 	Ideal    Point
 	Position Point
 	Bounds   Rect
-	W        Span
-	H        Span
 
 	Children []*Item
 	root     bool
@@ -252,29 +256,28 @@ func (i *Item) LastLeaf() *Item {
 func (i *Item) AlignY(align Alignment) {
 	switch align {
 	case AlignStart:
-		i.Position.Y = i.H.Start
+		i.Position.Y = i.Bounds.StartY()
 	case AlignEnd:
-		i.Position.Y = i.H.End
+		i.Position.Y = i.Bounds.EndY()
 	default:
-		i.Position.Y = i.H.Start + i.H.Offset()
+		i.Position.Y = i.Bounds.StartY() + i.Bounds.OffsetY()
 	}
 }
 
 func (i *Item) AlignX(align Alignment) {
 	switch align {
 	case AlignStart:
-		i.Position.X = i.W.Start
+		i.Position.X = i.Bounds.StartX()
 	case AlignEnd:
-		i.Position.X = i.W.End - len(i.Value)
+		i.Position.X = i.Bounds.StartX() - len(i.Value)
 	default:
-		i.Position.X = i.W.Start + i.W.Offset() - (len(i.Value) / 2)
+		i.Position.X = i.Bounds.StartX() + i.Bounds.OffsetX() - (len(i.Value) / 2)
 	}
 }
 
 func (i *Item) MoveX(delta int) {
 	i.Position.X += delta
-	i.W.Start += delta
-	i.W.End += delta
+	i.Bounds.X += delta
 
 	for _, c := range i.Children {
 		c.MoveX(delta)
@@ -283,8 +286,7 @@ func (i *Item) MoveX(delta int) {
 
 func (i *Item) MoveY(delta int) {
 	i.Position.Y += delta
-	i.H.Start += delta
-	i.H.End += delta
+	i.Bounds.Y += delta
 
 	for _, c := range i.Children {
 		c.MoveY(delta)
@@ -327,8 +329,8 @@ func (i ideal) Compute(root *Node, opts *Options) []*Item {
 	default:
 		items = i.verticalLayout(root, opts)
 	}
-	opts.Width = maxFromItems(items, func(i *Item) int { return i.W.End })
-	opts.Height = maxFromItems(items, func(i *Item) int { return i.H.End })
+	opts.Width = maxFromItems(items, func(i *Item) int { return i.Bounds.EndX() })
+	opts.Height = maxFromItems(items, func(i *Item) int { return i.Bounds.EndY() })
 	return items
 }
 
@@ -373,11 +375,15 @@ func computeVerticalChildren(node *Item, opts *Options, spacing, level, height i
 		)
 		x.Position.X = startX
 		x.Position.Y = startY
-		x.W = NewSpan(startX, endX)
-		x.H = NewSpan(startY, startY+height)
+		x.Bounds = Rect{
+			X:      startX,
+			Y:      startY,
+			Width:  endX - startX,
+			Height: height,
+		}
 
-		if x.W.Len() < opts.Spacing+1 {
-			x.W.End = x.W.Start + opts.Spacing + 1
+		if x.Bounds.Width < opts.Spacing+1 {
+			x.Bounds.Width += opts.Spacing + 1
 		}
 		x.AlignX(opts.AlignX)
 		x.AlignY(opts.AlignY)
@@ -385,12 +391,12 @@ func computeVerticalChildren(node *Item, opts *Options, spacing, level, height i
 }
 
 func resolveVerticalChildren(node *Item) {
-	boundary := node.Children[0].W.End
+	boundary := node.Children[0].Bounds.EndX()
 	for _, c := range node.Children[1:] {
-		if c.W.Start < boundary {
-			c.MoveX(boundary - c.W.Start + 1)
+		if c.Bounds.StartX() < boundary {
+			c.MoveX(boundary - c.Bounds.StartX() + 1)
 		}
-		boundary = c.W.End
+		boundary = c.Bounds.EndX()
 	}
 }
 
@@ -401,8 +407,12 @@ func computeVerticalNode(node *Item, opts *Options, spacing, height int) {
 	)
 	node.Position.X = node.Ideal.X * opts.Width / spacing
 	node.Position.Y = node.Ideal.Y * height
-	node.W = NewSpan(first.W.Start, last.W.End)
-	node.H = NewSpan(node.Position.Y, node.Position.Y+height)
+	node.Bounds = Rect{
+		X:      node.Position.X,
+		Y:      node.Position.Y,
+		Width:  last.Bounds.EndX() - first.Bounds.StartX(),
+		Height: height,
+	}
 	node.AlignX(opts.AlignX)
 	node.AlignY(opts.AlignY)
 }
@@ -442,13 +452,17 @@ func computeHorizontalChildren(node *Item, opts *Options, spacing, level, width 
 			startY = (x.Ideal.Y * opts.Height / spacing)
 			endY   = ((x.Ideal.Y + opts.Spacing) * opts.Height) / spacing
 		)
-		x.Position.X = startX + opts.Margin
-		x.Position.Y = startY + opts.Margin
-		x.W = NewSpan(startX+opts.Margin, startX+width-opts.Margin)
-		x.H = NewSpan(startY+opts.Margin, endY-opts.Margin)
+		x.Position.X = startX
+		x.Position.Y = startY
+		x.Bounds = Rect{
+			X:      startX,
+			Y:      startY,
+			Width:  width,
+			Height: endY - startY,
+		}
 
-		if x.H.Len() < opts.Spacing+1 {
-			x.H.End = x.H.Start + opts.Spacing + 1
+		if x.Bounds.Height < opts.Spacing+1 {
+			x.Bounds.Height += opts.Spacing + 1
 		}
 		x.AlignX(opts.AlignX)
 		x.AlignY(opts.AlignY)
@@ -456,12 +470,12 @@ func computeHorizontalChildren(node *Item, opts *Options, spacing, level, width 
 }
 
 func resolveHorizontalChildren(node *Item, opts *Options) {
-	boundary := node.Children[0].H.End + opts.Margin
+	boundary := node.Children[0].Bounds.EndY()
 	for _, c := range node.Children[1:] {
-		if c.H.Start < boundary {
-			c.MoveY(boundary - c.H.Start - opts.Margin + 1)
+		if c.Bounds.StartY() < boundary {
+			c.MoveY(boundary - c.Bounds.StartY() + 1)
 		}
-		boundary = c.H.End + opts.Margin
+		boundary = c.Bounds.EndY()
 	}
 }
 
@@ -472,9 +486,13 @@ func computeHorizontalNode(node *Item, opts *Options, spacing, width int) {
 	)
 	node.Position.X = node.Ideal.X * width
 	node.Position.Y = node.Ideal.Y * opts.Height / spacing
-	node.W = NewSpan(node.Position.X+opts.Margin, node.Position.X+width-opts.Margin)
-	node.Position.X += opts.Margin
-	node.H = NewSpan(first.H.Start, last.H.End)
+
+	node.Bounds = Rect{
+		X:      node.Position.X,
+		Y:      node.Position.Y,
+		Width:  width,
+		Height: last.Bounds.EndY() - first.Bounds.StartY(),
+	}
 	node.AlignX(opts.AlignX)
 	node.AlignY(opts.AlignY)
 }
@@ -548,30 +566,6 @@ func rearrangeCompactChildren(node *Item, spacing int) {
 		node.Children[i].Position.X = node.Position.X + spacing
 		rearrangeCompactChildren(node.Children[i], spacing)
 	}
-}
-
-type Span struct {
-	Start int
-	End   int
-}
-
-func NewSpan(start, end int) Span {
-	return Span{
-		Start: start,
-		End:   end,
-	}
-}
-
-func (s Span) Offset() int {
-	return s.Len() / 2
-}
-
-func (s Span) Len() int {
-	return s.End - s.Start
-}
-
-func (s Span) Next() Span {
-	return NewSpan(s.End+1, s.End+1+s.Len())
 }
 
 type treeLayout struct {

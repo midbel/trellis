@@ -159,12 +159,12 @@ func (c inspectCommand) Run(args []string) error {
 			strconv.Itoa(n.Ideal.Y),
 			strconv.Itoa(n.Computed.X),
 			strconv.Itoa(n.Computed.Y),
-			strconv.Itoa(n.Width.Start),
-			strconv.Itoa(n.Width.End),
-			strconv.Itoa(n.Height.Start),
-			strconv.Itoa(n.Height.End),
-			strconv.Itoa(n.Width.Len()),
-			strconv.Itoa(n.Height.Len()),
+			strconv.Itoa(n.Bounds.StartX()),
+			strconv.Itoa(n.Bounds.EndX()),
+			strconv.Itoa(n.Bounds.StartY()),
+			strconv.Itoa(n.Bounds.EndY()),
+			strconv.Itoa(n.Bounds.Width),
+			strconv.Itoa(n.Bounds.Height),
 		}
 		tbl1.Rows = append(tbl1.Rows, row)
 	}

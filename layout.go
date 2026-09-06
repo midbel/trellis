@@ -373,7 +373,7 @@ func computeVerticalCoordinates(node *Item, opts *Options, spacing, level int) {
 	height := opts.Height / (level + 1)
 
 	computeVerticalChildren(node, opts, spacing, level, height)
-	resolveVerticalChildren(node)
+	resolveVerticalChildren(node, opts)
 	computeVerticalNode(node, opts, spacing, height)
 }
 
@@ -406,7 +406,10 @@ func computeVerticalChildren(node *Item, opts *Options, spacing, level, height i
 	}
 }
 
-func resolveVerticalChildren(node *Item) {
+func resolveVerticalChildren(node *Item, opts *Options) {
+	if len(node.Children) < 1 {
+		return
+	}
 	boundary := node.Children[0].Bounds.EndX()
 	for _, c := range node.Children[1:] {
 		if c.Bounds.StartX() < boundary {
@@ -421,6 +424,9 @@ func computeVerticalNode(node *Item, opts *Options, spacing, height int) {
 		first = node.FirstLeaf()
 		last  = node.LastLeaf()
 	)
+	if spacing == 0 {
+		spacing++
+	}
 	node.Position.X = node.Ideal.X * opts.Width / spacing
 	node.Position.Y = node.Ideal.Y * height
 
@@ -493,6 +499,9 @@ func computeHorizontalChildren(node *Item, opts *Options, spacing, level, width 
 }
 
 func resolveHorizontalChildren(node *Item, opts *Options) {
+	if len(node.Children) < 1 {
+		return
+	}
 	boundary := node.Children[0].Bounds.EndY()
 	for _, c := range node.Children[1:] {
 		if c.Bounds.StartY() < boundary {
@@ -507,6 +516,9 @@ func computeHorizontalNode(node *Item, opts *Options, spacing, width int) {
 		first = node.FirstLeaf()
 		last  = node.LastLeaf()
 	)
+	if spacing == 0 {
+		spacing++
+	}
 	node.Position.X = node.Ideal.X * width
 	node.Position.Y = node.Ideal.Y * opts.Height / spacing
 

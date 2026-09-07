@@ -141,21 +141,24 @@ func (c compact) Render(root *Node, options *Options) error {
 	opts.AlignX = AlignStart
 	opts.Orient = CompactLayout
 	var (
-		items   = compactLayout(root, opts)
-		canvas  = NewCanvas(opts.Width, opts.Height)
-		screen  = NewScreen(opts.Width, opts.Height)
-		spacing = opts.Spacing
+		items  = compactLayout(root, opts)
+		canvas = NewCanvas(opts.Width, opts.Height)
+		screen = NewScreen(opts.Width, opts.Height)
 	)
 	for _, i := range items {
 		canvas.Put(i.Position.X, i.Position.Y, i.Content)
 		var (
-			x = i.Position.X - spacing + 1
+			x = i.Position.X - 2
 			z = i.Position.X - x
 		)
 		if opts.Padding == 0 {
 			z--
 		}
 		canvas.HalfOpenHorizontalLine(x, i.Position.Y, z)
+
+		for n := range i.Depth() {
+			canvas.VerticalBar(x, i.Position.Y+n+1)
+		}
 	}
 	if err := canvas.Render(screen); err != nil {
 		return err

@@ -44,7 +44,7 @@ func ComputeLayout(root *Node, options *Options) (CoordinateMap, error) {
 	var (
 		is  []*Item
 		res CoordinateMap
-		fn LayoutFunc
+		fn  LayoutFunc
 	)
 	fn, err = Layout(options.Orient)
 	if err != nil {
@@ -270,6 +270,17 @@ func maxFromItems(is []*Item, get func(*Item) int) int {
 		res = max(get(is[i]), res)
 	}
 	return res
+}
+
+func (i *Item) Depth() int {
+	if i.Leaf() {
+		return 1
+	}
+	var depth int
+	for _, c := range i.Children {
+		depth += c.Depth()
+	}
+	return depth + 1
 }
 
 func (i *Item) FirstLeaf() *Item {

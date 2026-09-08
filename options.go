@@ -8,9 +8,16 @@ import (
 var ErrUnknown = errors.New("unknown")
 
 const (
-	PaddingS = 1
-	PaddingM = 2
-	PaddingL = 4
+	PaddingS = 1 << iota
+	PaddingM
+	PaddingL
+)
+
+const (
+	SpacingS = 1 << iota
+	SpacingM
+	SpacingL
+	SpacingX
 )
 
 const (

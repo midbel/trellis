@@ -545,6 +545,8 @@ func computeHorizontalNode(node *Item, opts *Options, spacing, width int) {
 	node.AlignY(opts.AlignY)
 }
 
+const compactBarWidth = 2
+
 func compactLayout(root *Node, opts *Options) []*Item {
 	clone := opts.Clone()
 	clone.Spacing = 1

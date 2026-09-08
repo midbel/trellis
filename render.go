@@ -137,6 +137,7 @@ func (c compact) Render(root *Node, options *Options) error {
 	if err != nil {
 		return err
 	}
+	opts.Spacing = SpacingL
 	opts.AlignY = AlignStart
 	opts.AlignX = AlignStart
 	opts.Orient = CompactLayout
@@ -147,14 +148,9 @@ func (c compact) Render(root *Node, options *Options) error {
 	)
 	for _, i := range items {
 		canvas.Put(i.Position.X, i.Position.Y, i.Content)
-		var (
-			x = i.Position.X - 2
-			z = i.Position.X - x
-		)
-		if opts.Padding == 0 {
-			z--
-		}
-		canvas.HalfOpenHorizontalLine(x, i.Position.Y, z)
+
+		x := i.Position.X - compactBarWidth
+		canvas.HalfOpenHorizontalLine(x, i.Position.Y, compactBarWidth)
 
 		for n := range i.Depth() {
 			canvas.VerticalBar(x, i.Position.Y+n+1)

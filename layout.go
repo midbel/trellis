@@ -46,11 +46,11 @@ func ComputeLayout(root *Node, options *Options) (CoordinateMap, error) {
 		res CoordinateMap
 		fn  LayoutFunc
 	)
-	fn, err = Layout(options.Orient)
+	fn, err = Layout(opts.Orient)
 	if err != nil {
 		return res, err
 	}
-	is = fn(root, options)
+	is = fn(root, opts)
 	for i := range is {
 		c := Coordinate{
 			Value: strings.TrimSpace(is[i].String()),

@@ -8,14 +8,14 @@ import (
 const space = ' '
 
 type Screen struct {
-	bytes  [][]rune
+	lines  [][]rune
 	dim    Dimension
 	filler rune
 }
 
 func NewScreen(width, height int) (*Screen, error) {
 	sc := &Screen{
-		bytes: make([][]rune, height),
+		lines: make([][]rune, height),
 		dim: Dimension{
 			Width:  width,
 			Height: height,
@@ -25,30 +25,31 @@ func NewScreen(width, height int) (*Screen, error) {
 	if err := sc.dim.Validate(); err != nil {
 		return nil, err
 	}
-	for i := range sc.bytes {
-		sc.bytes[i] = make([]rune, width)
+	for i := range sc.lines {
+		sc.lines[i] = make([]rune, width)
 	}
 	return sc, nil
 }
 
-func (s *Screen) Put(x, y int, char rune) {
-	if y >= 0 && y < len(s.bytes) {
-		if x < 0 || x >= len(s.bytes[y]) {
-			return
+func (s *Screen) Put(x, y int, char rune) error {
+	if y >= 0 && y < len(s.lines) {
+		if x < 0 || x >= len(s.lines[y]) {
+			return nil
 		}
-		if char == 0 && s.bytes[y][x] == 0 {
-			s.bytes[y][x] = s.filler
-			return
+		if char == 0 && s.lines[y][x] == 0 {
+			s.lines[y][x] = s.filler
+			return nil
 		}
-		s.bytes[y][x] = char
+		s.lines[y][x] = char
 	}
+	return nil
 }
 
 func (s *Screen) Render(w io.Writer) error {
 	ws := bufio.NewWriter(w)
-	for i := range s.bytes {
-		for j := range s.bytes[i] {
-			_, err := ws.WriteRune(s.bytes[i][j])
+	for i := range s.lines {
+		for j := range s.lines[i] {
+			_, err := ws.WriteRune(s.lines[i][j])
 			if err != nil {
 				return err
 			}

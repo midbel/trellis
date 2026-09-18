@@ -8,6 +8,20 @@ const (
 	horizontalBarAscii = '-'
 )
 
+const (
+	verticalBarUnicode    = '│'
+	horizontalBarUnicode  = '─'
+	crossingUnicode       = '┼'
+	downRightUnicode      = '┌'
+	downLeftUnicode       = '┐'
+	upRightUnicode        = '└'
+	upLeftUnicode         = '┘'
+	horizontalDownUnicode = '┬'
+	verticalRightUnicode  = '├'
+	verticalLeftUnicode   = '┤'
+	horizontalTopUnicode  = '┴'
+)
+
 type Dimension struct {
 	Width  int
 	Height int
@@ -117,7 +131,9 @@ func (c *Canvas) Render(sc *Screen) error {
 		if ct != nil {
 			ch = ct.Rune()
 		}
-		sc.Put(x, y, ch)
+		if err := sc.Put(x, y, ch); err != nil {
+			return err
+		}
 	}
 	return nil
 }

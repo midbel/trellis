@@ -59,14 +59,18 @@ type Canvas struct {
 	cells []Cell
 }
 
-func NewCanvas(width, height int) *Canvas {
-	return &Canvas{
+func NewCanvas(width, height int) (*Canvas, error) {
+	canvas := &Canvas{
 		dim: Dimension{
 			Width:  width,
 			Height: height,
 		},
 		cells: make([]Cell, width*height),
 	}
+	if err := canvas.dim.Validate(); err != nil {
+		return nil, err
+	}
+	return canvas, nil
 }
 
 func (c *Canvas) Put(x, y int, content Content) {

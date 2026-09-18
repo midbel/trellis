@@ -64,12 +64,17 @@ func (v vertical) Render(root *Node, options *Options) error {
 		return err
 	}
 	opts.Orient = VerticalLayout
-	var (
-		items  = stdVerticalLayout(root, opts)
-		canvas = NewCanvas(opts.Width, opts.Height)
-		screen = NewScreen(opts.Width, opts.Height)
-	)
 
+	canvas, err := NewCanvas(opts.Width, opts.Height)
+	if err != nil {
+		return err
+	}
+	screen, err := NewScreen(opts.Width, opts.Height)
+	if err != nil {
+		return err
+	}
+
+	items := stdVerticalLayout(root, opts)
 	for _, i := range items {
 		canvas.Put(i.Position.X, i.Position.Y, i.Content)
 		for _, x := range i.Children {
@@ -101,12 +106,16 @@ func (h horizontal) Render(root *Node, options *Options) error {
 		return err
 	}
 	opts.Orient = HorizontalLayout
-	var (
-		items  = stdHorizontalLayout(root, opts)
-		canvas = NewCanvas(opts.Width, opts.Height)
-		screen = NewScreen(opts.Width, opts.Height)
-	)
+	canvas, err := NewCanvas(opts.Width, opts.Height)
+	if err != nil {
+		return err
+	}
+	screen, err := NewScreen(opts.Width, opts.Height)
+	if err != nil {
+		return err
+	}
 
+	items := stdHorizontalLayout(root, opts)
 	for _, i := range items {
 		canvas.Put(i.Position.X, i.Position.Y, i.Content)
 		for _, x := range i.Children {
@@ -141,11 +150,17 @@ func (c compact) Render(root *Node, options *Options) error {
 	opts.AlignY = AlignStart
 	opts.AlignX = AlignStart
 	opts.Orient = CompactLayout
-	var (
-		items  = compactLayout(root, opts)
-		canvas = NewCanvas(opts.Width, opts.Height)
-		screen = NewScreen(opts.Width, opts.Height)
-	)
+
+	canvas, err := NewCanvas(opts.Width, opts.Height)
+	if err != nil {
+		return err
+	}
+	screen, err := NewScreen(opts.Width, opts.Height)
+	if err != nil {
+		return err
+	}
+
+	items := compactLayout(root, opts)
 	for _, i := range items {
 		canvas.Put(i.Position.X, i.Position.Y, i.Content)
 

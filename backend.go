@@ -12,7 +12,7 @@ type Screen struct {
 	filler byte
 }
 
-func NewScreen(width, height int) *Screen {
+func NewScreen(width, height int) (*Screen, error) {
 	sc := &Screen{
 		bytes: make([][]byte, height),
 		dim: Dimension{
@@ -21,10 +21,13 @@ func NewScreen(width, height int) *Screen {
 		},
 		filler: space,
 	}
+	if err := sc.dim.Validate(); err != nil {
+		return nil, err
+	}
 	for i := range sc.bytes {
 		sc.bytes[i] = make([]byte, width)
 	}
-	return sc
+	return sc, nil
 }
 
 func (s *Screen) Put(x, y int, b byte) {

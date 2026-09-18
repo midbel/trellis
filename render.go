@@ -1,7 +1,9 @@
 package trellis
 
 import (
+	"fmt"
 	"io"
+	"slices"
 )
 
 type Renderer interface {
@@ -151,6 +153,13 @@ func (c compact) Render(root *Node, options *Options) error {
 	opts.AlignX = AlignStart
 	opts.Orient = CompactLayout
 
+	items := compactLayout(root, opts)
+	if ix := slices.IndexFunc(items, func(i *Item) bool { return i.Root() }); ix >= 0 {
+		opts.Height = items[ix].Weight()
+	} else {
+		return fmt.Errorf("missing root")
+	}
+
 	canvas, err := NewCanvas(opts.Width, opts.Height)
 	if err != nil {
 		return err
@@ -160,7 +169,6 @@ func (c compact) Render(root *Node, options *Options) error {
 		return err
 	}
 
-	items := compactLayout(root, opts)
 	for _, i := range items {
 		canvas.Put(i.Position.X, i.Position.Y, i.Content)
 

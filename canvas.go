@@ -34,12 +34,20 @@ type Style struct {
 }
 
 type Content struct {
-	Value []byte
+	Value []rune
 	Style
 }
 
 func (c Content) String() string {
 	return string(c.Value)
+}
+
+func (c Content) DisplayWidth() int {
+	var width int
+	for _, r := range c.Value {
+		width += RuneWidth(r)
+	}
+	return width
 }
 
 type Cell interface {

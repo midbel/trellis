@@ -111,7 +111,7 @@ func defaultRenderContent(node *Node, opts *Options) Content {
 		value = tmp
 	}
 	return Content{
-		Value: value,
+		Value: []rune(string(value)),
 	}
 }
 

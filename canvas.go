@@ -3,9 +3,9 @@ package trellis
 import "fmt"
 
 const (
-	connectBarAscii    byte = '+'
-	verticalBarAscii   byte = '|'
-	horizontalBarAscii byte = '-'
+	connectBarAscii    = '+'
+	verticalBarAscii   = '|'
+	horizontalBarAscii = '-'
 )
 
 type Dimension struct {
@@ -51,7 +51,7 @@ func (c Content) DisplayWidth() int {
 }
 
 type Cell interface {
-	Byte() byte
+	Rune() rune
 }
 
 type Canvas struct {
@@ -113,39 +113,39 @@ func (c *Canvas) Render(sc *Screen) error {
 		y := i / c.dim.Width
 		x := i % c.dim.Width
 
-		var ch byte
+		var ch rune
 		if ct != nil {
-			ch = ct.Byte()
+			ch = ct.Rune()
 		}
 		sc.Put(x, y, ch)
 	}
 	return nil
 }
 
-func (c *Canvas) put(x, y int, ch byte) {
+func (c *Canvas) put(x, y int, ch rune) {
 	if !c.dim.Valid(x, y) {
 		return
 	}
 	c.cells[y*c.dim.Width+x] = newChar(ch)
 }
 
-func (c *Canvas) putConnector(x, y int, ch byte) {
+func (c *Canvas) putConnector(x, y int, char rune) {
 	if !c.dim.Valid(x, y) {
 		return
 	}
 	cell := c.cells[y*c.dim.Width+x]
 	if cell != nil {
-		b := cell.Byte()
-		if b == connectBarAscii && ch == connectBarAscii {
+		b := cell.Rune()
+		if b == connectBarAscii && char == connectBarAscii {
 			return
 		}
-		if b == verticalBarAscii && ch == horizontalBarAscii {
-			ch = connectBarAscii
-		} else if b == horizontalBarAscii && ch == verticalBarAscii {
-			ch = connectBarAscii
+		if b == verticalBarAscii && char == horizontalBarAscii {
+			char = connectBarAscii
+		} else if b == horizontalBarAscii && char == verticalBarAscii {
+			char = connectBarAscii
 		}
 	}
-	c.put(x, y, ch)
+	c.put(x, y, char)
 }
 
 func (c *Canvas) verticalConnector(seg Segment) {
@@ -191,15 +191,15 @@ func (c *Canvas) horizontalConnector(seg Segment) {
 }
 
 type char struct {
-	value byte
+	value rune
 }
 
-func newChar(b byte) Cell {
+func newChar(b rune) Cell {
 	return char{
 		value: b,
 	}
 }
 
-func (c char) Byte() byte {
+func (c char) Rune() rune {
 	return c.value
 }

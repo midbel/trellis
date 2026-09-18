@@ -272,13 +272,13 @@ func maxFromItems(is []*Item, get func(*Item) int) int {
 	return res
 }
 
-func (i *Item) Depth() int {
+func (i *Item) Weight() int {
 	if i.Leaf() {
 		return 1
 	}
 	var depth int
 	for _, c := range i.Children {
-		depth += c.Depth()
+		depth += c.Weight()
 	}
 	return depth + 1
 }

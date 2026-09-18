@@ -152,7 +152,7 @@ func (c compact) Render(root *Node, options *Options) error {
 		x := i.Position.X - compactBarWidth
 		canvas.HalfOpenHorizontalLine(x, i.Position.Y, compactBarWidth)
 
-		for n := range i.Depth() {
+		for n := range i.Weight() {
 			canvas.VerticalBar(x, i.Position.Y+n+1)
 		}
 	}

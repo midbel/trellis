@@ -23,7 +23,6 @@ func (f *XmlFile) Render(w io.Writer) error {
 type Screen struct {
 	lines  [][]rune
 	dim    Dimension
-	filler rune
 }
 
 func NewScreen(width, height int) (*Screen, error) {
@@ -33,7 +32,6 @@ func NewScreen(width, height int) (*Screen, error) {
 			Width:  width,
 			Height: height,
 		},
-		filler: space,
 	}
 	if err := sc.dim.Validate(); err != nil {
 		return nil, err
@@ -41,6 +39,7 @@ func NewScreen(width, height int) (*Screen, error) {
 	for i := range sc.lines {
 		sc.lines[i] = make([]rune, width)
 	}
+	sc.fillGrid()
 	return sc, nil
 }
 
@@ -56,9 +55,6 @@ func (s *Screen) Put(x, y int, cell Cell) error {
 	case Segment:
 		err = s.putConnector(x, y, c)
 	default:
-		if s.lines[y][x] == 0 {
-			s.lines[y][x] = s.filler
-		}
 	}
 	return err
 }
@@ -158,4 +154,12 @@ func (s *Screen) writeSymbol(x, y int, char rune) {
 	// 	}
 	// }
 	s.writeChar(x, y, char)
+}
+
+func (s *Screen) fillGrid() {
+	for i := range s.lines {
+		for j := range s.lines[i] {
+			s.lines[i][j] = space
+		}
+	}
 }

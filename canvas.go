@@ -50,6 +50,11 @@ type Style struct {
 	Underline bool
 }
 
+type Placement struct {
+	Point
+	Cell
+}
+
 type Cell interface{}
 
 type Connector struct {
@@ -103,7 +108,7 @@ func (c Content) DisplayWidth() int {
 
 type Canvas struct {
 	dim   Dimension
-	cells []Cell
+	cells []Placement
 }
 
 func NewCanvas(width, height int) (*Canvas, error) {
@@ -112,7 +117,7 @@ func NewCanvas(width, height int) (*Canvas, error) {
 			Width:  width,
 			Height: height,
 		},
-		cells: make([]Cell, width*height),
+		cells: make([]Placement, 0, width*height),
 	}
 	if err := canvas.dim.Validate(); err != nil {
 		return nil, err
@@ -156,11 +161,8 @@ func (c *Canvas) HorizontalBar(x, y, size int, halfOpen bool) error {
 }
 
 func (c *Canvas) Render(sc *Screen) error {
-	for i, cell := range c.cells {
-		y := i / c.dim.Width
-		x := i % c.dim.Width
-
-		if err := sc.Put(x, y, cell); err != nil {
+	for _, p := range c.cells {
+		if err := sc.Put(p.X, p.Y, p.Cell); err != nil {
 			return err
 		}
 	}
@@ -171,6 +173,10 @@ func (c *Canvas) put(x, y int, cell Cell) error {
 	if !c.dim.Valid(x, y) {
 		return fmt.Errorf("invalid coordinate (%d, %d)", x, y)
 	}
-	c.cells[y*c.dim.Width+x] = cell
+	p := Placement{
+		Point: NewPoint(x, y),
+		Cell: cell,
+	}
+	c.cells = append(c.cells, p)
 	return nil
 }

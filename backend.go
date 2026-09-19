@@ -12,7 +12,7 @@ type XmlFile struct {
 	cells []Cell
 }
 
-func (f *XmlFile) Put(x, y int, char rune) error {
+func (f *XmlFile) Put(x, y int, cell Cell) error {
 	return nil
 }
 
@@ -26,6 +26,8 @@ type Screen struct {
 
 	connector ConnectorStyle
 	border    bool
+
+	intersects []Point
 }
 
 func NewScreen(width, height int) (*Screen, error) {
@@ -71,25 +73,27 @@ func (s *Screen) Put(x, y int, cell Cell) error {
 }
 
 func (s *Screen) Render(w io.Writer) error {
-	var (
-		ws = bufio.NewWriter(w)
-		bd []byte
-	)
+	ws := bufio.NewWriter(w)
 	if s.border {
-		bd = make([]byte, s.dim.Width+2)
-		for i := range bd {
-			bd[i] = horizontalBarAscii
+		if _, err := ws.WriteRune(s.connector.TopLeft()); err != nil {
+			return err
 		}
-		bd[0] = connectBarAscii
-		bd[len(bd)-1] = bd[0]
-		if _, err := ws.Write(bd); err != nil {
+		for range s.dim.Width {
+			if _, err := ws.WriteRune(s.connector.HorizontalBar()); err != nil {
+				return err
+			}
+		}
+		if _, err := ws.WriteRune(s.connector.TopRight()); err != nil {
+			return err
+		}
+		if _, err := ws.WriteRune('\n'); err != nil {
 			return err
 		}
 	}
+	s.writeLinks()
 	for i := range s.lines {
 		if s.border {
-			_, err := ws.WriteRune(verticalBarAscii)
-			if err != nil {
+			if _, err := ws.WriteRune(s.connector.VerticalBar()); err != nil {
 				return err
 			}
 		}
@@ -100,8 +104,7 @@ func (s *Screen) Render(w io.Writer) error {
 			}
 		}
 		if s.border {
-			_, err := ws.WriteRune(verticalBarAscii)
-			if err != nil {
+			if _, err := ws.WriteRune(s.connector.VerticalBar()); err != nil {
 				return err
 			}
 		}
@@ -109,12 +112,77 @@ func (s *Screen) Render(w io.Writer) error {
 			return err
 		}
 	}
-	if len(bd) > 0 {
-		if _, err := ws.Write(bd); err != nil {
+	if s.border {
+		if _, err := ws.WriteRune(s.connector.BottomLeft()); err != nil {
+			return err
+		}
+		for range s.dim.Width {
+			if _, err := ws.WriteRune(s.connector.HorizontalBar()); err != nil {
+				return err
+			}
+		}
+		if _, err := ws.WriteRune(s.connector.BottomRight()); err != nil {
+			return err
+		}
+		if _, err := ws.WriteRune('\n'); err != nil {
 			return err
 		}
 	}
 	return ws.Flush()
+}
+
+func (s *Screen) writeLinks() {
+	isBar := func(y, x int) bool {
+		fmt.Println(s.dim, x, y, s.dim.Valid(x, y))
+		if !s.dim.Valid(x, y) {
+			return false
+		}
+		return s.lines[y][x] != space
+	}
+	for _, p := range s.intersects {
+		if !s.dim.Valid(p.X, p.Y) {
+			continue
+		}
+		var (
+			left   = isBar(p.Y, p.X-1)
+			right  = isBar(p.Y, p.X+1)
+			top    = isBar(p.Y-1, p.X)
+			bottom = isBar(p.Y+1, p.X)
+			char   = s.lines[p.Y][p.X]
+		)
+		switch {
+		case left && right && top && bottom:
+			// all four
+			char = s.connector.CrossPath()
+		case left && right && top && !bottom:
+			// horizontal up
+			char = s.connector.HorizontalUp()
+		case left && right && bottom && !top:
+			// horizontal down
+			char = s.connector.HorizontalDown()
+		case top && bottom && left && !right:
+			// vertical left
+			char = s.connector.VerticalLeft()
+		case top && bottom && right && !left:
+			// vertical right
+			char = s.connector.VerticalRight()
+		case bottom && left && !right && !top:
+			// bottom left
+			char = s.connector.TopRight()
+		case top && left && !right && !bottom:
+			// top left
+			char = s.connector.BottomRight()
+		case bottom && right && !left && !top:
+			// bottom right
+			char = s.connector.TopLeft()
+		case top && right && !left && !bottom:
+			// top right
+			char = s.connector.BottomLeft()
+		}
+		if s.dim.Valid(p.X, p.Y) {
+			s.lines[p.Y][p.X] = char
+		}
+	}
 }
 
 func (s *Screen) putContent(x, y int, val Content) error {
@@ -125,6 +193,7 @@ func (s *Screen) putContent(x, y int, val Content) error {
 }
 
 func (s *Screen) putConnector(x, y int, seg Segment) error {
+	s.intersects = append(s.intersects, seg.Start, seg.End)
 	if seg.Horizontal() {
 		s.horizontalConnector(seg)
 	} else {
@@ -134,8 +203,9 @@ func (s *Screen) putConnector(x, y int, seg Segment) error {
 }
 
 func (s *Screen) verticalConnector(seg Segment) {
+	char := s.connector.VerticalBar()
 	if seg.DistanceY() == 1 {
-		s.writeSymbol(seg.Start.X, seg.Start.Y, verticalBarAscii)
+		s.writeSymbol(seg.Start.X, seg.Start.Y, char)
 		return
 	}
 	var (
@@ -146,17 +216,14 @@ func (s *Screen) verticalConnector(seg Segment) {
 		start, end = end, start
 	}
 	for y := start.Y; y >= end.Y; y-- {
-		ch := verticalBarAscii
-		if y == start.Y || y == end.Y {
-			ch = connectBarAscii
-		}
-		s.writeSymbol(start.X, y, ch)
+		s.writeSymbol(start.X, y, char)
 	}
 }
 
 func (s *Screen) horizontalConnector(seg Segment) {
+	char := s.connector.HorizontalBar()
 	if seg.DistanceX() == 1 {
-		s.writeSymbol(seg.Start.X, seg.Start.Y, horizontalBarAscii)
+		s.writeSymbol(seg.Start.X, seg.Start.Y, char)
 		return
 	}
 	var (
@@ -167,11 +234,7 @@ func (s *Screen) horizontalConnector(seg Segment) {
 		start, end = end, start
 	}
 	for x := start.X; x <= end.X; x++ {
-		ch := horizontalBarAscii
-		if x == start.X || x == end.X {
-			ch = connectBarAscii
-		}
-		s.writeSymbol(x, start.Y, ch)
+		s.writeSymbol(x, start.Y, char)
 	}
 }
 
@@ -183,18 +246,6 @@ func (s *Screen) writeChar(x, y int, char rune) {
 }
 
 func (s *Screen) writeSymbol(x, y int, char rune) {
-	// cell := c.cells[y*c.dim.Width+x]
-	// if cell != nil {
-	// 	b := cell.Rune()
-	// 	if b == connectBarAscii && char == connectBarAscii {
-	// 		return
-	// 	}
-	// 	if b == verticalBarAscii && char == horizontalBarAscii {
-	// 		char = connectBarAscii
-	// 	} else if b == horizontalBarAscii && char == verticalBarAscii {
-	// 		char = connectBarAscii
-	// 	}
-	// }
 	s.writeChar(x, y, char)
 }
 

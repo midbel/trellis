@@ -5,26 +5,6 @@ import (
 	"strings"
 )
 
-const (
-	connectBarAscii    = '+'
-	verticalBarAscii   = '|'
-	horizontalBarAscii = '-'
-)
-
-const (
-	verticalBarUnicode    = '│'
-	horizontalBarUnicode  = '─'
-	crossingUnicode       = '┼'
-	downRightUnicode      = '┌'
-	downLeftUnicode       = '┐'
-	upRightUnicode        = '└'
-	upLeftUnicode         = '┘'
-	horizontalDownUnicode = '┬'
-	verticalRightUnicode  = '├'
-	verticalLeftUnicode   = '┤'
-	horizontalTopUnicode  = '┴'
-)
-
 type Dimension struct {
 	Width  int
 	Height int
@@ -142,7 +122,7 @@ func (c *Canvas) PutConnector(conn Connector) error {
 	return nil
 }
 
-func (c *Canvas) VerticalBar(x, y, size int, halfOpen bool) error {
+func (c *Canvas) VerticalBar(x, y, size int) error {
 	var (
 		beg = NewPoint(x, y)
 		end = NewPoint(x, y+size)
@@ -151,7 +131,7 @@ func (c *Canvas) VerticalBar(x, y, size int, halfOpen bool) error {
 	return c.put(x, y, NewConnector([]Segment{seg}))
 }
 
-func (c *Canvas) HorizontalBar(x, y, size int, halfOpen bool) error {
+func (c *Canvas) HorizontalBar(x, y, size int) error {
 	var (
 		beg = NewPoint(x, y)
 		end = NewPoint(x+size, y)

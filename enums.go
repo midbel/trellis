@@ -82,6 +82,26 @@ const (
 	AlignBottom = AlignEnd
 )
 
+const (
+	connectBarAscii    = '+'
+	verticalBarAscii   = '|'
+	horizontalBarAscii = '-'
+)
+
+const (
+	verticalBarUnicode    = '│'
+	horizontalBarUnicode  = '─'
+	crossingUnicode       = '┼'
+	downRightUnicode      = '┌'
+	downLeftUnicode       = '┐'
+	upRightUnicode        = '└'
+	upLeftUnicode         = '┘'
+	horizontalDownUnicode = '┬'
+	verticalRightUnicode  = '├'
+	verticalLeftUnicode   = '┤'
+	horizontalTopUnicode  = '┴'
+)
+
 type ConnectorStyle uint8
 
 func ParseConnector(str string) (ConnectorStyle, error) {
@@ -99,3 +119,80 @@ const (
 	ConnectorAscii ConnectorStyle = iota
 	ConnectorUnicode
 )
+
+func (c ConnectorStyle) CrossPath() rune {
+	if c == ConnectorAscii {
+		return connectBarAscii
+	}
+	return crossingUnicode
+}
+
+func (c ConnectorStyle) VerticalLeft() rune {
+	if c == ConnectorAscii {
+		return connectBarAscii
+	}
+	return verticalLeftUnicode
+}
+
+func (c ConnectorStyle) VerticalRight() rune {
+	if c == ConnectorAscii {
+		return connectBarAscii
+	}
+	return verticalRightUnicode
+}
+
+func (c ConnectorStyle) HorizontalUp() rune {
+	if c == ConnectorAscii {
+		return connectBarAscii
+	}
+	return horizontalTopUnicode
+}
+
+func (c ConnectorStyle) HorizontalDown() rune {
+	if c == ConnectorAscii {
+		return connectBarAscii
+	}
+	return horizontalDownUnicode
+}
+
+func (c ConnectorStyle) TopLeft() rune {
+	if c == ConnectorAscii {
+		return connectBarAscii
+	}
+	return downRightUnicode
+}
+
+func (c ConnectorStyle) TopRight() rune {
+	if c == ConnectorAscii {
+		return connectBarAscii
+	}
+	return downLeftUnicode
+}
+
+func (c ConnectorStyle) BottomLeft() rune {
+	if c == ConnectorAscii {
+		return connectBarAscii
+	}
+	return upRightUnicode
+}
+
+func (c ConnectorStyle) BottomRight() rune {
+	if c == ConnectorAscii {
+		return connectBarAscii
+	}
+	return upLeftUnicode
+}
+
+func (c ConnectorStyle) VerticalBar() rune {
+	if c == ConnectorAscii {
+		return verticalBarAscii
+	}
+	return verticalBarUnicode
+}
+
+func (c ConnectorStyle) HorizontalBar() rune {
+	if c == ConnectorAscii {
+		return horizontalBarAscii
+	}
+	return horizontalBarUnicode
+}

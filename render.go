@@ -173,8 +173,8 @@ func (c compact) Render(root *Node, options *Options) error {
 		canvas.Put(i.Position.X, i.Position.Y, i.Content)
 
 		x := i.Position.X - compactBarWidth
-		canvas.HorizontalBar(x, i.Position.Y, compactBarWidth, true)
-		canvas.VerticalBar(x, i.Position.Y, i.Weight()+1, false)
+		canvas.HorizontalBar(x, i.Position.Y, compactBarWidth)
+		canvas.VerticalBar(x, i.Position.Y, i.Weight()+1)
 	}
 	if err := canvas.Render(screen); err != nil {
 		return err

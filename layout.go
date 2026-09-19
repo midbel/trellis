@@ -76,6 +76,13 @@ type Segment struct {
 	End   Point
 }
 
+func NewSegment(start, end Point) Segment {
+	return Segment{
+		Start: start,
+		End:   end,
+	}
+}
+
 func (s Segment) DistanceX() int {
 	return s.End.X - s.Start.X
 }
@@ -101,8 +108,19 @@ func (s Segment) Vertical() bool {
 	return s.Start.X == s.End.X
 }
 
+func (s Segment) String() string {
+	return fmt.Sprintf("segment(%s -> %s)", s.Start, s.End)
+}
+
 type Point struct {
 	X, Y int
+}
+
+func NewPoint(x, y int) Point {
+	return Point{
+		X: x,
+		Y: y,
+	}
 }
 
 func (p Point) Equal(other Point) bool {
@@ -122,7 +140,11 @@ func (p Point) BeforeX(other Point) bool {
 	return p.X < other.X
 }
 
-func horizontalPath(from, to *Item, opts *Options) []Segment {
+func (p Point) String() string {
+	return fmt.Sprintf("point(%d, %d)", p.X, p.Y)
+}
+
+func horizontalPath(from, to *Item, opts *Options) Connector {
 	if !from.Position.BeforeX(to.Position) {
 		from, to = to, from
 	}
@@ -138,7 +160,7 @@ func horizontalPath(from, to *Item, opts *Options) []Segment {
 		}
 		s.Start.X += offset
 		s.End.X--
-		return []Segment{s}
+		return NewConnector([]Segment{s})
 	}
 	f := Segment{
 		Start: start,
@@ -161,10 +183,10 @@ func horizontalPath(from, to *Item, opts *Options) []Segment {
 		v.Start, v.End = t.Start, f.End
 	}
 
-	return []Segment{f, v, t}
+	return NewConnector([]Segment{f, v, t})
 }
 
-func verticalPath(from, to *Item, opts *Options) []Segment {
+func verticalPath(from, to *Item, opts *Options) Connector {
 	if !from.Position.BeforeY(to.Position) {
 		from, to = to, from
 	}
@@ -182,7 +204,7 @@ func verticalPath(from, to *Item, opts *Options) []Segment {
 		}
 		s.Start.Y++
 		s.End.Y--
-		return []Segment{s}
+		return NewConnector([]Segment{s})
 	}
 	f := Segment{
 		Start: start,
@@ -204,7 +226,7 @@ func verticalPath(from, to *Item, opts *Options) []Segment {
 	} else {
 		v.Start, v.End = t.Start, f.End
 	}
-	return []Segment{f, v, t}
+	return NewConnector([]Segment{f, v, t})
 }
 
 type Rect struct {

@@ -80,10 +80,8 @@ func (v vertical) Render(root *Node, options *Options) error {
 	for _, i := range items {
 		canvas.Put(i.Position.X, i.Position.Y, i.Content)
 		for _, x := range i.Children {
-			paths := verticalPath(i, x, opts)
-			for _, p := range paths {
-				canvas.Connect(p)
-			}
+			conn := verticalPath(i, x, opts)
+			canvas.PutConnector(conn)
 		}
 	}
 	if err := canvas.Render(screen); err != nil {
@@ -121,10 +119,8 @@ func (h horizontal) Render(root *Node, options *Options) error {
 	for _, i := range items {
 		canvas.Put(i.Position.X, i.Position.Y, i.Content)
 		for _, x := range i.Children {
-			paths := horizontalPath(i, x, opts)
-			for _, p := range paths {
-				canvas.Connect(p)
-			}
+			conn := horizontalPath(i, x, opts)
+			canvas.PutConnector(conn)
 		}
 	}
 	if err := canvas.Render(screen); err != nil {
@@ -173,11 +169,8 @@ func (c compact) Render(root *Node, options *Options) error {
 		canvas.Put(i.Position.X, i.Position.Y, i.Content)
 
 		x := i.Position.X - compactBarWidth
-		canvas.HalfOpenHorizontalLine(x, i.Position.Y, compactBarWidth)
-
-		for n := range i.Weight() {
-			canvas.VerticalBar(x, i.Position.Y+n+1)
-		}
+		canvas.HorizontalBar(x, i.Position.Y, compactBarWidth, true)
+		canvas.VerticalBar(x, i.Position.Y, i.Weight()+1, false)
 	}
 	if err := canvas.Render(screen); err != nil {
 		return err

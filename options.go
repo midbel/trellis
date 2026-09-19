@@ -98,11 +98,16 @@ func defaultRenderContent(node *Node, opts *Options) Content {
 	value := []byte(node.Value)
 	if opts.Padding > 0 {
 		var (
-			pad = make([]byte, opts.Padding)
-			tmp = make([]byte, 0, len(value))
+			pad  = make([]byte, opts.Padding)
+			tmp  = make([]byte, 0, len(value))
+			char = byte(' ')
 		)
+		if len(opts.PaddingChar) == 1 {
+			raw := []byte(opts.PaddingChar)
+			char = raw[0]
+		}
 		for i := range pad {
-			pad[i] = ' '
+			pad[i] = char
 		}
 		tmp = append(tmp, pad...)
 		tmp = append(tmp, value...)
@@ -141,28 +146,6 @@ func (t *Options) borderWidth() int {
 		return 1
 	}
 	return 0
-}
-
-func (t *Options) paddedValue(str string) []byte {
-	if t.Padding <= 0 {
-		return []byte(str)
-	}
-	var (
-		char  = byte(' ')
-		value = []byte(str)
-		pad   = make([]byte, t.Padding)
-		tmp   = make([]byte, 0, t.Padding+len(str))
-	)
-	if t.PaddingChar != "" && len(t.PaddingChar) == 1 {
-		char = t.PaddingChar[0]
-	}
-	for i := range pad {
-		pad[i] = char
-	}
-	tmp = append(tmp, pad...)
-	tmp = append(tmp, value...)
-	tmp = append(tmp, pad...)
-	return tmp
 }
 
 func (t *Options) Align() Alignment {

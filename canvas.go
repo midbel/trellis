@@ -1,6 +1,9 @@
 package trellis
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 const (
 	connectBarAscii    = '+'
@@ -47,6 +50,40 @@ type Style struct {
 	Underline bool
 }
 
+type Cell interface{}
+
+type Connector struct {
+	Paths []Segment
+}
+
+func NewConnector(paths []Segment) Connector {
+	return Connector{
+		Paths: paths,
+	}
+}
+
+func (c Connector) X() int {
+	return c.Paths[0].Start.X
+}
+
+func (c Connector) Y() int {
+	return c.Paths[0].Start.Y
+}
+
+func (c Connector) String() string {
+	var str strings.Builder
+	str.WriteString("connector(")
+	for i, p := range c.Paths {
+		if i > 0 {
+			str.WriteRune(',')
+			str.WriteRune(' ')
+		}
+		str.WriteString(p.String())
+	}
+	str.WriteString(")")
+	return str.String()
+}
+
 type Content struct {
 	Value []rune
 	Style
@@ -62,10 +99,6 @@ func (c Content) DisplayWidth() int {
 		width += RuneWidth(r)
 	}
 	return width
-}
-
-type Cell interface {
-	Rune() rune
 }
 
 type Canvas struct {
@@ -87,135 +120,57 @@ func NewCanvas(width, height int) (*Canvas, error) {
 	return canvas, nil
 }
 
-func (c *Canvas) Put(x, y int, content Content) {
-	for i, b := range content.Value {
-		c.put(x+i, y, b)
+func (c *Canvas) Put(x, y int, cell Cell) error {
+	if conn, ok := cell.(Connector); ok {
+		return c.PutConnector(conn)
 	}
+	return c.put(x, y, cell)
 }
 
-func (c *Canvas) VerticalBar(x, y int) {
-	c.putConnector(x, y, verticalBarAscii)
-}
-
-func (c *Canvas) HorizontalBar(x, y int) {
-	c.putConnector(x, y, horizontalBarAscii)
-}
-
-func (c *Canvas) HalfOpenHorizontalLine(x, y, size int) {
-	ch := connectBarAscii
-	if size == 1 {
-		ch = horizontalBarAscii
-	}
-	c.putConnector(x, y, ch)
-	size--
-	for range size {
-		x++
-		c.putConnector(x, y, horizontalBarAscii)
-	}
-}
-
-func (c *Canvas) Connect(seg Segment) {
-	if seg.Horizontal() {
-		c.horizontalConnector(seg)
-	} else {
-		c.verticalConnector(seg)
-	}
-}
-
-func (c *Canvas) Render(sc *Screen) error {
-	for i, ct := range c.cells {
-		y := i / c.dim.Width
-		x := i % c.dim.Width
-
-		var ch rune
-		if ct != nil {
-			ch = ct.Rune()
-		}
-		if err := sc.Put(x, y, ch); err != nil {
+func (c *Canvas) PutConnector(conn Connector) error {
+	for _, s := range conn.Paths {
+		err := c.put(s.Start.X, s.Start.Y, s)
+		if err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (c *Canvas) put(x, y int, ch rune) {
-	if !c.dim.Valid(x, y) {
-		return
-	}
-	c.cells[y*c.dim.Width+x] = newChar(ch)
-}
-
-func (c *Canvas) putConnector(x, y int, char rune) {
-	if !c.dim.Valid(x, y) {
-		return
-	}
-	cell := c.cells[y*c.dim.Width+x]
-	if cell != nil {
-		b := cell.Rune()
-		if b == connectBarAscii && char == connectBarAscii {
-			return
-		}
-		if b == verticalBarAscii && char == horizontalBarAscii {
-			char = connectBarAscii
-		} else if b == horizontalBarAscii && char == verticalBarAscii {
-			char = connectBarAscii
-		}
-	}
-	c.put(x, y, char)
-}
-
-func (c *Canvas) verticalConnector(seg Segment) {
-	if seg.DistanceY() == 1 {
-		c.putConnector(seg.Start.X, seg.Start.Y, verticalBarAscii)
-		return
-	}
+func (c *Canvas) VerticalBar(x, y, size int, halfOpen bool) error {
 	var (
-		start = seg.Start
-		end   = seg.End
+		beg = NewPoint(x, y)
+		end = NewPoint(x, y+size)
+		seg = NewSegment(beg, end)
 	)
-	if start.BeforeY(end) {
-		start, end = end, start
-	}
-	for y := start.Y; y >= end.Y; y-- {
-		ch := verticalBarAscii
-		if y == start.Y || y == end.Y {
-			ch = connectBarAscii
-		}
-		c.putConnector(start.X, y, ch)
-	}
+	return c.put(x, y, NewConnector([]Segment{seg}))
 }
 
-func (c *Canvas) horizontalConnector(seg Segment) {
-	if seg.DistanceX() == 1 {
-		c.putConnector(seg.Start.X, seg.Start.Y, horizontalBarAscii)
-		return
-	}
+func (c *Canvas) HorizontalBar(x, y, size int, halfOpen bool) error {
 	var (
-		start = seg.Start
-		end   = seg.End
+		beg = NewPoint(x, y)
+		end = NewPoint(x+size, y)
+		seg = NewSegment(beg, end)
 	)
-	if end.BeforeX(start) {
-		start, end = end, start
-	}
-	for x := start.X; x <= end.X; x++ {
-		ch := horizontalBarAscii
-		if x == start.X || x == end.X {
-			ch = connectBarAscii
+	return c.put(x, y, NewConnector([]Segment{seg}))
+}
+
+func (c *Canvas) Render(sc *Screen) error {
+	for i, cell := range c.cells {
+		y := i / c.dim.Width
+		x := i % c.dim.Width
+
+		if err := sc.Put(x, y, cell); err != nil {
+			return err
 		}
-		c.putConnector(x, start.Y, ch)
 	}
+	return nil
 }
 
-type char struct {
-	value rune
-}
-
-func newChar(b rune) Cell {
-	return char{
-		value: b,
+func (c *Canvas) put(x, y int, cell Cell) error {
+	if !c.dim.Valid(x, y) {
+		return fmt.Errorf("invalid coordinate (%d, %d)", x, y)
 	}
-}
-
-func (c char) Rune() rune {
-	return c.value
+	c.cells[y*c.dim.Width+x] = cell
+	return nil
 }

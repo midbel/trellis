@@ -4,20 +4,117 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"strconv"
+
+	"github.com/midbel/angle/xml"
 )
 
 const space = ' '
 
+type View interface {
+	Put(int, int, Cell) error
+	Render(io.Writer) error
+}
+
 type XmlFile struct {
-	cells []Cell
+	root *xml.Element
+}
+
+func NewXml(opts *Options) (View, error) {
+	el := xml.Element{
+		Name: xml.NewName("tree"),
+		Attributes: []xml.Attribute{
+			{
+				Name:  xml.NewName("width"),
+				Value: strconv.Itoa(opts.Width),
+			},
+			{
+				Name:  xml.NewName("height"),
+				Value: strconv.Itoa(opts.Height),
+			},
+			{
+				Name:  xml.NewName("orientation"),
+				Value: opts.Orient.String(),
+			},
+		},
+	}
+	return &XmlFile{
+		root: &el,
+	}, nil
 }
 
 func (f *XmlFile) Put(x, y int, cell Cell) error {
+	switch c := cell.(type) {
+	case Content:
+		f.createElementForContent(x, y, c)
+	case Segment:
+		f.createElementForSegment(x, y, c)
+	default:
+	}
 	return nil
 }
 
 func (f *XmlFile) Render(w io.Writer) error {
-	return nil
+	var (
+		doc = xml.NewDocument(*f.root)
+		enc = xml.NewEncoder(w)
+	)
+	return enc.Encode(doc)
+}
+
+func (f *XmlFile) createElementForContent(x, y int, val Content) {
+	el := xml.Element{
+		Name: xml.NewName("content"),
+		Attributes: []xml.Attribute{
+			{
+				Name:  xml.NewName("x"),
+				Value: strconv.Itoa(x),
+			},
+			{
+				Name:  xml.NewName("y"),
+				Value: strconv.Itoa(y),
+			},
+		},
+		Children: []xml.Node{
+			xml.Text{Value: string(val.Value)},
+		},
+	}
+	f.root.Children = append(f.root.Children, el)
+}
+
+func (f *XmlFile) createElementForSegment(x, y int, seg Segment) {
+	el := xml.Element{
+		Name: xml.NewName("segment"),
+		Children: []xml.Node{
+			xml.Element{
+				Name: xml.NewName("start"),
+				Attributes: []xml.Attribute{
+					{
+						Name:  xml.NewName("x"),
+						Value: strconv.Itoa(seg.Start.X),
+					},
+					{
+						Name:  xml.NewName("y"),
+						Value: strconv.Itoa(seg.Start.Y),
+					},
+				},
+			},
+			xml.Element{
+				Name: xml.NewName("end"),
+				Attributes: []xml.Attribute{
+					{
+						Name:  xml.NewName("x"),
+						Value: strconv.Itoa(seg.End.X),
+					},
+					{
+						Name:  xml.NewName("y"),
+						Value: strconv.Itoa(seg.End.Y),
+					},
+				},
+			},
+		},
+	}
+	f.root.Children = append(f.root.Children, el)
 }
 
 type Screen struct {
@@ -27,22 +124,22 @@ type Screen struct {
 	connector ConnectorStyle
 	border    bool
 
-	intersects []Point
+	crossings []Point
 }
 
-func NewScreen(width, height int) (*Screen, error) {
+func NewScreen(opts *Options) (View, error) {
 	sc := &Screen{
-		lines: make([][]rune, height),
+		lines: make([][]rune, opts.Height),
 		dim: Dimension{
-			Width:  width,
-			Height: height,
+			Width:  opts.Width,
+			Height: opts.Height,
 		},
 	}
 	if err := sc.dim.Validate(); err != nil {
 		return nil, err
 	}
 	for i := range sc.lines {
-		sc.lines[i] = make([]rune, width)
+		sc.lines[i] = make([]rune, opts.Width)
 	}
 	sc.fillGrid()
 	return sc, nil
@@ -90,7 +187,7 @@ func (s *Screen) Render(w io.Writer) error {
 			return err
 		}
 	}
-	s.writeLinks()
+	s.writeCrossings()
 	for i := range s.lines {
 		if s.border {
 			if _, err := ws.WriteRune(s.connector.VerticalBar()); err != nil {
@@ -131,7 +228,7 @@ func (s *Screen) Render(w io.Writer) error {
 	return ws.Flush()
 }
 
-func (s *Screen) writeLinks() {
+func (s *Screen) writeCrossings() {
 	isBar := func(y, x int) bool {
 		fmt.Println(s.dim, x, y, s.dim.Valid(x, y))
 		if !s.dim.Valid(x, y) {
@@ -139,7 +236,7 @@ func (s *Screen) writeLinks() {
 		}
 		return s.lines[y][x] != space
 	}
-	for _, p := range s.intersects {
+	for _, p := range s.crossings {
 		if !s.dim.Valid(p.X, p.Y) {
 			continue
 		}
@@ -193,7 +290,7 @@ func (s *Screen) putContent(x, y int, val Content) error {
 }
 
 func (s *Screen) putConnector(x, y int, seg Segment) error {
-	s.intersects = append(s.intersects, seg.Start, seg.End)
+	s.crossings = append(s.crossings, seg.Start, seg.End)
 	if seg.Horizontal() {
 		s.horizontalConnector(seg)
 	} else {

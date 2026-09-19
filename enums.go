@@ -17,6 +17,19 @@ func ParseOrientation(orient string) (Orientation, error) {
 	}
 }
 
+func (o Orientation) String() string {
+	switch o {
+	case HorizontalLayout:
+		return "horizontal"
+	case VerticalLayout:
+		return "vertical"
+	case CompactLayout:
+		return "compact"
+	default:
+		return ""
+	}
+}
+
 const (
 	HorizontalLayout Orientation = iota
 	VerticalLayout

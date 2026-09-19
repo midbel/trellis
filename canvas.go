@@ -140,9 +140,9 @@ func (c *Canvas) HorizontalBar(x, y, size int) error {
 	return c.put(x, y, NewConnector([]Segment{seg}))
 }
 
-func (c *Canvas) Render(sc *Screen) error {
+func (c *Canvas) Render(view View) error {
 	for _, p := range c.cells {
-		if err := sc.Put(p.X, p.Y, p.Cell); err != nil {
+		if err := view.Put(p.X, p.Y, p.Cell); err != nil {
 			return err
 		}
 	}

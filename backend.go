@@ -21,8 +21,11 @@ func (f *XmlFile) Render(w io.Writer) error {
 }
 
 type Screen struct {
-	lines  [][]rune
-	dim    Dimension
+	lines [][]rune
+	dim   Dimension
+
+	connector ConnectorStyle
+	border    bool
 }
 
 func NewScreen(width, height int) (*Screen, error) {
@@ -43,6 +46,14 @@ func NewScreen(width, height int) (*Screen, error) {
 	return sc, nil
 }
 
+func (s *Screen) SetConnectorStyle(style ConnectorStyle) {
+	s.connector = style
+}
+
+func (s *Screen) SetBorder(border bool) {
+	s.border = border
+}
+
 func (s *Screen) Put(x, y int, cell Cell) error {
 	var err error
 	if !s.dim.Valid(x, y) {
@@ -60,15 +71,46 @@ func (s *Screen) Put(x, y int, cell Cell) error {
 }
 
 func (s *Screen) Render(w io.Writer) error {
-	ws := bufio.NewWriter(w)
+	var (
+		ws = bufio.NewWriter(w)
+		bd []byte
+	)
+	if s.border {
+		bd = make([]byte, s.dim.Width+2)
+		for i := range bd {
+			bd[i] = horizontalBarAscii
+		}
+		bd[0] = connectBarAscii
+		bd[len(bd)-1] = bd[0]
+		if _, err := ws.Write(bd); err != nil {
+			return err
+		}
+	}
 	for i := range s.lines {
+		if s.border {
+			_, err := ws.WriteRune(verticalBarAscii)
+			if err != nil {
+				return err
+			}
+		}
 		for j := range s.lines[i] {
 			_, err := ws.WriteRune(s.lines[i][j])
 			if err != nil {
 				return err
 			}
 		}
+		if s.border {
+			_, err := ws.WriteRune(verticalBarAscii)
+			if err != nil {
+				return err
+			}
+		}
 		if _, err := ws.WriteRune('\n'); err != nil {
+			return err
+		}
+	}
+	if len(bd) > 0 {
+		if _, err := ws.Write(bd); err != nil {
 			return err
 		}
 	}

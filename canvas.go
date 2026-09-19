@@ -175,7 +175,7 @@ func (c *Canvas) put(x, y int, cell Cell) error {
 	}
 	p := Placement{
 		Point: NewPoint(x, y),
-		Cell: cell,
+		Cell:  cell,
 	}
 	c.cells = append(c.cells, p)
 	return nil

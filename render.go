@@ -75,6 +75,8 @@ func (v vertical) Render(root *Node, options *Options) error {
 	if err != nil {
 		return err
 	}
+	screen.SetBorder(opts.Border)
+	screen.SetConnectorStyle(opts.Style)
 
 	items := stdVerticalLayout(root, opts)
 	for _, i := range items {
@@ -114,6 +116,8 @@ func (h horizontal) Render(root *Node, options *Options) error {
 	if err != nil {
 		return err
 	}
+	screen.SetBorder(opts.Border)
+	screen.SetConnectorStyle(opts.Style)
 
 	items := stdHorizontalLayout(root, opts)
 	for _, i := range items {

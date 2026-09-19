@@ -134,6 +134,8 @@ func NewScreen(opts *Options) (View, error) {
 			Width:  opts.Width,
 			Height: opts.Height,
 		},
+		border: opts.Border,
+		connector: opts.Style,
 	}
 	if err := sc.dim.Validate(); err != nil {
 		return nil, err

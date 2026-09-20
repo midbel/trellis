@@ -171,10 +171,6 @@ func (h *handler) handleFlag(expr any) error {
 	if !ok {
 		return ErrIdent
 	}
-	// if name == "vertical" || name == "horizontal" || name == "compact" {
-	// 	h.Type = string(name)
-	// 	return nil
-	// }
 	set, ok := h.flags[string(name)]
 	if !ok {
 		return unknownDirective(string(name))
@@ -188,13 +184,6 @@ func (h *handler) handleOption(expr, value any) error {
 	if !ok {
 		return ErrIdent
 	}
-	// if name == "type" {
-	// 	str, err := parseString(value)
-	// 	if err == nil {
-	// 		h.Type = str
-	// 	}
-	// 	return err
-	// }
 	setter, ok := h.setters[string(name)]
 	if !ok {
 		return unknownDirective(string(name))

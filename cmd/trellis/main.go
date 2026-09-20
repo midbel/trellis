@@ -29,6 +29,7 @@ func loadTree() (*codec.TreeSpec, error) {
 		width   = flag.Int("w", 0, "width")
 		height  = flag.Int("h", 0, "height")
 		reverse = flag.Bool("r", false, "reverse")
+		border = flag.Bool("b", false, "border")
 		orient  trellis.Orientation
 		output  trellis.Output
 		style   trellis.ConnectorStyle
@@ -40,7 +41,7 @@ func loadTree() (*codec.TreeSpec, error) {
 		}
 		return err
 	})
-	flag.Func("b", "output", func(str string) error {
+	flag.Func("o", "output", func(str string) error {
 		v, err := trellis.ParseOutput(str)
 		if err == nil {
 			output = v
@@ -83,6 +84,9 @@ func loadTree() (*codec.TreeSpec, error) {
 	}
 	if *reverse != spec.Options.Reverse {
 		spec.Options.Reverse = *reverse
+	}
+	if *border != spec.Options.Border {
+		spec.Options.Border = *border
 	}
 	if style > 0 {
 		spec.Options.Style = style

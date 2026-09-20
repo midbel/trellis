@@ -232,7 +232,6 @@ func (s *Screen) Render(w io.Writer) error {
 
 func (s *Screen) writeCrossings() {
 	isBar := func(y, x int) bool {
-		fmt.Println(s.dim, x, y, s.dim.Valid(x, y))
 		if !s.dim.Valid(x, y) {
 			return false
 		}

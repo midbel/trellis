@@ -24,11 +24,11 @@ func main() {
 func renderTree(spec *codec.TreeSpec) error {
 	switch spec.Type {
 	case "", "horizontal":
-		return trellis.HorizontalTree(os.Stdout, spec.Node, spec.Options)
+		return trellis.Horizontal(os.Stdout, spec.Node, spec.Options)
 	case "vertical":
-		return trellis.VerticalTree(os.Stdout, spec.Node, spec.Options)
+		return trellis.Vertical(os.Stdout, spec.Node, spec.Options)
 	case "compact":
-		return trellis.CompactTree(os.Stdout, spec.Node, spec.Options)
+		return trellis.Compact(os.Stdout, spec.Node, spec.Options)
 	default:
 		return nil
 	}

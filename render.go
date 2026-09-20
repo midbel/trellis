@@ -6,35 +6,6 @@ import (
 	"slices"
 )
 
-type Renderer interface {
-	Render(*Node, *Options) error
-}
-
-func HorizontalTree(w io.Writer, root *Node, opts *Options) error {
-	r := NewHorizontal(w)
-	return r.Render(root, opts)
-}
-
-func VerticalTree(w io.Writer, root *Node, opts *Options) error {
-	r := NewVertical(w)
-	return r.Render(root, opts)
-}
-
-func CompactTree(w io.Writer, root *Node, opts *Options) error {
-	r := NewCompact(w)
-	return r.Render(root, opts)
-}
-
-func SunburstTree(w io.Writer, root *Node, opts *Options) error {
-	r := NewSunburst(w)
-	return r.Render(root, opts)
-}
-
-func RadialTree(w io.Writer, root *Node, opts *Options) error {
-	r := NewRadial(w)
-	return r.Render(root, opts)
-}
-
 type Node struct {
 	Value string
 	Nodes []*Node
@@ -50,67 +21,17 @@ func (n *Node) Leaf() bool {
 	return len(n.Nodes) == 0
 }
 
-type vertical struct {
-	w io.Writer
+func Table(w io.Writer, root *Node, options *Options) error {
+	return nil
 }
 
-func NewVertical(w io.Writer) Renderer {
-	return vertical{
-		w: w,
-	}
-}
-
-func (v vertical) Render(root *Node, options *Options) error {
-	opts, err := prepareOptions(options)
-	if err != nil {
-		return err
-	}
-	opts.Orient = VerticalLayout
-
-	canvas, err := NewCanvas(opts.Width, opts.Height)
-	if err != nil {
-		return err
-	}
-	screen, err := NewXml(opts)
-	if err != nil {
-		return err
-	}
-
-	items := stdVerticalLayout(root, opts)
-	for _, i := range items {
-		canvas.Put(i.Position.X, i.Position.Y, i.Content)
-		for _, x := range i.Children {
-			conn := verticalPath(i, x, opts)
-			canvas.PutConnector(conn)
-		}
-	}
-	if err := canvas.Render(screen); err != nil {
-		return err
-	}
-	return screen.Render(v.w)
-}
-
-type horizontal struct {
-	w io.Writer
-}
-
-func NewHorizontal(w io.Writer) Renderer {
-	return horizontal{
-		w: w,
-	}
-}
-
-func (h horizontal) Render(root *Node, options *Options) error {
+func Horizontal(w io.Writer, root *Node, options *Options) error {
 	opts, err := prepareOptions(options)
 	if err != nil {
 		return err
 	}
 	opts.Orient = HorizontalLayout
-	canvas, err := NewCanvas(opts.Width, opts.Height)
-	if err != nil {
-		return err
-	}
-	screen, err := NewScreen(opts)
+	canvas, err := NewCanvas(opts)
 	if err != nil {
 		return err
 	}
@@ -123,23 +44,33 @@ func (h horizontal) Render(root *Node, options *Options) error {
 			canvas.PutConnector(conn)
 		}
 	}
-	if err := canvas.Render(screen); err != nil {
+	return renderCanvas(w, opts.Output, canvas)
+}
+
+func Vertical(w io.Writer, root *Node, options *Options) error {
+	opts, err := prepareOptions(options)
+	if err != nil {
 		return err
 	}
-	return screen.Render(h.w)
-}
+	opts.Orient = VerticalLayout
 
-type compact struct {
-	w io.Writer
-}
-
-func NewCompact(w io.Writer) Renderer {
-	return compact{
-		w: w,
+	canvas, err := NewCanvas(opts)
+	if err != nil {
+		return err
 	}
+
+	items := stdVerticalLayout(root, opts)
+	for _, i := range items {
+		canvas.Put(i.Position.X, i.Position.Y, i.Content)
+		for _, x := range i.Children {
+			conn := verticalPath(i, x, opts)
+			canvas.PutConnector(conn)
+		}
+	}
+	return renderCanvas(w, opts.Output, canvas)
 }
 
-func (c compact) Render(root *Node, options *Options) error {
+func Compact(w io.Writer, root *Node, options *Options) error {
 	opts, err := prepareOptions(options)
 	if err != nil {
 		return err
@@ -156,11 +87,7 @@ func (c compact) Render(root *Node, options *Options) error {
 		return fmt.Errorf("missing root")
 	}
 
-	canvas, err := NewCanvas(opts.Width, opts.Height)
-	if err != nil {
-		return err
-	}
-	screen, err := NewScreen(opts)
+	canvas, err := NewCanvas(opts)
 	if err != nil {
 		return err
 	}
@@ -172,50 +99,40 @@ func (c compact) Render(root *Node, options *Options) error {
 		canvas.HorizontalBar(x, i.Position.Y, compactBarWidth)
 		canvas.VerticalBar(x, i.Position.Y, i.Weight()+1)
 	}
-	if err := canvas.Render(screen); err != nil {
+	return renderCanvas(w, opts.Output, canvas)
+}
+
+func Sunburst(w io.Writer, root *Node, options *Options) error {
+	return fmt.Errorf("not yet implemented")
+}
+
+func Radial(w io.Writer, root *Node, options *Options) error {
+	return fmt.Errorf("not yet implemented")
+}
+
+func TreeMap(w io.Writer, root *Node, options *Options) error {
+	return fmt.Errorf("not yet implemented")
+}
+
+func renderCanvas(w io.Writer, out Output, canvas *Canvas) error {
+	var (
+		view View
+		err  error
+	)
+	switch out {
+	case OutputScreen:
+		view, err = canvas.Screen()
+	case OutputSvg:
+		view, err = canvas.Svg()
+	case OutputXml:
+		view, err = canvas.Xml()
+	case OutputJson:
+		view, err = canvas.Json()
+	default:
+		return fmt.Errorf("no output provided")
+	}
+	if err != nil {
 		return err
 	}
-	return screen.Render(c.w)
-}
-
-type treemap struct {
-	w io.Writer
-}
-
-func NewTreemap(w io.Writer) Renderer {
-	return treemap{
-		w: w,
-	}
-}
-
-func (m treemap) Render(root *Node, options *Options) error {
-	return nil
-}
-
-type sunburst struct {
-	w io.Writer
-}
-
-func NewSunburst(w io.Writer) Renderer {
-	return sunburst{
-		w: w,
-	}
-}
-
-func (s sunburst) Render(root *Node, options *Options) error {
-	return nil
-}
-
-type radial struct {
-	w io.Writer
-}
-
-func NewRadial(w io.Writer) Renderer {
-	return radial{
-		w: w,
-	}
-}
-
-func (r radial) Render(root *Node, options *Options) error {
-	return nil
+	return view.Render(w)
 }

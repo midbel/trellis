@@ -44,7 +44,7 @@ func makeSetters(opts *trellis.Options) map[string]func(any) error {
 		"align-x":     assignValue(&opts.AlignX, parseAlignment),
 		"align-y":     assignValue(&opts.AlignY, parseAlignment),
 		"connector":   assignValue(&opts.Style, parseConnectorStyle),
-		// "backend":
+		"output":      assignValue(&opts.Output, parseOutput),
 	}
 }
 
@@ -79,6 +79,17 @@ func parsePadding(value any) (int, error) {
 		return get(string(v))
 	default:
 		return parseInt(value)
+	}
+}
+
+func parseOutput(value any) (trellis.Output, error) {
+	switch v := value.(type) {
+	case sexpr.Ident:
+		return trellis.ParseOutput(string(v))
+	case string:
+		return trellis.ParseOutput(v)
+	default:
+		return 0, ErrType
 	}
 }
 

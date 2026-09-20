@@ -1,11 +1,36 @@
 package trellis
 
-import "fmt"
+type Output uint8
+
+const (
+	OutputScreen = 1 << iota
+	OutputSvg
+	OutputXml
+	OutputJson
+	OutputTable
+)
+
+func ParseOutput(str string) (Output, error) {
+	switch str {
+	case "screen", "terminal":
+		return OutputScreen, nil
+	case "svg":
+		return OutputSvg, nil
+	case "xml":
+		return OutputXml, nil
+	case "json":
+		return OutputJson, nil
+	case "inspect", "table", "debug":
+		return OutputTable, nil
+	default:
+		return 0, unknown("output", str)
+	}
+}
 
 type Orientation uint8
 
-func ParseOrientation(orient string) (Orientation, error) {
-	switch orient {
+func ParseOrientation(str string) (Orientation, error) {
+	switch str {
 	case "", "h", "horizontal":
 		return HorizontalLayout, nil
 	case "v", "vertical":
@@ -13,7 +38,7 @@ func ParseOrientation(orient string) (Orientation, error) {
 	case "c", "compact":
 		return CompactLayout, nil
 	default:
-		return HorizontalLayout, fmt.Errorf("%s: unknown orientation", orient)
+		return 0, unknown("orientation", str)
 	}
 }
 

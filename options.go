@@ -50,6 +50,7 @@ type StyleOptions struct {
 }
 
 type Options struct {
+	Output Output
 	LayoutOptions
 	RenderOptions
 	StyleOptions

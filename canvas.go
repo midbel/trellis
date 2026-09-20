@@ -88,21 +88,55 @@ func (c Content) DisplayWidth() int {
 
 type Canvas struct {
 	dim   Dimension
+	opts  *Options
 	cells []Placement
 }
 
-func NewCanvas(width, height int) (*Canvas, error) {
+func NewCanvas(opts *Options) (*Canvas, error) {
 	canvas := &Canvas{
 		dim: Dimension{
-			Width:  width,
-			Height: height,
+			Width:  opts.Width,
+			Height: opts.Height,
 		},
-		cells: make([]Placement, 0, width*height),
+		opts:  opts,
+		cells: make([]Placement, 0, opts.Width*opts.Height),
 	}
 	if err := canvas.dim.Validate(); err != nil {
 		return nil, err
 	}
 	return canvas, nil
+}
+
+func (c *Canvas) Screen() (View, error) {
+	view, err := NewScreen(c.opts)
+	if err != nil {
+		return nil, err
+	}
+	c.fillView(view)
+	return view, nil
+}
+
+func (c *Canvas) Xml() (View, error) {
+	view, err := NewXml(c.opts)
+	if err != nil {
+		return nil, err
+	}
+	c.fillView(view)
+	return view, nil
+}
+
+func (c *Canvas) Svg() (View, error) {
+	return nil, fmt.Errorf("svg view: not yet implemented")
+}
+
+func (c *Canvas) Json() (View, error) {
+	return nil, fmt.Errorf("json view: not yet implemented")
+}
+
+func (c *Canvas) fillView(view View) {
+	for _, p := range c.cells {
+		view.put(p.X, p.Y, p.Cell)
+	}
 }
 
 func (c *Canvas) Put(x, y int, cell Cell) error {
@@ -138,15 +172,6 @@ func (c *Canvas) HorizontalBar(x, y, size int) error {
 		seg = NewSegment(beg, end)
 	)
 	return c.put(x, y, NewConnector([]Segment{seg}))
-}
-
-func (c *Canvas) Render(view View) error {
-	for _, p := range c.cells {
-		if err := view.Put(p.X, p.Y, p.Cell); err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 func (c *Canvas) put(x, y int, cell Cell) error {

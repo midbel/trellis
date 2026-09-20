@@ -12,8 +12,8 @@ import (
 const space = ' '
 
 type View interface {
-	Put(int, int, Cell) error
 	Render(io.Writer) error
+	put(int, int, Cell) error
 }
 
 type XmlFile struct {
@@ -43,23 +43,25 @@ func NewXml(opts *Options) (View, error) {
 	}, nil
 }
 
-func (f *XmlFile) Put(x, y int, cell Cell) error {
-	switch c := cell.(type) {
-	case Content:
-		f.createElementForContent(x, y, c)
-	case Segment:
-		f.createElementForSegment(x, y, c)
-	default:
-	}
-	return nil
-}
-
 func (f *XmlFile) Render(w io.Writer) error {
 	var (
 		doc = xml.NewDocument(*f.root)
 		enc = xml.NewEncoder(w)
 	)
 	return enc.Encode(doc)
+}
+
+func (f *XmlFile) put(x, y int, cell Cell) error {
+	switch c := cell.(type) {
+	case Content:
+		f.createElementForContent(x, y, c)
+	case Segment:
+		f.createElementForSegment(x, y, c)
+	case Connector:
+		f.createElementForConnector(x, y, c)
+	default:
+	}
+	return nil
 }
 
 func (f *XmlFile) createElementForContent(x, y int, val Content) {
@@ -80,6 +82,10 @@ func (f *XmlFile) createElementForContent(x, y int, val Content) {
 		},
 	}
 	f.root.Children = append(f.root.Children, el)
+}
+
+func (f *XmlFile) createElementForConnector(x, y int, conn Connector) {
+
 }
 
 func (f *XmlFile) createElementForSegment(x, y int, seg Segment) {
@@ -134,7 +140,7 @@ func NewScreen(opts *Options) (View, error) {
 			Width:  opts.Width,
 			Height: opts.Height,
 		},
-		border: opts.Border,
+		border:    opts.Border,
 		connector: opts.Style,
 	}
 	if err := sc.dim.Validate(); err != nil {
@@ -145,30 +151,6 @@ func NewScreen(opts *Options) (View, error) {
 	}
 	sc.fillGrid()
 	return sc, nil
-}
-
-func (s *Screen) SetConnectorStyle(style ConnectorStyle) {
-	s.connector = style
-}
-
-func (s *Screen) SetBorder(border bool) {
-	s.border = border
-}
-
-func (s *Screen) Put(x, y int, cell Cell) error {
-	var err error
-	if !s.dim.Valid(x, y) {
-		return fmt.Errorf("invalid coordinates (%d, %d)", x, y)
-
-	}
-	switch c := cell.(type) {
-	case Content:
-		err = s.putContent(x, y, c)
-	case Segment:
-		err = s.putConnector(x, y, c)
-	default:
-	}
-	return err
 }
 
 func (s *Screen) Render(w io.Writer) error {
@@ -228,6 +210,22 @@ func (s *Screen) Render(w io.Writer) error {
 		}
 	}
 	return ws.Flush()
+}
+
+func (s *Screen) put(x, y int, cell Cell) error {
+	var err error
+	if !s.dim.Valid(x, y) {
+		return fmt.Errorf("invalid coordinates (%d, %d)", x, y)
+
+	}
+	switch c := cell.(type) {
+	case Content:
+		err = s.putContent(x, y, c)
+	case Segment:
+		err = s.putConnector(x, y, c)
+	default:
+	}
+	return err
 }
 
 func (s *Screen) writeCrossings() {

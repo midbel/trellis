@@ -55,8 +55,6 @@ func (f *XmlFile) put(x, y int, cell Cell) error {
 	switch c := cell.(type) {
 	case Content:
 		f.createElementForContent(x, y, c)
-	case Segment:
-		f.createElementForSegment(x, y, c)
 	case Connector:
 		f.createElementForConnector(x, y, c)
 	default:
@@ -85,11 +83,18 @@ func (f *XmlFile) createElementForContent(x, y int, val Content) {
 }
 
 func (f *XmlFile) createElementForConnector(x, y int, conn Connector) {
-
+	el := xml.Element{
+		Name: xml.NewName("connector"),
+	}
+	for _, seg := range conn.Paths {
+		sub := f.createElementForSegment(seg)
+		el.Children = append(el.Children, sub)
+	}
+	f.root.Children = append(f.root.Children, el)
 }
 
-func (f *XmlFile) createElementForSegment(x, y int, seg Segment) {
-	el := xml.Element{
+func (f *XmlFile) createElementForSegment(seg Segment) xml.Element {
+	return xml.Element{
 		Name: xml.NewName("segment"),
 		Children: []xml.Node{
 			xml.Element{
@@ -120,7 +125,6 @@ func (f *XmlFile) createElementForSegment(x, y int, seg Segment) {
 			},
 		},
 	}
-	f.root.Children = append(f.root.Children, el)
 }
 
 type Screen struct {
@@ -221,7 +225,7 @@ func (s *Screen) put(x, y int, cell Cell) error {
 	switch c := cell.(type) {
 	case Content:
 		err = s.putContent(x, y, c)
-	case Segment:
+	case Connector:
 		err = s.putConnector(x, y, c)
 	default:
 	}
@@ -288,12 +292,14 @@ func (s *Screen) putContent(x, y int, val Content) error {
 	return nil
 }
 
-func (s *Screen) putConnector(x, y int, seg Segment) error {
-	s.crossings = append(s.crossings, seg.Start, seg.End)
-	if seg.Horizontal() {
-		s.horizontalConnector(seg)
-	} else {
-		s.verticalConnector(seg)
+func (s *Screen) putConnector(x, y int, conn Connector) error {
+	for _, seg := range conn.Paths {
+		s.crossings = append(s.crossings, seg.Start, seg.End)
+		if seg.Horizontal() {
+			s.horizontalConnector(seg)
+		} else {
+			s.verticalConnector(seg)
+		}
 	}
 	return nil
 }

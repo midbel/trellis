@@ -41,7 +41,7 @@ func Horizontal(w io.Writer, root *Node, options *Options) error {
 		canvas.Put(i.Position.X, i.Position.Y, i.Content)
 		for _, x := range i.Children {
 			conn := horizontalPath(i, x, opts)
-			canvas.PutConnector(conn)
+			canvas.Put(conn.X(), conn.Y(), conn)
 		}
 	}
 	return renderCanvas(w, opts.Output, canvas)
@@ -64,7 +64,7 @@ func Vertical(w io.Writer, root *Node, options *Options) error {
 		canvas.Put(i.Position.X, i.Position.Y, i.Content)
 		for _, x := range i.Children {
 			conn := verticalPath(i, x, opts)
-			canvas.PutConnector(conn)
+			canvas.Put(conn.X(), conn.Y(), conn)
 		}
 	}
 	return renderCanvas(w, opts.Output, canvas)

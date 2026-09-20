@@ -140,20 +140,7 @@ func (c *Canvas) fillView(view View) {
 }
 
 func (c *Canvas) Put(x, y int, cell Cell) error {
-	if conn, ok := cell.(Connector); ok {
-		return c.PutConnector(conn)
-	}
 	return c.put(x, y, cell)
-}
-
-func (c *Canvas) PutConnector(conn Connector) error {
-	for _, s := range conn.Paths {
-		err := c.put(s.Start.X, s.Start.Y, s)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 func (c *Canvas) VerticalBar(x, y, size int) error {

@@ -21,6 +21,20 @@ func (n *Node) Leaf() bool {
 	return len(n.Nodes) == 0
 }
 
+var renderers = map[Orientation]func(io.Writer, *Node, *Options) error{
+	HorizontalLayout: Horizontal,
+	VerticalLayout:   Vertical,
+	CompactLayout:    Compact,
+}
+
+func Render(w io.Writer, root *Node, options *Options) error {
+	fn, ok := renderers[options.Orient]
+	if !ok {
+		return fmt.Errorf("unsupported layout given")
+	}
+	return fn(w, root, options)
+}
+
 func Table(w io.Writer, root *Node, options *Options) error {
 	return nil
 }

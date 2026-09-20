@@ -38,7 +38,6 @@ var dispatch = map[Format]func(io.Reader) (*TreeSpec, error){
 }
 
 type TreeSpec struct {
-	Type string
 	*trellis.Node
 	*trellis.Options
 }
@@ -72,7 +71,6 @@ func treeFromSexpr(r io.Reader) (*TreeSpec, error) {
 		return nil, ErrRoot
 	}
 	spec := TreeSpec{
-		Type:    h.Type,
 		Node:    h.root,
 		Options: h.options,
 	}
@@ -85,7 +83,6 @@ type context struct {
 }
 
 type handler struct {
-	Type    string
 	options *trellis.Options
 	root    *trellis.Node
 	stack   []*context
@@ -174,10 +171,10 @@ func (h *handler) handleFlag(expr any) error {
 	if !ok {
 		return ErrIdent
 	}
-	if name == "vertical" || name == "horizontal" || name == "compact" {
-		h.Type = string(name)
-		return nil
-	}
+	// if name == "vertical" || name == "horizontal" || name == "compact" {
+	// 	h.Type = string(name)
+	// 	return nil
+	// }
 	set, ok := h.flags[string(name)]
 	if !ok {
 		return unknownDirective(string(name))
@@ -191,13 +188,13 @@ func (h *handler) handleOption(expr, value any) error {
 	if !ok {
 		return ErrIdent
 	}
-	if name == "type" {
-		str, err := parseString(value)
-		if err == nil {
-			h.Type = str
-		}
-		return err
-	}
+	// if name == "type" {
+	// 	str, err := parseString(value)
+	// 	if err == nil {
+	// 		h.Type = str
+	// 	}
+	// 	return err
+	// }
 	setter, ok := h.setters[string(name)]
 	if !ok {
 		return unknownDirective(string(name))

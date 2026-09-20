@@ -5,10 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"slices"
-	"strconv"
 
-	"github.com/midbel/cli"
 	"github.com/midbel/trellis"
 	"github.com/midbel/trellis/codec"
 )
@@ -16,161 +13,64 @@ import (
 var errFail = errors.New("fail")
 
 func main() {
-	var (
-		set  = cli.NewFlagSet("trellis")
-		root = prepare()
-	)
-	if err := set.Parse(os.Args[1:]); err != nil {
-		if errors.Is(err, flag.ErrHelp) {
-			root.Help()
-			os.Exit(2)
-		}
-	}
-	err := root.Execute(set.Args())
+	spec, err := loadTree()
 	if err != nil {
-		if s, ok := err.(cli.SuggestionError); ok && len(s.Others) > 0 {
-			fmt.Fprintln(os.Stderr, "similar command(s)")
-			for _, n := range s.Others {
-				fmt.Fprintln(os.Stderr, "-", n)
-			}
-		}
-		if !errors.Is(err, errFail) {
-			fmt.Fprintln(os.Stderr, err)
-		}
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(2)
+	}
+	if err := trellis.Render(os.Stdout, spec.Node, spec.Options); err != nil {
+		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 }
 
-func prepare() *cli.CommandTrie {
-	root := cli.New()
-	root.Register(single("inspect"), &inspectCmd)
-	return root
-}
-
-func single(str string) []string {
-	return []string{str}
-}
-
-var inspectCmd = cli.Command{
-	Name:    "inspect",
-	Summary: "",
-	Usage:   "inspect <file>",
-	Handler: &inspectCommand{},
-}
-
-type inspectCommand struct {
-	Type    trellis.Orientation
-	Reverse bool
-	Width   int
-	Height  int
-	Spacing int
-}
-
-func (c inspectCommand) Run(args []string) error {
-	set := cli.NewFlagSet("inspect")
-	set.BoolVar(&c.Reverse, "r", false, "reverse chart")
-	set.IntVar(&c.Width, "w", 0, "width")
-	set.IntVar(&c.Height, "h", 0, "height")
-	set.Func("k", "type", func(str string) error {
-		o, err := trellis.ParseOrientation(str)
+func loadTree() (*codec.TreeSpec, error) {
+	var (
+		width  = flag.Int("w", 0, "width")
+		height = flag.Int("h", 0, "height")
+		orient trellis.Orientation
+		output trellis.Output
+	)
+	flag.Func("t", "orientation", func(str string) error {
+		v, err := trellis.ParseOrientation(str)
 		if err == nil {
-			c.Type = o
+			orient = v
 		}
 		return err
 	})
-	if err := set.Parse(args); err != nil {
+	flag.Func("b", "output", func(str string) error {
+		v, err := trellis.ParseOutput(str)
+		if err == nil {
+			output = v
+		}
 		return err
-	}
-	if set.NArg() != 1 {
-		return cli.ErrUsage
-	}
-	r, err := os.Open(set.Arg(0))
+	})
+	flag.Parse()
+
+	r, err := os.Open(flag.Arg(0))
 	if err != nil {
-		cli.FailIO(err)
+		return nil, err
 	}
 	defer r.Close()
 
-	spec, err := codec.Tree(r, codec.Options{
+	opts := codec.Options{
 		Format: codec.FormatSexpr,
-	})
+	}
+	spec, err := codec.Tree(r, opts)
 	if err != nil {
-		cli.FailData(err)
+		return nil, err
 	}
-	tbl1 := cli.Table{
-		Headers: []string{
-			"value",
-			"ideal-x",
-			"ideal-y",
-			"computed-x",
-			"computed-y",
-			"start-x",
-			"end-x",
-			"start-y",
-			"end-y",
-			"width",
-			"height",
-		},
+	if *width > 0 {
+		spec.Options.Width = *width
 	}
-	if c.Width > 0 {
-		spec.Width = c.Width
+	if *height > 0 {
+		spec.Options.Height = *height
 	}
-	if c.Height > 0 {
-		spec.Height = c.Height
+	if orient > 0 {
+		spec.Options.Orient = orient
 	}
-	if c.Type > 0 {
-		spec.Orient = c.Type
+	if output > 0 {
+		spec.Options.Output = output
 	}
-	res, err := trellis.ComputeLayout(spec.Node, spec.Options)
-	if err != nil {
-		return err
-	}
-
-	tbl2 := cli.Table{
-		Rows: [][]string{
-			{"Width", strconv.Itoa(spec.Width), strconv.Itoa(res.Width)},
-			{"Height", strconv.Itoa(spec.Height), strconv.Itoa(res.Height)},
-			{"Spacing", "", strconv.Itoa(spec.Options.Spacing)},
-			{"Margin", "", strconv.Itoa(spec.Options.Margin)},
-			{"Padding", "", strconv.Itoa(spec.Options.Padding)},
-		},
-	}
-
-	slices.SortFunc(res.Coordinates, func(c1, c2 trellis.Coordinate) int {
-		var diff int
-		switch c.Type {
-		case trellis.VerticalLayout:
-			diff = c1.Ideal.Y - c2.Ideal.Y
-			if diff == 0 {
-				diff = c1.Ideal.X - c2.Ideal.X
-			}
-		default:
-			diff = c1.Ideal.X - c2.Ideal.X
-			if diff == 0 {
-				diff = c1.Ideal.Y - c2.Ideal.Y
-			}
-		}
-		return diff
-	})
-
-	for _, n := range res.Coordinates {
-		row := []string{
-			n.Value,
-			strconv.Itoa(n.Ideal.X),
-			strconv.Itoa(n.Ideal.Y),
-			strconv.Itoa(n.Computed.X),
-			strconv.Itoa(n.Computed.Y),
-			strconv.Itoa(n.Bounds.StartX()),
-			strconv.Itoa(n.Bounds.EndX()),
-			strconv.Itoa(n.Bounds.StartY()),
-			strconv.Itoa(n.Bounds.EndY()),
-			strconv.Itoa(n.Bounds.Width),
-			strconv.Itoa(n.Bounds.Height),
-		}
-		tbl1.Rows = append(tbl1.Rows, row)
-	}
-	rdr := cli.NewTableRenderer(cli.Stdout)
-	rdr.Render(tbl1)
-	rdr.Empty()
-	rdr.Render(tbl2)
-	return nil
+	return spec, nil
 }

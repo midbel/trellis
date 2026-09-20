@@ -27,6 +27,15 @@ func makeFlags(opts *trellis.Options) map[string]func() {
 		"spacing": func() {
 			opts.Spacing++
 		},
+		"vertical": func() {
+			opts.Orient = trellis.VerticalLayout
+		},
+		"horizontal": func() {
+			opts.Orient = trellis.HorizontalLayout
+		},
+		"compact": func() {
+			opts.Orient = trellis.CompactLayout
+		},
 	}
 }
 

@@ -305,7 +305,8 @@ func (s *Screen) writeCrossings() {
 		if !s.dim.Valid(x, y) {
 			return false
 		}
-		return s.lines[y][x] != space
+		return IsBar(s.lines[y][x])
+		// return s.lines[y][x] != space
 	}
 	for _, p := range s.crossings {
 		if !s.dim.Valid(p.X, p.Y) {

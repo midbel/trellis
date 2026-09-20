@@ -72,6 +72,12 @@ func (o *Options) Validate() error {
 	if o.CoordinatesStep < 0 {
 		return fmt.Errorf("coordinates step can not be negative")
 	}
+	if o.MinDepth < 0 {
+		return fmt.Errorf("minimum depth can not be negative")
+	}
+	if o.MaxDepth < 0 {
+		return fmt.Errorf("maximum depth can not be negative")
+	}
 	return nil
 }
 

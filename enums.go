@@ -140,6 +140,28 @@ const (
 	horizontalTopUnicode  = '┴'
 )
 
+func IsBar(r rune) bool {
+	switch r {
+	default:
+		return false
+	case connectBarAscii:
+	case verticalBarAscii:
+	case horizontalBarAscii:
+	case verticalBarUnicode:
+	case horizontalBarUnicode:
+	case crossingUnicode:
+	case downRightUnicode:
+	case downLeftUnicode:
+	case upRightUnicode:
+	case upLeftUnicode:
+	case horizontalDownUnicode:
+	case verticalRightUnicode:
+	case verticalLeftUnicode:
+	case horizontalTopUnicode:
+	}
+	return true
+}
+
 type ConnectorStyle uint8
 
 func ParseConnector(str string) (ConnectorStyle, error) {

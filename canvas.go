@@ -79,11 +79,7 @@ func (c Content) String() string {
 }
 
 func (c Content) DisplayWidth() int {
-	var width int
-	for _, r := range c.Value {
-		width += RuneWidth(r)
-	}
-	return width
+	return DisplayWidth(c.Value)
 }
 
 type Canvas struct {
@@ -112,8 +108,7 @@ func (c *Canvas) Screen() (View, error) {
 	if err != nil {
 		return nil, err
 	}
-	c.fillView(view)
-	return view, nil
+	return view, c.fillView(view)
 }
 
 func (c *Canvas) Xml() (View, error) {
@@ -121,8 +116,7 @@ func (c *Canvas) Xml() (View, error) {
 	if err != nil {
 		return nil, err
 	}
-	c.fillView(view)
-	return view, nil
+	return view, c.fillView(view)
 }
 
 func (c *Canvas) Svg() (View, error) {
@@ -133,10 +127,13 @@ func (c *Canvas) Json() (View, error) {
 	return nil, fmt.Errorf("json view: not yet implemented")
 }
 
-func (c *Canvas) fillView(view View) {
+func (c *Canvas) fillView(view View) error {
 	for _, p := range c.cells {
-		view.put(p.X, p.Y, p.Cell)
+		if err := view.put(p.X, p.Y, p.Cell); err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
 func (c *Canvas) Put(x, y int, cell Cell) error {

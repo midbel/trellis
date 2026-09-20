@@ -4,6 +4,14 @@ import (
 	"unicode"
 )
 
+func DisplayWidth(value []rune) int {
+	var width int
+	for _, r := range value {
+		width += RuneWidth(r)
+	}
+	return width
+}
+
 func RuneWidth(r rune) int {
 	switch {
 	case unicode.Is(unicode.Mn, r):

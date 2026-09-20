@@ -286,8 +286,9 @@ func (s *Screen) writeCrossings() {
 }
 
 func (s *Screen) putContent(x, y int, val Content) error {
-	for i, r := range val.Value {
-		s.writeChar(x+i, y, r)
+	for _, r := range val.Value {
+		s.writeChar(x, y, r)
+		x += RuneWidth(r)
 	}
 	return nil
 }

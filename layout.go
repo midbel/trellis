@@ -151,7 +151,7 @@ func horizontalPath(from, to *Item, opts *Options) Connector {
 	var (
 		start  = from.Position
 		end    = to.Position
-		offset = len(from.Value)
+		offset = from.DisplayWidth()
 	)
 	if start.Y == end.Y {
 		s := Segment{
@@ -336,9 +336,9 @@ func (i *Item) AlignX(align Alignment) {
 	case AlignStart:
 		i.Position.X = i.Bounds.StartX()
 	case AlignEnd:
-		i.Position.X = i.Bounds.EndX() - len(i.Value)
+		i.Position.X = i.Bounds.EndX() - i.DisplayWidth()
 	default:
-		i.Position.X = i.Bounds.StartX() + i.Bounds.OffsetX() - (len(i.Value) / 2)
+		i.Position.X = i.Bounds.StartX() + i.Bounds.OffsetX() - (i.DisplayWidth() / 2)
 	}
 }
 
@@ -373,7 +373,7 @@ func (i *Item) Len() int {
 }
 
 func (i *Item) Size() int {
-	return len(i.Value)
+	return i.DisplayWidth()
 }
 
 func stdVerticalLayout(root *Node, opts *Options) []*Item {

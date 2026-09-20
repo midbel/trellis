@@ -26,13 +26,12 @@ func main() {
 
 func loadTree() (*codec.TreeSpec, error) {
 	var (
-		width  = flag.Int("w", 0, "width")
-		height = flag.Int("h", 0, "height")
+		width   = flag.Int("w", 0, "width")
+		height  = flag.Int("h", 0, "height")
 		reverse = flag.Bool("r", false, "reverse")
-		orient trellis.Orientation
-		output trellis.Output
-		style trellis.ConnectorStyle
-
+		orient  trellis.Orientation
+		output  trellis.Output
+		style   trellis.ConnectorStyle
 	)
 	flag.Func("t", "orientation", func(str string) error {
 		v, err := trellis.ParseOrientation(str)

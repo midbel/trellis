@@ -96,15 +96,15 @@ func applyDefaults(opts *Options) {
 }
 
 func defaultRenderContent(node *Node, opts *Options) Content {
-	value := []byte(node.Value)
+	value := []rune(node.Value)
 	if opts.Padding > 0 {
 		var (
-			pad  = make([]byte, opts.Padding)
-			tmp  = make([]byte, 0, len(value))
-			char = byte(' ')
+			pad  = make([]rune, opts.Padding)
+			tmp  = make([]rune, 0, len(value))
+			char = rune(' ')
 		)
 		if len(opts.PaddingChar) == 1 {
-			raw := []byte(opts.PaddingChar)
+			raw := []rune(opts.PaddingChar)
 			char = raw[0]
 		}
 		for i := range pad {
@@ -117,7 +117,7 @@ func defaultRenderContent(node *Node, opts *Options) Content {
 		value = tmp
 	}
 	return Content{
-		Value: []rune(string(value)),
+		Value: value,
 	}
 }
 

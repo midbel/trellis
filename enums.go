@@ -154,7 +154,7 @@ func ParseConnector(str string) (ConnectorStyle, error) {
 }
 
 const (
-	ConnectorAscii ConnectorStyle = 1<<iota
+	ConnectorAscii ConnectorStyle = 1 << iota
 	ConnectorUnicode
 )
 

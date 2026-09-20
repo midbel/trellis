@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"strconv"
+	"strings"
 
 	"github.com/midbel/angle/xml"
 )
@@ -133,6 +134,7 @@ type Screen struct {
 
 	connector ConnectorStyle
 	border    bool
+	ticksStep int
 
 	crossings []Point
 }
@@ -146,6 +148,7 @@ func NewScreen(opts *Options) (View, error) {
 		},
 		border:    opts.Border,
 		connector: opts.Style,
+		ticksStep: opts.CoordinatesStep,
 	}
 	if err := sc.dim.Validate(); err != nil {
 		return nil, err
@@ -158,8 +161,35 @@ func NewScreen(opts *Options) (View, error) {
 }
 
 func (s *Screen) Render(w io.Writer) error {
-	ws := bufio.NewWriter(w)
+	var (
+		ws     = bufio.NewWriter(w)
+		spaces = strings.Repeat(" ", 6)
+	)
+	if s.showCoordinates() {
+		if _, err := ws.WriteString(spaces); err != nil {
+			return err
+		}
+		if s.border {
+			if _, err := ws.WriteRune(space); err != nil {
+				return err
+			}
+		}
+		row := s.coordinatesX()
+		for i := range row {
+			if _, err := ws.WriteRune(row[i]); err != nil {
+				return err
+			}
+		}
+		if _, err := ws.WriteRune('\n'); err != nil {
+			return err
+		}
+	}
 	if s.border {
+		if s.showCoordinates() {
+			if _, err := ws.WriteString(spaces); err != nil {
+				return err
+			}
+		}
 		if _, err := ws.WriteRune(s.connector.TopLeft()); err != nil {
 			return err
 		}
@@ -177,6 +207,21 @@ func (s *Screen) Render(w io.Writer) error {
 	}
 	s.writeCrossings()
 	for i := range s.lines {
+		if s.showCoordinates() {
+			if i%s.ticksStep == 0 {
+				y := strconv.Itoa(i)
+				if _, err := ws.WriteString(strings.Repeat(" ", 5-len(y))); err != nil {
+					return err
+				}
+				if _, err := ws.WriteString(y + " "); err != nil {
+					return err
+				}
+			} else {
+				if _, err := ws.WriteString(spaces); err != nil {
+					return err
+				}
+			}
+		}
 		if s.border {
 			if _, err := ws.WriteRune(s.connector.VerticalBar()); err != nil {
 				return err
@@ -198,6 +243,9 @@ func (s *Screen) Render(w io.Writer) error {
 		}
 	}
 	if s.border {
+		if s.showCoordinates() {
+			ws.WriteString(spaces)
+		}
 		if _, err := ws.WriteRune(s.connector.BottomLeft()); err != nil {
 			return err
 		}
@@ -214,6 +262,26 @@ func (s *Screen) Render(w io.Writer) error {
 		}
 	}
 	return ws.Flush()
+}
+
+func (s *Screen) showCoordinates() bool {
+	return s.ticksStep > 0
+}
+
+func (s *Screen) coordinatesX() []rune {
+	line := make([]rune, s.dim.Width)
+	for i := range line {
+		line[i] = space
+	}
+	for i := 0; i < s.dim.Width; i += s.ticksStep {
+		ix := strconv.Itoa(i)
+		if i == 0 {
+			copy(line[i:i+1], []rune(ix))
+		} else {
+			copy(line[i-len(ix):i], []rune(ix))
+		}
+	}
+	return line
 }
 
 func (s *Screen) put(x, y int, cell Cell) error {

@@ -36,7 +36,7 @@ type LayoutOptions struct {
 }
 
 type RenderOptions struct {
-	ShowCoordinates bool
+	CoordinatesStep int
 	Border          bool
 }
 
@@ -68,6 +68,9 @@ func (o *Options) Validate() error {
 	}
 	if o.Spacing < 0 {
 		return fmt.Errorf("spacing can not be negative")
+	}
+	if o.CoordinatesStep < 0 {
+		return fmt.Errorf("coordinates step can not be negative")
 	}
 	return nil
 }

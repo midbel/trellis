@@ -12,9 +12,6 @@ func makeFlags(opts *trellis.Options) map[string]func() {
 		"border": func() {
 			opts.Border = true
 		},
-		"coordinates": func() {
-			opts.ShowCoordinates = true
-		},
 		"reverse": func() {
 			opts.Reverse = true
 		},
@@ -49,7 +46,7 @@ func makeSetters(opts *trellis.Options) map[string]func(any) error {
 		"spacing":     assignValue(&opts.Spacing, parseInt),
 		"border":      assignValue(&opts.Border, parseBool),
 		"reverse":     assignValue(&opts.Reverse, parseBool),
-		"coordinates": assignValue(&opts.ShowCoordinates, parseBool),
+		"ticks":       assignValue(&opts.CoordinatesStep, parseInt),
 		"align-x":     assignValue(&opts.AlignX, parseAlignment),
 		"align-y":     assignValue(&opts.AlignY, parseAlignment),
 		"connector":   assignValue(&opts.Style, parseConnectorStyle),

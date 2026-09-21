@@ -3,25 +3,7 @@ package trellis
 import (
 	"fmt"
 	"slices"
-	"strings"
 )
-
-type LayoutFunc func(*Node, *Options) []*Item
-
-func Layout(orient Orientation) (LayoutFunc, error) {
-	var fn LayoutFunc
-	switch orient {
-	case HorizontalLayout:
-		fn = stdHorizontalLayout
-	case VerticalLayout:
-		fn = stdVerticalLayout
-	case CompactLayout:
-		fn = compactLayout
-	default:
-		return nil, fmt.Errorf("unsupported layout")
-	}
-	return fn, nil
-}
 
 type CoordinateMap struct {
 	Width       int
@@ -37,37 +19,7 @@ type Coordinate struct {
 }
 
 func ComputeLayout(root *Node, options *Options) (CoordinateMap, error) {
-	opts, err := prepareOptions(options)
-	if err != nil {
-		return CoordinateMap{}, err
-	}
-	var (
-		is  []*Item
-		res CoordinateMap
-		fn  LayoutFunc
-	)
-	fn, err = Layout(opts.Orient)
-	if err != nil {
-		return res, err
-	}
-	is = fn(root, opts)
-	for i := range is {
-		c := Coordinate{
-			Value: strings.TrimSpace(is[i].String()),
-			Ideal: Point{
-				X: is[i].Ideal.X,
-				Y: is[i].Ideal.Y,
-			},
-			Computed: Point{
-				X: is[i].Position.X,
-				Y: is[i].Position.Y,
-			},
-			Bounds: is[i].Bounds,
-		}
-		res.Coordinates = append(res.Coordinates, c)
-	}
-	res.Width = opts.Width
-	res.Height = opts.Height
+	var res CoordinateMap
 	return res, nil
 }
 
@@ -275,6 +227,12 @@ func (r Rect) OffsetY() int {
 	return r.Height / 2
 }
 
+type ItemsSet struct {
+	Width  int
+	Height int
+	Items  []*Item
+}
+
 type Item struct {
 	Content
 
@@ -376,17 +334,18 @@ func (i *Item) Size() int {
 	return i.DisplayWidth()
 }
 
-func stdVerticalLayout(root *Node, opts *Options) []*Item {
+func stdVerticalLayout(root *Node, opts *Options) *ItemsSet {
 	var (
-		mk = defaultTreeLayout()
-		is = mk.Make(root, opts)
+		mk  = defaultTreeLayout()
+		is  = mk.Make(root, opts)
+		set ItemsSet
 	)
 	for i := range is {
 		is[i].Position = is[i].Position.Swap()
 		is[i].Ideal = is[i].Position
 	}
 	var (
-		spacing = maxFromItems(is, func(i *Item) int { return i.Position.X })
+		extent = maxFromItems(is, func(i *Item) int { return i.Position.X + opts.Spacing })
 		level   = maxFromItems(is, func(i *Item) int { return i.Position.Y })
 	)
 	ix := slices.IndexFunc(is, func(it *Item) bool {
@@ -395,11 +354,18 @@ func stdVerticalLayout(root *Node, opts *Options) []*Item {
 	if ix < 0 {
 		return nil
 	}
-	computeVerticalCoordinates(is[ix], opts, spacing, level)
+	if extent == 0 {
+		extent = opts.Spacing
+	}
+	computeVerticalCoordinates(is[ix], opts, extent, level)
 
 	opts.Width = maxFromItems(is, func(i *Item) int { return i.Bounds.EndX() })
 	opts.Height = maxFromItems(is, func(i *Item) int { return i.Bounds.EndY() })
-	return is
+
+	set.Width = opts.Width
+	set.Height = opts.Height
+	set.Items = is
+	return &set
 }
 
 func computeVerticalCoordinates(node *Item, opts *Options, spacing, level int) {
@@ -475,12 +441,24 @@ func computeVerticalNode(node *Item, opts *Options, spacing, height int) {
 	node.AlignY(opts.AlignY)
 }
 
-func stdHorizontalLayout(root *Node, opts *Options) []*Item {
+func countLeaves(root *Node) int {
+	if root.Leaf() {
+		return 1
+	}
+	var sum int
+	for _, n := range root.Nodes {
+		sum += countLeaves(n)
+	}
+	return sum
+}
+
+func stdHorizontalLayout(root *Node, opts *Options) *ItemsSet {
 	var (
-		mk      = defaultTreeLayout()
-		is      = mk.Make(root, opts)
-		spacing = maxFromItems(is, func(i *Item) int { return i.Position.Y })
-		level   = maxFromItems(is, func(i *Item) int { return i.Position.X })
+		mk     = defaultTreeLayout()
+		is     = mk.Make(root, opts)
+		extent = maxFromItems(is, func(i *Item) int { return i.Position.Y + opts.Spacing })
+		level  = maxFromItems(is, func(i *Item) int { return i.Position.X })
+		set    ItemsSet
 	)
 	ix := slices.IndexFunc(is, func(it *Item) bool {
 		return it.Root()
@@ -488,10 +466,19 @@ func stdHorizontalLayout(root *Node, opts *Options) []*Item {
 	if ix < 0 {
 		return nil
 	}
-	computeHorizontalCoordinates(is[ix], opts, spacing, level)
+	if extent == 0 {
+		extent = opts.Spacing
+	}
+
+	computeHorizontalCoordinates(is[ix], opts, extent, level)
 	opts.Width = maxFromItems(is, func(i *Item) int { return i.Bounds.EndX() })
 	opts.Height = maxFromItems(is, func(i *Item) int { return i.Bounds.EndY() })
-	return is
+
+	set.Items = is
+	set.Width = opts.Width
+	set.Height = opts.Height
+
+	return &set
 }
 
 func computeHorizontalCoordinates(node *Item, opts *Options, spacing, level int) {
@@ -569,13 +556,14 @@ func computeHorizontalNode(node *Item, opts *Options, spacing, width int) {
 
 const compactBarWidth = 2
 
-func compactLayout(root *Node, opts *Options) []*Item {
+func compactLayout(root *Node, opts *Options) *ItemsSet {
 	clone := opts.Clone()
 	clone.Spacing = 1
 
 	var (
 		mk    = defaultTreeLayout()
 		items = mk.Make(root, clone)
+		set   ItemsSet
 	)
 	items[0].Bounds = Rect{
 		Width:  opts.Width,
@@ -602,7 +590,9 @@ func compactLayout(root *Node, opts *Options) []*Item {
 		return i.Root()
 	})
 	rearrangeCompactChildren(items[ix], opts.Spacing)
-	return items
+
+	set.Items = items
+	return &set
 }
 
 func rearrangeCompactChildren(node *Item, spacing int) {
@@ -655,9 +645,11 @@ func (m *treeLayout) makeLayout(node *Node, depth int, opts *Options) *Item {
 	}
 	sub.Position.X = depth
 	depth++
-	for _, n := range node.Nodes {
-		child := m.makeLayout(n, depth, opts)
-		sub.Children = append(sub.Children, child)
+	if opts.MaxDepth == 0 || depth <= opts.MaxDepth {
+		for _, n := range node.Nodes {
+			child := m.makeLayout(n, depth, opts)
+			sub.Children = append(sub.Children, child)
+		}
 	}
 	if node.Leaf() {
 		sub.Position.Y = m.siblingsSpacing
@@ -668,11 +660,16 @@ func (m *treeLayout) makeLayout(node *Node, depth int, opts *Options) *Item {
 		} else if opts.Align() == AlignEnd {
 			sub.Position.Y = sub.Children[len(sub.Children)-1].Position.Y
 		} else {
-			var sum int
-			for i := range sub.Children {
-				sum += sub.Children[i].Position.Y
+			if len(sub.Children) > 0 {
+				var sum int
+				for i := range sub.Children {
+					sum += sub.Children[i].Position.Y
+				}
+				sub.Position.Y = sum / (len(sub.Children))
+			} else {
+				sub.Position.Y = m.siblingsSpacing
+				m.siblingsSpacing += opts.Spacing
 			}
-			sub.Position.Y = sum / (len(sub.Children))
 		}
 	}
 	sub.Ideal = sub.Position

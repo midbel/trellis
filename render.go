@@ -21,6 +21,25 @@ func (n *Node) Leaf() bool {
 	return len(n.Nodes) == 0
 }
 
+func traverse(node *Node, target int) []*Node {
+	if target == 0 {
+		return []*Node{node}
+	}
+	return traverseDepth(node, 0, target-1)
+}
+
+func traverseDepth(node *Node, currDepth, targetDepth int) []*Node {
+	if currDepth >= targetDepth {
+		return node.Nodes
+	}
+	var all []*Node
+	for _, n := range node.Nodes {
+		ns := traverseDepth(n, currDepth+1, targetDepth)
+		all = append(all, ns...)
+	}
+	return all
+}
+
 var renderers = map[Orientation]func(io.Writer, *Node, *Options) error{
 	HorizontalLayout: Horizontal,
 	VerticalLayout:   Vertical,
@@ -45,20 +64,35 @@ func Horizontal(w io.Writer, root *Node, options *Options) error {
 		return err
 	}
 	opts.Orient = HorizontalLayout
-	canvas, err := NewCanvas(opts)
+	master, err := NewCanvas(opts)
 	if err != nil {
 		return err
 	}
+	var (
+		// nodes = traverse(root, opts.MinDepth)
+		nodes  = traverse(root, 1)
+		offset int
+	)
+	for _, n := range nodes {
+		clone := opts.Clone()
+		set := stdHorizontalLayout(n, clone)
 
-	items := stdHorizontalLayout(root, opts)
-	for _, i := range items {
-		canvas.Put(i.Position.X, i.Position.Y, i.Content)
-		for _, x := range i.Children {
-			conn := horizontalPath(i, x, opts)
-			canvas.Put(conn.X(), conn.Y(), conn)
+		canvas, err := NewCanvas(clone)
+		if err != nil {
+			return err
 		}
+		for _, i := range set.Items {
+			canvas.Put(i.Position.X, i.Position.Y, i.Content)
+			for _, x := range i.Children {
+				conn := horizontalPath(i, x, clone)
+				canvas.Put(conn.X(), conn.Y(), conn)
+			}
+		}
+		canvas.Move(0, offset)
+		master.Append(canvas)
+		offset += set.Height
 	}
-	return renderCanvas(w, opts.Output, canvas)
+	return renderCanvas(w, opts.Output, master)
 }
 
 func Vertical(w io.Writer, root *Node, options *Options) error {
@@ -73,8 +107,11 @@ func Vertical(w io.Writer, root *Node, options *Options) error {
 		return err
 	}
 
-	items := stdVerticalLayout(root, opts)
-	for _, i := range items {
+	set := stdVerticalLayout(root, opts)
+	if err := canvas.UpdateDim(set.Width, set.Height); err != nil {
+		return err
+	}
+	for _, i := range set.Items {
 		canvas.Put(i.Position.X, i.Position.Y, i.Content)
 		for _, x := range i.Children {
 			conn := verticalPath(i, x, opts)
@@ -93,10 +130,12 @@ func Compact(w io.Writer, root *Node, options *Options) error {
 	opts.AlignY = AlignStart
 	opts.AlignX = AlignStart
 	opts.Orient = CompactLayout
+	opts.CoordinatesStep = 0
+	opts.Border = false
 
-	items := compactLayout(root, opts)
-	if ix := slices.IndexFunc(items, func(i *Item) bool { return i.Root() }); ix >= 0 {
-		opts.Height = items[ix].Weight()
+	set := compactLayout(root, opts)
+	if ix := slices.IndexFunc(set.Items, func(i *Item) bool { return i.Root() }); ix >= 0 {
+		opts.Height = set.Items[ix].Weight()
 	} else {
 		return fmt.Errorf("missing root")
 	}
@@ -106,7 +145,7 @@ func Compact(w io.Writer, root *Node, options *Options) error {
 		return err
 	}
 
-	for _, i := range items {
+	for _, i := range set.Items {
 		canvas.Put(i.Position.X, i.Position.Y, i.Content)
 
 		x := i.Position.X - compactBarWidth
@@ -148,5 +187,6 @@ func renderCanvas(w io.Writer, out Output, canvas *Canvas) error {
 	if err != nil {
 		return err
 	}
+	_ = view
 	return view.Render(w)
 }

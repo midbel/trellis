@@ -47,6 +47,16 @@ func NewConnector(paths []Segment) Connector {
 	}
 }
 
+func (c Connector) Move(x, y int) Connector {
+	for i := range c.Paths {
+		c.Paths[i].Start.X += x
+		c.Paths[i].Start.Y += y
+		c.Paths[i].End.X += x
+		c.Paths[i].End.Y += y
+	}
+	return c
+}
+
 func (c Connector) X() int {
 	return c.Paths[0].Start.X
 }
@@ -83,9 +93,11 @@ func (c Content) DisplayWidth() int {
 }
 
 type Canvas struct {
-	dim   Dimension
-	opts  *Options
-	cells []Placement
+	origin   Point
+	dim      Dimension
+	opts     *Options
+	cells    []Placement
+	children []*Canvas
 }
 
 func NewCanvas(opts *Options) (*Canvas, error) {
@@ -103,8 +115,26 @@ func NewCanvas(opts *Options) (*Canvas, error) {
 	return canvas, nil
 }
 
+func (c *Canvas) SetOrigin(pt Point) {
+	c.origin = pt
+}
+
+func (c *Canvas) Move(x, y int) {
+	c.origin.X += x
+	c.origin.Y += y
+}
+
+func (c *Canvas) Append(other *Canvas) {
+	c.children = append(c.children, other)
+}
+
+func (c *Canvas) Merge(other *Canvas) error {
+	return nil
+}
+
 func (c *Canvas) Screen() (View, error) {
-	view, err := NewScreen(c.opts)
+	clone := c.cloneOptions()
+	view, err := NewScreen(clone)
 	if err != nil {
 		return nil, err
 	}
@@ -112,7 +142,8 @@ func (c *Canvas) Screen() (View, error) {
 }
 
 func (c *Canvas) Xml() (View, error) {
-	view, err := NewXml(c.opts)
+	clone := c.cloneOptions()
+	view, err := NewXml(clone)
 	if err != nil {
 		return nil, err
 	}
@@ -127,13 +158,54 @@ func (c *Canvas) Json() (View, error) {
 	return nil, fmt.Errorf("json view: not yet implemented")
 }
 
+func (c *Canvas) cloneOptions() *Options {
+	clone := c.opts.Clone()
+	clone.Width = c.dim.Width
+	clone.Height = c.dim.Height
+
+	if len(c.children) > 0 {
+		clone.ResetSize()
+		if clone.Orient == HorizontalLayout {
+			clone.Width = c.opts.Width
+		} else {
+			clone.Height = c.opts.Height
+		}
+		for _, x := range c.children {
+			if clone.Orient == HorizontalLayout {
+				clone.Height += x.dim.Height
+				clone.Width = max(clone.Width, x.dim.Width)
+			} else if clone.Orient == VerticalLayout {
+				clone.Width += x.dim.Width
+				clone.Height = max(clone.Height, x.dim.Height)
+			}
+		}
+	}
+	return clone
+}
+
 func (c *Canvas) fillView(view View) error {
 	for _, p := range c.cells {
+		p.X += c.origin.X
+		p.Y += c.origin.Y
+		if conn, ok := p.Cell.(Connector); ok {
+			p.Cell = conn.Move(c.origin.X, c.origin.Y)
+		}
 		if err := view.put(p.X, p.Y, p.Cell); err != nil {
 			return err
 		}
 	}
+	for _, x := range c.children {
+		if err := x.fillView(view); err != nil {
+			return err
+		}
+	}
 	return nil
+}
+
+func (c *Canvas) UpdateDim(width, height int) error {
+	c.dim.Width = width
+	c.dim.Height = height
+	return c.dim.Validate()
 }
 
 func (c *Canvas) Put(x, y int, cell Cell) error {
@@ -160,7 +232,7 @@ func (c *Canvas) HorizontalBar(x, y, size int) error {
 
 func (c *Canvas) put(x, y int, cell Cell) error {
 	if !c.dim.Valid(x, y) {
-		return fmt.Errorf("invalid coordinate (%d, %d)", x, y)
+		return fmt.Errorf("invalid coordinate (%d, %d)")
 	}
 	p := Placement{
 		Point: NewPoint(x, y),

@@ -146,6 +146,11 @@ var defaultOptions = &Options{
 	},
 }
 
+func (t *Options) ResetSize() {
+	t.Width = 0
+	t.Height = 0
+}
+
 func (t *Options) Clone() *Options {
 	x := *t
 	return &x

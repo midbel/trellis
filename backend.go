@@ -58,6 +58,7 @@ func (f *XmlFile) put(x, y int, cell Cell) error {
 		f.createElementForContent(x, y, c)
 	case Connector:
 		f.createElementForConnector(x, y, c)
+	case *Canvas:
 	default:
 	}
 	return nil

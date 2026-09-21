@@ -29,7 +29,7 @@ func loadTree() (*codec.TreeSpec, error) {
 		width   = flag.Int("w", 0, "width")
 		height  = flag.Int("h", 0, "height")
 		reverse = flag.Bool("r", false, "reverse")
-		border = flag.Bool("b", false, "border")
+		border  = flag.Bool("b", false, "border")
 		orient  trellis.Orientation
 		output  trellis.Output
 		style   trellis.ConnectorStyle

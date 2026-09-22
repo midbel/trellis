@@ -69,7 +69,7 @@ func Vertical(w io.Writer, root *Node, options *Options) error {
 	}
 
 	set := stdVerticalLayout(root, opts)
-	if err := canvas.UpdateDim(set.Width, set.Height); err != nil {
+	if err := canvas.Resize(set.Width, set.Height); err != nil {
 		return err
 	}
 	for _, i := range set.Items {

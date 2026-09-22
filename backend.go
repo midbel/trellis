@@ -23,7 +23,7 @@ type XmlFile struct {
 
 func NewXml(opts *Options) (View, error) {
 	el := xml.Element{
-		Name: xml.NewName("tree"),
+		Name: xml.NewName("canvas"),
 		Attributes: []xml.Attribute{
 			xml.NewAttribute(xml.NewName("width"), strconv.Itoa(opts.Width)),
 			xml.NewAttribute(xml.NewName("height"), strconv.Itoa(opts.Height)),
@@ -56,7 +56,7 @@ func (f *XmlFile) put(x, y int, cell Cell) error {
 	return nil
 }
 
-func (f *XmlFile) createElementForCanvas(x, y int, cvs *Canvas) {
+func (f *XmlFile) createElementForCanvas(x, y int, cv *Canvas) {
 	el := &xml.Element{
 		Name: xml.NewName("canvas"),
 		Attributes: []xml.Attribute{
@@ -64,6 +64,12 @@ func (f *XmlFile) createElementForCanvas(x, y int, cvs *Canvas) {
 			xml.NewAttribute(xml.NewName("y"), strconv.Itoa(y)),
 		},
 	}
+	root := f.root
+	f.root = el
+	for _, p := range cv.cells {
+		f.put(p.X, p.Y, p.Cell)
+	}
+	f.root = root
 	f.root.Children = append(f.root.Children, el)
 }
 

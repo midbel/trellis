@@ -2,6 +2,7 @@ package trellis
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 )
 
@@ -48,13 +49,14 @@ func NewConnector(paths []Segment) Connector {
 }
 
 func (c Connector) Move(x, y int) Connector {
-	for i := range c.Paths {
+	cp := NewConnector(slices.Clone(c.Paths))
+	for i := range cp.Paths {
 		c.Paths[i].Start.X += x
 		c.Paths[i].Start.Y += y
 		c.Paths[i].End.X += x
 		c.Paths[i].End.Y += y
 	}
-	return c
+	return cp
 }
 
 func (c Connector) X() int {
@@ -106,8 +108,7 @@ func NewCanvas(opts *Options) (*Canvas, error) {
 			Width:  opts.Width,
 			Height: opts.Height,
 		},
-		opts:  opts,
-		cells: make([]Placement, 0, opts.Width*opts.Height),
+		opts: opts,
 	}
 	if err := canvas.dim.Validate(); err != nil {
 		return nil, err
@@ -128,10 +129,6 @@ func (c *Canvas) Append(other *Canvas) {
 	c.children = append(c.children, other)
 }
 
-func (c *Canvas) Merge(other *Canvas) error {
-	return nil
-}
-
 func (c *Canvas) Screen() (View, error) {
 	clone := c.cloneOptions()
 	view, err := NewScreen(clone)
@@ -147,7 +144,16 @@ func (c *Canvas) Xml() (View, error) {
 	if err != nil {
 		return nil, err
 	}
-	return view, c.fillView(view)
+	if len(c.children) > 1 {
+		for _, cv := range c.children {
+			if err := view.put(cv.origin.X, cv.origin.Y, cv); err != nil {
+				return nil, err
+			}
+		}
+		return view, nil
+	} else {
+		return view, c.children[0].fillView(view)
+	}
 }
 
 func (c *Canvas) Svg() (View, error) {
@@ -202,7 +208,7 @@ func (c *Canvas) fillView(view View) error {
 	return nil
 }
 
-func (c *Canvas) UpdateDim(width, height int) error {
+func (c *Canvas) Resize(width, height int) error {
 	c.dim.Width = width
 	c.dim.Height = height
 	return c.dim.Validate()

@@ -346,7 +346,7 @@ func stdVerticalLayout(root *Node, opts *Options) *ItemsSet {
 	}
 	var (
 		extent = maxFromItems(is, func(i *Item) int { return i.Position.X + opts.Spacing })
-		level   = maxFromItems(is, func(i *Item) int { return i.Position.Y })
+		level  = maxFromItems(is, func(i *Item) int { return i.Position.Y })
 	)
 	ix := slices.IndexFunc(is, func(it *Item) bool {
 		return it.Root()

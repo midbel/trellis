@@ -25,18 +25,9 @@ func NewXml(opts *Options) (View, error) {
 	el := xml.Element{
 		Name: xml.NewName("tree"),
 		Attributes: []xml.Attribute{
-			{
-				Name:  xml.NewName("width"),
-				Value: strconv.Itoa(opts.Width),
-			},
-			{
-				Name:  xml.NewName("height"),
-				Value: strconv.Itoa(opts.Height),
-			},
-			{
-				Name:  xml.NewName("orientation"),
-				Value: opts.Orient.String(),
-			},
+			xml.NewAttribute(xml.NewName("width"), strconv.Itoa(opts.Width)),
+			xml.NewAttribute(xml.NewName("height"), strconv.Itoa(opts.Height)),
+			xml.NewAttribute(xml.NewName("orientation"), opts.Orient.String()),
 		},
 	}
 	return &XmlFile{
@@ -46,7 +37,7 @@ func NewXml(opts *Options) (View, error) {
 
 func (f *XmlFile) Render(w io.Writer) error {
 	var (
-		doc = xml.NewDocument(*f.root)
+		doc = xml.NewDocument(f.root)
 		enc = xml.NewEncoder(w)
 	)
 	return enc.Encode(doc)
@@ -59,33 +50,39 @@ func (f *XmlFile) put(x, y int, cell Cell) error {
 	case Connector:
 		f.createElementForConnector(x, y, c)
 	case *Canvas:
+		f.createElementForCanvas(x, y, c)
 	default:
 	}
 	return nil
+}
+
+func (f *XmlFile) createElementForCanvas(x, y int, cvs *Canvas) {
+	el := &xml.Element{
+		Name: xml.NewName("canvas"),
+		Attributes: []xml.Attribute{
+			xml.NewAttribute(xml.NewName("x"), strconv.Itoa(x)),
+			xml.NewAttribute(xml.NewName("y"), strconv.Itoa(y)),
+		},
+	}
+	f.root.Children = append(f.root.Children, el)
 }
 
 func (f *XmlFile) createElementForContent(x, y int, val Content) {
 	el := xml.Element{
 		Name: xml.NewName("content"),
 		Attributes: []xml.Attribute{
-			{
-				Name:  xml.NewName("x"),
-				Value: strconv.Itoa(x),
-			},
-			{
-				Name:  xml.NewName("y"),
-				Value: strconv.Itoa(y),
-			},
+			xml.NewAttribute(xml.NewName("x"), strconv.Itoa(x)),
+			xml.NewAttribute(xml.NewName("y"), strconv.Itoa(y)),
 		},
 		Children: []xml.Node{
-			xml.Text{Value: string(val.Value)},
+			xml.NewText(string(val.Value)),
 		},
 	}
-	f.root.Children = append(f.root.Children, el)
+	f.root.Children = append(f.root.Children, &el)
 }
 
 func (f *XmlFile) createElementForConnector(x, y int, conn Connector) {
-	el := xml.Element{
+	el := &xml.Element{
 		Name: xml.NewName("connector"),
 	}
 	for _, seg := range conn.Paths {
@@ -95,36 +92,27 @@ func (f *XmlFile) createElementForConnector(x, y int, conn Connector) {
 	f.root.Children = append(f.root.Children, el)
 }
 
-func (f *XmlFile) createElementForSegment(seg Segment) xml.Element {
-	return xml.Element{
+func (f *XmlFile) createElementForSegment(seg Segment) *xml.Element {
+	start := &xml.Element{
+		Name: xml.NewName("start"),
+		Attributes: []xml.Attribute{
+			xml.NewAttribute(xml.NewName("x"), strconv.Itoa(seg.Start.X)),
+			xml.NewAttribute(xml.NewName("y"), strconv.Itoa(seg.Start.Y)),
+		},
+	}
+	end := &xml.Element{
+		Name: xml.NewName("end"),
+		Attributes: []xml.Attribute{
+			xml.NewAttribute(xml.NewName("x"), strconv.Itoa(seg.End.X)),
+			xml.NewAttribute(xml.NewName("y"), strconv.Itoa(seg.End.Y)),
+		},
+	}
+
+	return &xml.Element{
 		Name: xml.NewName("segment"),
 		Children: []xml.Node{
-			xml.Element{
-				Name: xml.NewName("start"),
-				Attributes: []xml.Attribute{
-					{
-						Name:  xml.NewName("x"),
-						Value: strconv.Itoa(seg.Start.X),
-					},
-					{
-						Name:  xml.NewName("y"),
-						Value: strconv.Itoa(seg.Start.Y),
-					},
-				},
-			},
-			xml.Element{
-				Name: xml.NewName("end"),
-				Attributes: []xml.Attribute{
-					{
-						Name:  xml.NewName("x"),
-						Value: strconv.Itoa(seg.End.X),
-					},
-					{
-						Name:  xml.NewName("y"),
-						Value: strconv.Itoa(seg.End.Y),
-					},
-				},
-			},
+			start,
+			end,
 		},
 	}
 }

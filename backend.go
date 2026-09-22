@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/midbel/angle/svg"
 	"github.com/midbel/angle/xml"
 )
 
@@ -121,6 +122,42 @@ func (f *XmlFile) createElementForSegment(seg Segment) *xml.Element {
 			end,
 		},
 	}
+}
+
+type Svg struct {
+	root *svg.Document
+}
+
+func NewSvg(opts *Options) (View, error) {
+	doc := svg.NewDocument(float64(opts.Width), float64(opts.Height))
+	return &Svg{
+		root: doc,
+	}, nil
+}
+
+func (s *Svg) Render(w io.Writer) error {
+	return s.root.Render(w)
+}
+
+func (s *Svg) put(x, y int, cell Cell) error {
+	switch c := cell.(type) {
+	case Content:
+		t := svg.NewText(float64(x), float64(y), string(c.Value))
+		s.root.Append(t)
+	case Connector:
+		p := svg.NewPath()
+		for i, s := range c.Paths {
+			if i == 0 {
+				p.MoveTo(float64(s.Start.X), float64(s.Start.Y))
+			} else {
+				p.LineTo(float64(s.Start.X), float64(s.Start.Y))
+			}
+			p.LineTo(float64(s.End.X), float64(s.End.Y))
+		}
+		s.root.Append(p)
+	default:
+	}
+	return nil
 }
 
 type Screen struct {

@@ -157,7 +157,12 @@ func (c *Canvas) Xml() (View, error) {
 }
 
 func (c *Canvas) Svg() (View, error) {
-	return nil, fmt.Errorf("svg view: not yet implemented")
+	clone := c.cloneOptions()
+	view, err := NewSvg(clone)
+	if err != nil {
+		return nil, err
+	}
+	return view, c.fillView(view)
 }
 
 func (c *Canvas) Json() (View, error) {

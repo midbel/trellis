@@ -142,6 +142,8 @@ func renderCanvas(w io.Writer, out Output, canvas *Canvas) error {
 		view, err = canvas.Xml()
 	case OutputJson:
 		view, err = canvas.Json()
+	case OutputTable:
+		view, err = canvas.Table()
 	default:
 		return fmt.Errorf("no output provided")
 	}

@@ -160,6 +160,21 @@ func (s *Svg) put(x, y int, cell Cell) error {
 	return nil
 }
 
+type Table struct{}
+
+func NewTable() (View, error) {
+	t := &Table{}
+	return t, nil
+}
+
+func (t *Table) Render(w io.Writer) error {
+	return nil
+}
+
+func (t *Table) put(x, y int, cell Cell) error {
+	return nil
+}
+
 type Screen struct {
 	lines [][]rune
 	dim   Dimension

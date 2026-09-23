@@ -169,6 +169,10 @@ func (c *Canvas) Json() (View, error) {
 	return nil, fmt.Errorf("json view: not yet implemented")
 }
 
+func (c *Canvas) Table() (View, error) {
+	return NewTable()
+}
+
 func (c *Canvas) cloneOptions() *Options {
 	clone := c.opts.Clone()
 	clone.Width = c.dim.Width

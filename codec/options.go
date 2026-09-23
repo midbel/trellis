@@ -15,15 +15,6 @@ func makeFlags(opts *trellis.Options) map[string]func() {
 		"reverse": func() {
 			opts.Reverse = true
 		},
-		"padding": func() {
-			opts.Padding++
-		},
-		"margin": func() {
-			opts.Margin++
-		},
-		"spacing": func() {
-			opts.Spacing++
-		},
 		"vertical": func() {
 			opts.Orient = trellis.VerticalLayout
 		},
@@ -40,10 +31,10 @@ func makeSetters(opts *trellis.Options) map[string]func(any) error {
 	return map[string]func(any) error{
 		"width":       assignValue(&opts.Width, parseInt),
 		"height":      assignValue(&opts.Height, parseInt),
-		"padding":     assignValue(&opts.Padding, parsePadding),
 		"paddingChar": assignValue(&opts.PaddingChar, parseString),
-		"margin":      assignValue(&opts.Margin, parseInt),
-		"spacing":     assignValue(&opts.Spacing, parseInt),
+		"padding":     assignValue(&opts.Padding, parsePadding),
+		"margin":      assignValue(&opts.Margin, parseMargin),
+		"spacing":     assignValue(&opts.Spacing, parseSpacing),
 		"border":      assignValue(&opts.Border, parseBool),
 		"reverse":     assignValue(&opts.Reverse, parseBool),
 		"ticks":       assignValue(&opts.CoordinatesStep, parseInt),
@@ -51,6 +42,8 @@ func makeSetters(opts *trellis.Options) map[string]func(any) error {
 		"align-y":     assignValue(&opts.AlignY, parseAlignment),
 		"connector":   assignValue(&opts.Style, parseConnectorStyle),
 		"output":      assignValue(&opts.Output, parseOutput),
+		"min-depth":   assignValue(&opts.MinDepth, parseInt),
+		"max-depth":   assignValue(&opts.MaxDepth, parseInt),
 	}
 }
 
@@ -62,6 +55,54 @@ func assignValue[T any](dst *T, parse func(any) (T, error)) func(any) error {
 		}
 		*dst = v
 		return nil
+	}
+}
+
+func parseSpacing(value any) (int, error) {
+	get := func(pad string) (int, error) {
+		switch pad {
+		case "small":
+			return trellis.SpacingS, nil
+		case "medium":
+			return trellis.SpacingM, nil
+		case "large":
+			return trellis.SpacingL, nil
+		case "extra":
+			return trellis.SpacingX, nil
+		default:
+			return 0, fmt.Errorf("padding: unsupported value %q", pad)
+		}
+	}
+	switch v := value.(type) {
+	case string:
+		return get(v)
+	case sexpr.Ident:
+		return get(string(v))
+	default:
+		return parseInt(value)
+	}
+}
+
+func parseMargin(value any) (int, error) {
+	get := func(pad string) (int, error) {
+		switch pad {
+		case "small":
+			return trellis.PaddingS, nil
+		case "medium":
+			return trellis.PaddingM, nil
+		case "large":
+			return trellis.PaddingL, nil
+		default:
+			return 0, fmt.Errorf("padding: unsupported value %q", pad)
+		}
+	}
+	switch v := value.(type) {
+	case string:
+		return get(v)
+	case sexpr.Ident:
+		return get(string(v))
+	default:
+		return parseInt(value)
 	}
 }
 

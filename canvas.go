@@ -144,16 +144,20 @@ func (c *Canvas) Xml() (View, error) {
 	if err != nil {
 		return nil, err
 	}
-	if len(c.children) > 1 {
-		for _, cv := range c.children {
-			if err := view.put(cv.origin.X, cv.origin.Y, cv); err != nil {
-				return nil, err
-			}
-		}
-		return view, nil
-	} else {
-		return view, c.children[0].fillView(view)
-	}
+	return view, c.fillView(view)
+	// if n := len(c.children); n > 1 {
+	// 	for _, cv := range c.children {
+	// 		if err := view.put(cv.origin.X, cv.origin.Y, cv); err != nil {
+	// 			return nil, err
+	// 		}
+	// 	}
+	// 	return view, nil
+	// } else {
+	// 	if n == 0 {
+	// 		return view, nil
+	// 	}
+	// 	return view, c.children[0].fillView(view)
+	// }
 }
 
 func (c *Canvas) Svg() (View, error) {
@@ -171,16 +175,7 @@ func (c *Canvas) Json() (View, error) {
 	if err != nil {
 		return nil, err
 	}
-	if len(c.children) > 1 {
-		for _, cv := range c.children {
-			if err := view.put(cv.origin.X, cv.origin.Y, cv); err != nil {
-				return nil, err
-			}
-		}
-		return view, nil
-	} else {
-		return view, c.children[0].fillView(view)
-	}
+	return view, c.fillView(view)
 }
 
 func (c *Canvas) Table() (View, error) {

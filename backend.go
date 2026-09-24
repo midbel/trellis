@@ -105,7 +105,7 @@ func (f *JsonFile) appendCanvas(x, y int, c *Canvas) {
 	vs, ok := tmp["canvas"].([]any)
 	if ok {
 		f.root = tmp
-		f.root["canvas"] = append(vs, tmp)
+		f.root["canvas"] = append(vs, root)
 	}	
 }
 
@@ -132,7 +132,7 @@ func (f *XmlFile) Render(w io.Writer) error {
 		doc = xml.NewDocument(f.root)
 		enc = xml.NewEncoder(w)
 	)
-	enc.SetCompact(true)
+	// enc.SetCompact(true)
 	return enc.Encode(doc)
 }
 

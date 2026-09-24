@@ -29,6 +29,12 @@ func ParseOutput(str string) (Output, error) {
 
 type Orientation uint8
 
+const (
+	HorizontalLayout Orientation = 1<< iota
+	VerticalLayout
+	CompactLayout
+)
+
 func ParseOrientation(str string) (Orientation, error) {
 	switch str {
 	case "", "h", "horizontal":
@@ -55,57 +61,7 @@ func (o Orientation) String() string {
 	}
 }
 
-const (
-	HorizontalLayout Orientation = iota
-	VerticalLayout
-	CompactLayout
-)
-
-type Format uint8
-
-func ParseFormat(str string) (Format, error) {
-	switch str {
-	case "", "regular":
-		return Regular, nil
-	case "italic":
-		return Italic, nil
-	case "bold":
-		return Bold, nil
-	case "underline":
-		return Underline, nil
-	case "strike":
-		return Strike, nil
-	default:
-		return 0, unknown("format", str)
-	}
-}
-
-const (
-	Regular Format = 1 << iota
-	Italic
-	Bold
-	Underline
-	Strike
-)
-
-func (f Format) Zero() bool {
-	return f <= Regular
-}
-
 type Alignment uint8
-
-func ParseAlignment(str string) (Alignment, error) {
-	switch str {
-	case "", "center":
-		return AlignCenter, nil
-	case "left", "start", "top":
-		return AlignStart, nil
-	case "right", "end", "bottom":
-		return AlignEnd, nil
-	default:
-		return 0, unknown("alignment", str)
-	}
-}
 
 const (
 	AlignCenter Alignment = iota
@@ -119,6 +75,19 @@ const (
 	AlignRight  = AlignEnd
 	AlignBottom = AlignEnd
 )
+
+func ParseAlignment(str string) (Alignment, error) {
+	switch str {
+	case "", "center":
+		return AlignCenter, nil
+	case "left", "start", "top":
+		return AlignStart, nil
+	case "right", "end", "bottom":
+		return AlignEnd, nil
+	default:
+		return 0, unknown("alignment", str)
+	}
+}
 
 const (
 	connectBarAscii    = '+'

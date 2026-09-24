@@ -9,6 +9,7 @@ import (
 
 	"github.com/midbel/angle/svg"
 	"github.com/midbel/angle/xml"
+	"github.com/midbel/curly"
 )
 
 const space = ' '
@@ -16,6 +17,96 @@ const space = ' '
 type View interface {
 	Render(io.Writer) error
 	put(int, int, Cell) error
+}
+
+type JsonFile struct {
+	root map[string]any
+}
+
+func NewJson(opts *Options) (View, error) {
+	j :=  &JsonFile{
+		root: make(map[string]any),
+	}
+	j.root["width"] = opts.Width
+	j.root["height"] = opts.Height
+	j.root["orientation"] = opts.Orient.String()
+	j.root["cells"] = []any{}
+	j.root["connectors"] = []any{}
+	j.root["canvas"] = []any{}
+	return j, nil
+}
+
+func (f *JsonFile) Render(w io.Writer) error {
+	return curly.Compact(w).Write(f.root)
+}
+
+func (f *JsonFile) put(x, y int, cell Cell) error {
+	switch c := cell.(type) {
+	case Content:
+		f.appendContent(x, y, c)
+	case Connector:
+		f.appendConnector(x, y, c)
+	case *Canvas:
+		f.appendCanvas(x, y, c)
+	default:
+	}
+	return nil
+}
+
+func (f *JsonFile) appendContent(x, y int, c Content) {
+	v := map[string]any{
+		"content": string(c.Value),
+		"x": x,
+		"y": y,
+	}
+	vs, ok := f.root["cells"].([]any)
+	if ok {
+		f.root["cells"] = append(vs, v)
+	}
+}
+
+func (f *JsonFile) appendConnector(x, y int, c Connector) {
+	var list []any
+	for _, p := range c.Paths {
+		s := map[string]any{
+			"x": p.Start.X,
+			"y": p.Start.Y,
+		}
+		e := map[string]any{
+			"x": p.End.X,
+			"y": p.End.Y,
+		}
+		g := map[string]any{
+			"start": s,
+			"end": e,
+		}
+		list = append(list, g)
+	}
+	vs, ok := f.root["connectors"].([]any)
+	if ok {
+		f.root["connectors"] = append(vs, list)
+	}	
+}
+
+func (f *JsonFile) appendCanvas(x, y int, c *Canvas) {
+	root := map[string]any{
+		"x": x,
+		"y": y,
+		"cells": []any{},
+		"connectors": []any{},
+	}
+	tmp := f.root
+	f.root = root
+
+	for _, p := range c.cells {
+		f.put(p.X, p.Y, p.Cell)
+	}
+
+	vs, ok := tmp["canvas"].([]any)
+	if ok {
+		f.root = tmp
+		f.root["canvas"] = append(vs, tmp)
+	}	
 }
 
 type XmlFile struct {
@@ -41,6 +132,7 @@ func (f *XmlFile) Render(w io.Writer) error {
 		doc = xml.NewDocument(f.root)
 		enc = xml.NewEncoder(w)
 	)
+	enc.SetCompact(true)
 	return enc.Encode(doc)
 }
 
@@ -140,10 +232,10 @@ func (s *Svg) Render(w io.Writer) error {
 }
 
 func (s *Svg) put(x, y int, cell Cell) error {
+	var el svg.Element
 	switch c := cell.(type) {
 	case Content:
-		t := svg.NewText(float64(x), float64(y), string(c.Value))
-		s.root.Append(t)
+		el = svg.NewText(float64(x), float64(y), string(c.Value))
 	case Connector:
 		p := svg.NewPath()
 		for i, s := range c.Paths {
@@ -154,9 +246,10 @@ func (s *Svg) put(x, y int, cell Cell) error {
 			}
 			p.LineTo(float64(s.End.X), float64(s.End.Y))
 		}
-		s.root.Append(p)
+		el = p
 	default:
 	}
+	s.root.Append(el)
 	return nil
 }
 

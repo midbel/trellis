@@ -166,7 +166,21 @@ func (c *Canvas) Svg() (View, error) {
 }
 
 func (c *Canvas) Json() (View, error) {
-	return nil, fmt.Errorf("json view: not yet implemented")
+	clone := c.cloneOptions()
+	view, err := NewJson(clone)
+	if err != nil {
+		return nil, err
+	}
+	if len(c.children) > 1 {
+		for _, cv := range c.children {
+			if err := view.put(cv.origin.X, cv.origin.Y, cv); err != nil {
+				return nil, err
+			}
+		}
+		return view, nil
+	} else {
+		return view, c.children[0].fillView(view)
+	}
 }
 
 func (c *Canvas) Table() (View, error) {

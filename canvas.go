@@ -105,7 +105,6 @@ func (c Content) DisplayWidth() int {
 type Canvas struct {
 	origin   Point
 	dim      Dimension
-	opts     Options
 	cells    []Placement
 	children []*Canvas
 }
@@ -135,7 +134,7 @@ func (c *Canvas) Append(other *Canvas) {
 
 func (c *Canvas) Screen(opts ScreenOptions) (View, error) {
 	opts.RenderOptions = c.adjustSize(opts.RenderOptions)
-	view, err := NewScreen(opts, opts.Size)
+	view, err := NewScreen(opts)
 	if err != nil {
 		return nil, err
 	}
@@ -144,7 +143,7 @@ func (c *Canvas) Screen(opts ScreenOptions) (View, error) {
 
 func (c *Canvas) Xml(opts XmlOptions) (View, error) {
 	opts.RenderOptions = c.adjustSize(opts.RenderOptions)
-	view, err := NewXml(opts, opts.Orient, opts.Size)
+	view, err := NewXml(opts)
 	if err != nil {
 		return nil, err
 	}
@@ -153,7 +152,7 @@ func (c *Canvas) Xml(opts XmlOptions) (View, error) {
 
 func (c *Canvas) Svg(opts SvgOptions) (View, error) {
 	opts.RenderOptions = c.adjustSize(opts.RenderOptions)
-	view, err := NewSvg(opts, opts.Size)
+	view, err := NewSvg(opts)
 	if err != nil {
 		return nil, err
 	}
@@ -162,7 +161,7 @@ func (c *Canvas) Svg(opts SvgOptions) (View, error) {
 
 func (c *Canvas) Json(opts JsonOptions) (View, error) {
 	opts.RenderOptions = c.adjustSize(opts.RenderOptions)
-	view, err := NewJson(opts, opts.Orient, opts.Size)
+	view, err := NewJson(opts)
 	if err != nil {
 		return nil, err
 	}
@@ -243,7 +242,7 @@ func (c *Canvas) HorizontalBar(x, y, size int) error {
 
 func (c *Canvas) put(x, y int, cell Cell) error {
 	if !c.dim.Valid(x, y) {
-		return fmt.Errorf("invalid coordinate (%d, %d)")
+		return fmt.Errorf("invalid coordinate (%d, %d)", x, y)
 	}
 	p := Placement{
 		Point: NewPoint(x, y),

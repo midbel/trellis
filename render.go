@@ -66,24 +66,45 @@ func Vertical(w io.Writer, root *Node, options Options) error {
 	}
 
 	var (
-		opts = options.Layout()
-		set  = stdVerticalLayout(root, opts)
+		opts   = options.Layout()
+		nodes  = traverse(root, 1)
+		offset int
 	)
-	canvas, err := NewCanvas(opts.Size)
+	fmt.Println(opts.Size)
+	master, err := NewCanvas(opts.Size)
 	if err != nil {
 		return err
 	}
-	if err := canvas.Resize(set.Width, set.Height); err != nil {
-		return err
-	}
-	for _, i := range set.Items {
-		canvas.Put(i.Position.X, i.Position.Y, i.Content)
-		for _, x := range i.Children {
-			conn := verticalPath(i, x, opts)
-			canvas.Put(conn.X(), conn.Y(), conn)
+	for _, n := range nodes {
+		clone := opts.Clone()
+		set := stdVerticalLayout(n, clone)
+
+		canvas, err := NewCanvas(clone.Size)
+		if err != nil {
+			return err
 		}
+		for _, i := range set.Items {
+			canvas.Put(i.Position.X, i.Position.Y, i.Content)
+			for _, x := range i.Children {
+				conn := verticalPath(i, x, opts)
+				canvas.Put(conn.X(), conn.Y(), conn)
+			}
+		}
+		canvas.Move(offset, 0)
+		master.Append(canvas)
+		offset += set.Width
 	}
-	return renderCanvas(w, canvas, options)
+	// if err := canvas.Resize(set.Width, set.Height); err != nil {
+	// 	return err
+	// }
+	// for _, i := range set.Items {
+	// 	canvas.Put(i.Position.X, i.Position.Y, i.Content)
+	// 	for _, x := range i.Children {
+	// 		conn := verticalPath(i, x, opts)
+	// 		canvas.Put(conn.X(), conn.Y(), conn)
+	// 	}
+	// }
+	return renderCanvas(w, master, options)
 }
 
 func Compact(w io.Writer, root *Node, options Options) error {

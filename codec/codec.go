@@ -93,10 +93,12 @@ func (b *OptionsBag) Build() (trellis.Options, error) {
 	case trellis.OutputXml:
 		opts = &trellis.XmlOptions{
 			RenderOptions: base,
+			Compact:       b.Compact,
 		}
 	case trellis.OutputJson:
 		opts = &trellis.JsonOptions{
 			RenderOptions: base,
+			Compact:       b.Compact,
 		}
 	default:
 		return nil, fmt.Errorf("unsupported output type")

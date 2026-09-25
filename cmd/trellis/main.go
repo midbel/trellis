@@ -40,45 +40,45 @@ type CliFlags struct {
 	File    string
 }
 
-func (c CliFlags) Build() (trellis.Options, error) {
-	base := trellis.RenderOptions{
-		Orient:  c.Orient,
-		Reverse: c.Reverse,
-		Size:    trellis.NewDimension(c.Width, c.Height),
-		Padding: trellis.PaddingM,
-		Margin:  trellis.SpacingM,
-		Spacing: trellis.SpacingM,
-		AlignX:  trellis.AlignCenter,
-		AlignY:  trellis.AlignCenter,
-	}
-	var opts trellis.Options
-	switch c.Output {
-	case trellis.OutputScreen:
-		opts = &trellis.ScreenOptions{
-			RenderOptions: base,
-			Border:        c.Border,
-			Style:         c.Style,
-		}
-	case trellis.OutputSvg:
-		opts = &trellis.SvgOptions{
-			RenderOptions: base,
-			Border:        c.Border,
-			Style:         c.Style,
-			Path:          trellis.ManathanPath,
-		}
-	case trellis.OutputXml:
-		opts = &trellis.XmlOptions{
-			RenderOptions: base,
-		}
-	case trellis.OutputJson:
-		opts = &trellis.JsonOptions{
-			RenderOptions: base,
-		}
-	default:
-		return nil, fmt.Errorf("unsupported output type")
-	}
-	return opts, nil
-}
+// func (c CliFlags) Build() (trellis.Options, error) {
+// 	base := trellis.RenderOptions{
+// 		Orient:  c.Orient,
+// 		Reverse: c.Reverse,
+// 		Size:    trellis.NewDimension(c.Width, c.Height),
+// 		Padding: trellis.PaddingM,
+// 		Margin:  trellis.SpacingM,
+// 		Spacing: trellis.SpacingM,
+// 		AlignX:  trellis.AlignCenter,
+// 		AlignY:  trellis.AlignCenter,
+// 	}
+// 	var opts trellis.Options
+// 	switch c.Output {
+// 	case trellis.OutputScreen:
+// 		opts = &trellis.ScreenOptions{
+// 			RenderOptions: base,
+// 			Border:        c.Border,
+// 			Style:         c.Style,
+// 		}
+// 	case trellis.OutputSvg:
+// 		opts = &trellis.SvgOptions{
+// 			RenderOptions: base,
+// 			Border:        c.Border,
+// 			Style:         c.Style,
+// 			Path:          trellis.ManathanPath,
+// 		}
+// 	case trellis.OutputXml:
+// 		opts = &trellis.XmlOptions{
+// 			RenderOptions: base,
+// 		}
+// 	case trellis.OutputJson:
+// 		opts = &trellis.JsonOptions{
+// 			RenderOptions: base,
+// 		}
+// 	default:
+// 		return nil, fmt.Errorf("unsupported output type")
+// 	}
+// 	return opts, nil
+// }
 
 func parseArgs(args []string) (CliFlags, *flag.FlagSet, error) {
 	var (

@@ -24,13 +24,14 @@ type JsonFile struct {
 	opts JsonOptions
 }
 
-func NewJson(opts JsonOptions, orient Orientation, size Dimension) (View, error) {
+func NewJson(opts JsonOptions) (View, error) {
 	j := &JsonFile{
 		root: make(map[string]any),
+		opts: opts,
 	}
-	j.root["width"] = size.Width
-	j.root["height"] = size.Height
-	j.root["orientation"] = orient.String()
+	j.root["width"] = opts.Size.Width
+	j.root["height"] = opts.Size.Height
+	j.root["orientation"] = opts.Orient.String()
 	j.root["cells"] = []any{}
 	j.root["connectors"] = []any{}
 	j.root["canvas"] = []any{}
@@ -121,17 +122,18 @@ type XmlFile struct {
 	opts XmlOptions
 }
 
-func NewXml(opts XmlOptions, orient Orientation, size Dimension) (View, error) {
+func NewXml(opts XmlOptions) (View, error) {
 	el := xml.Element{
 		Name: xml.NewName("canvas"),
 		Attributes: []xml.Attribute{
-			xml.NewAttribute(xml.NewName("width"), strconv.Itoa(size.Width)),
-			xml.NewAttribute(xml.NewName("height"), strconv.Itoa(size.Height)),
-			xml.NewAttribute(xml.NewName("orientation"), orient.String()),
+			xml.NewAttribute(xml.NewName("width"), strconv.Itoa(opts.Size.Width)),
+			xml.NewAttribute(xml.NewName("height"), strconv.Itoa(opts.Size.Height)),
+			xml.NewAttribute(xml.NewName("orientation"), opts.Orient.String()),
 		},
 	}
 	return &XmlFile{
 		root: &el,
+		opts: opts,
 	}, nil
 }
 
@@ -229,8 +231,8 @@ type Svg struct {
 	opts SvgOptions
 }
 
-func NewSvg(opts SvgOptions, size Dimension) (View, error) {
-	doc := svg.NewDocument(float64(size.Width), float64(size.Height))
+func NewSvg(opts SvgOptions) (View, error) {
+	doc := svg.NewDocument(float64(opts.Size.Width), float64(opts.Size.Height))
 	return &Svg{
 		root: doc,
 		opts: opts,
@@ -284,26 +286,24 @@ type Screen struct {
 
 	opts ScreenOptions
 
-	connector ConnectorStyle
-	border    bool
-	ticksStep int
+	// connector ConnectorStyle
+	// border    bool
+	// ticksStep int
 
 	crossings []Point
 }
 
-func NewScreen(opts ScreenOptions, size Dimension) (View, error) {
+func NewScreen(opts ScreenOptions) (View, error) {
 	sc := &Screen{
-		lines:     make([][]rune, size.Height),
-		dim:       size,
-		border:    opts.Border,
-		connector: opts.Style,
-		ticksStep: opts.CoordinatesStep,
+		lines: make([][]rune, opts.Size.Height),
+		dim:   opts.Size,
+		opts:  opts,
 	}
 	if err := sc.dim.Validate(); err != nil {
 		return nil, err
 	}
 	for i := range sc.lines {
-		sc.lines[i] = make([]rune, size.Width)
+		sc.lines[i] = make([]rune, opts.Size.Width)
 	}
 	sc.fillGrid()
 	return sc, nil
@@ -318,7 +318,7 @@ func (s *Screen) Render(w io.Writer) error {
 		if _, err := ws.WriteString(spaces); err != nil {
 			return err
 		}
-		if s.border {
+		if s.showBorder() {
 			if _, err := ws.WriteRune(space); err != nil {
 				return err
 			}
@@ -333,21 +333,21 @@ func (s *Screen) Render(w io.Writer) error {
 			return err
 		}
 	}
-	if s.border {
+	if s.showBorder() {
 		if s.showCoordinates() {
 			if _, err := ws.WriteString(spaces); err != nil {
 				return err
 			}
 		}
-		if _, err := ws.WriteRune(s.connector.TopLeft()); err != nil {
+		if _, err := ws.WriteRune(s.connector().TopLeft()); err != nil {
 			return err
 		}
 		for range s.dim.Width {
-			if _, err := ws.WriteRune(s.connector.HorizontalBar()); err != nil {
+			if _, err := ws.WriteRune(s.connector().HorizontalBar()); err != nil {
 				return err
 			}
 		}
-		if _, err := ws.WriteRune(s.connector.TopRight()); err != nil {
+		if _, err := ws.WriteRune(s.connector().TopRight()); err != nil {
 			return err
 		}
 		if _, err := ws.WriteRune('\n'); err != nil {
@@ -357,7 +357,7 @@ func (s *Screen) Render(w io.Writer) error {
 	s.writeCrossings()
 	for i := range s.lines {
 		if s.showCoordinates() {
-			if i%s.ticksStep == 0 {
+			if i%s.opts.CoordinatesStep == 0 {
 				y := strconv.Itoa(i)
 				if _, err := ws.WriteString(strings.Repeat(" ", 5-len(y))); err != nil {
 					return err
@@ -371,8 +371,8 @@ func (s *Screen) Render(w io.Writer) error {
 				}
 			}
 		}
-		if s.border {
-			if _, err := ws.WriteRune(s.connector.VerticalBar()); err != nil {
+		if s.showBorder() {
+			if _, err := ws.WriteRune(s.connector().VerticalBar()); err != nil {
 				return err
 			}
 		}
@@ -382,8 +382,8 @@ func (s *Screen) Render(w io.Writer) error {
 				return err
 			}
 		}
-		if s.border {
-			if _, err := ws.WriteRune(s.connector.VerticalBar()); err != nil {
+		if s.showBorder() {
+			if _, err := ws.WriteRune(s.connector().VerticalBar()); err != nil {
 				return err
 			}
 		}
@@ -391,19 +391,19 @@ func (s *Screen) Render(w io.Writer) error {
 			return err
 		}
 	}
-	if s.border {
+	if s.showBorder() {
 		if s.showCoordinates() {
 			ws.WriteString(spaces)
 		}
-		if _, err := ws.WriteRune(s.connector.BottomLeft()); err != nil {
+		if _, err := ws.WriteRune(s.connector().BottomLeft()); err != nil {
 			return err
 		}
 		for range s.dim.Width {
-			if _, err := ws.WriteRune(s.connector.HorizontalBar()); err != nil {
+			if _, err := ws.WriteRune(s.connector().HorizontalBar()); err != nil {
 				return err
 			}
 		}
-		if _, err := ws.WriteRune(s.connector.BottomRight()); err != nil {
+		if _, err := ws.WriteRune(s.connector().BottomRight()); err != nil {
 			return err
 		}
 		if _, err := ws.WriteRune('\n'); err != nil {
@@ -413,8 +413,16 @@ func (s *Screen) Render(w io.Writer) error {
 	return ws.Flush()
 }
 
+func (s *Screen) connector() ConnectorStyle {
+	return s.opts.Style
+}
+
+func (s *Screen) showBorder() bool {
+	return s.opts.Border
+}
+
 func (s *Screen) showCoordinates() bool {
-	return s.ticksStep > 0
+	return s.opts.CoordinatesStep > 0
 }
 
 func (s *Screen) coordinatesX() []rune {
@@ -422,7 +430,7 @@ func (s *Screen) coordinatesX() []rune {
 	for i := range line {
 		line[i] = space
 	}
-	for i := 0; i < s.dim.Width; i += s.ticksStep {
+	for i := 0; i < s.dim.Width; i += s.opts.CoordinatesStep {
 		ix := strconv.Itoa(i)
 		if i == 0 {
 			copy(line[i:i+1], []rune(ix))
@@ -471,31 +479,31 @@ func (s *Screen) writeCrossings() {
 		switch {
 		case left && right && top && bottom:
 			// all four
-			char = s.connector.CrossPath()
+			char = s.connector().CrossPath()
 		case left && right && top && !bottom:
 			// horizontal up
-			char = s.connector.HorizontalUp()
+			char = s.connector().HorizontalUp()
 		case left && right && bottom && !top:
 			// horizontal down
-			char = s.connector.HorizontalDown()
+			char = s.connector().HorizontalDown()
 		case top && bottom && left && !right:
 			// vertical left
-			char = s.connector.VerticalLeft()
+			char = s.connector().VerticalLeft()
 		case top && bottom && right && !left:
 			// vertical right
-			char = s.connector.VerticalRight()
+			char = s.connector().VerticalRight()
 		case bottom && left && !right && !top:
 			// bottom left
-			char = s.connector.TopRight()
+			char = s.connector().TopRight()
 		case top && left && !right && !bottom:
 			// top left
-			char = s.connector.BottomRight()
+			char = s.connector().BottomRight()
 		case bottom && right && !left && !top:
 			// bottom right
-			char = s.connector.TopLeft()
+			char = s.connector().TopLeft()
 		case top && right && !left && !bottom:
 			// top right
-			char = s.connector.BottomLeft()
+			char = s.connector().BottomLeft()
 		}
 		if s.dim.Valid(p.X, p.Y) {
 			s.lines[p.Y][p.X] = char
@@ -524,7 +532,7 @@ func (s *Screen) putConnector(x, y int, conn Connector) error {
 }
 
 func (s *Screen) verticalConnector(seg Segment) {
-	char := s.connector.VerticalBar()
+	char := s.connector().VerticalBar()
 	if seg.DistanceY() == 1 {
 		s.writeSymbol(seg.Start.X, seg.Start.Y, char)
 		return
@@ -542,7 +550,7 @@ func (s *Screen) verticalConnector(seg Segment) {
 }
 
 func (s *Screen) horizontalConnector(seg Segment) {
-	char := s.connector.HorizontalBar()
+	char := s.connector().HorizontalBar()
 	if seg.DistanceX() == 1 {
 		s.writeSymbol(seg.Start.X, seg.Start.Y, char)
 		return

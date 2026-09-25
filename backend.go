@@ -21,15 +21,16 @@ type View interface {
 
 type JsonFile struct {
 	root map[string]any
+	opts JsonOptions
 }
 
-func NewJson(opts *Options) (View, error) {
-	j :=  &JsonFile{
+func NewJson(opts JsonOptions, orient Orientation, size Dimension) (View, error) {
+	j := &JsonFile{
 		root: make(map[string]any),
 	}
-	j.root["width"] = opts.Width
-	j.root["height"] = opts.Height
-	j.root["orientation"] = opts.Orient.String()
+	j.root["width"] = size.Width
+	j.root["height"] = size.Height
+	j.root["orientation"] = orient.String()
 	j.root["cells"] = []any{}
 	j.root["connectors"] = []any{}
 	j.root["canvas"] = []any{}
@@ -37,7 +38,13 @@ func NewJson(opts *Options) (View, error) {
 }
 
 func (f *JsonFile) Render(w io.Writer) error {
-	return curly.Compact(w).Write(f.root)
+	var ws *curly.Writer
+	if f.opts.Compact {
+		ws = curly.Compact(w)
+	} else {
+		ws = curly.NewWriter(w)
+	}
+	return ws.Write(f.root)
 }
 
 func (f *JsonFile) put(x, y int, cell Cell) error {
@@ -56,8 +63,8 @@ func (f *JsonFile) put(x, y int, cell Cell) error {
 func (f *JsonFile) appendContent(x, y int, c Content) {
 	v := map[string]any{
 		"content": string(c.Value),
-		"x": x,
-		"y": y,
+		"x":       x,
+		"y":       y,
 	}
 	vs, ok := f.root["cells"].([]any)
 	if ok {
@@ -78,21 +85,21 @@ func (f *JsonFile) appendConnector(x, y int, c Connector) {
 		}
 		g := map[string]any{
 			"start": s,
-			"end": e,
+			"end":   e,
 		}
 		list = append(list, g)
 	}
 	vs, ok := f.root["connectors"].([]any)
 	if ok {
 		f.root["connectors"] = append(vs, list)
-	}	
+	}
 }
 
 func (f *JsonFile) appendCanvas(x, y int, c *Canvas) {
 	root := map[string]any{
-		"x": x,
-		"y": y,
-		"cells": []any{},
+		"x":          x,
+		"y":          y,
+		"cells":      []any{},
 		"connectors": []any{},
 	}
 	tmp := f.root
@@ -106,20 +113,21 @@ func (f *JsonFile) appendCanvas(x, y int, c *Canvas) {
 	if ok {
 		f.root = tmp
 		f.root["canvas"] = append(vs, root)
-	}	
+	}
 }
 
 type XmlFile struct {
 	root *xml.Element
+	opts XmlOptions
 }
 
-func NewXml(opts *Options) (View, error) {
+func NewXml(opts XmlOptions, orient Orientation, size Dimension) (View, error) {
 	el := xml.Element{
 		Name: xml.NewName("canvas"),
 		Attributes: []xml.Attribute{
-			xml.NewAttribute(xml.NewName("width"), strconv.Itoa(opts.Width)),
-			xml.NewAttribute(xml.NewName("height"), strconv.Itoa(opts.Height)),
-			xml.NewAttribute(xml.NewName("orientation"), opts.Orient.String()),
+			xml.NewAttribute(xml.NewName("width"), strconv.Itoa(size.Width)),
+			xml.NewAttribute(xml.NewName("height"), strconv.Itoa(size.Height)),
+			xml.NewAttribute(xml.NewName("orientation"), orient.String()),
 		},
 	}
 	return &XmlFile{
@@ -132,7 +140,7 @@ func (f *XmlFile) Render(w io.Writer) error {
 		doc = xml.NewDocument(f.root)
 		enc = xml.NewEncoder(w)
 	)
-	// enc.SetCompact(true)
+	enc.SetCompact(f.opts.Compact)
 	return enc.Encode(doc)
 }
 
@@ -218,12 +226,14 @@ func (f *XmlFile) createElementForSegment(seg Segment) *xml.Element {
 
 type Svg struct {
 	root *svg.Document
+	opts SvgOptions
 }
 
-func NewSvg(opts *Options) (View, error) {
-	doc := svg.NewDocument(float64(opts.Width), float64(opts.Height))
+func NewSvg(opts SvgOptions, size Dimension) (View, error) {
+	doc := svg.NewDocument(float64(size.Width), float64(size.Height))
 	return &Svg{
 		root: doc,
+		opts: opts,
 	}, nil
 }
 
@@ -272,6 +282,8 @@ type Screen struct {
 	lines [][]rune
 	dim   Dimension
 
+	opts ScreenOptions
+
 	connector ConnectorStyle
 	border    bool
 	ticksStep int
@@ -279,13 +291,10 @@ type Screen struct {
 	crossings []Point
 }
 
-func NewScreen(opts *Options) (View, error) {
+func NewScreen(opts ScreenOptions, size Dimension) (View, error) {
 	sc := &Screen{
-		lines: make([][]rune, opts.Height),
-		dim: Dimension{
-			Width:  opts.Width,
-			Height: opts.Height,
-		},
+		lines:     make([][]rune, size.Height),
+		dim:       size,
 		border:    opts.Border,
 		connector: opts.Style,
 		ticksStep: opts.CoordinatesStep,
@@ -294,7 +303,7 @@ func NewScreen(opts *Options) (View, error) {
 		return nil, err
 	}
 	for i := range sc.lines {
-		sc.lines[i] = make([]rune, opts.Width)
+		sc.lines[i] = make([]rune, size.Width)
 	}
 	sc.fillGrid()
 	return sc, nil

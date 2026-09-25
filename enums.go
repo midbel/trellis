@@ -30,7 +30,7 @@ func ParseOutput(str string) (Output, error) {
 type Orientation uint8
 
 const (
-	HorizontalLayout Orientation = 1<< iota
+	HorizontalLayout Orientation = 1 << iota
 	VerticalLayout
 	CompactLayout
 )
@@ -225,3 +225,11 @@ func (c ConnectorStyle) HorizontalBar() rune {
 	}
 	return horizontalBarUnicode
 }
+
+type PathStyle uint8
+
+const (
+	DirectPath PathStyle = 1 << iota
+	ManathanPath
+	CurvePath
+)

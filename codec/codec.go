@@ -37,9 +37,80 @@ var dispatch = map[Format]func(io.Reader) (*TreeSpec, error){
 	FormatXml:   treeFromXml,
 }
 
+type OptionsBag struct {
+	Type        trellis.Output
+	Orient      trellis.Orientation
+	Width       int
+	Height      int
+	MinDepth    int
+	MaxDepth    int
+	Spacing     int // Distance between sibling allocation regions.
+	Reverse     bool
+	AlignY      trellis.Alignment
+	AlignX      trellis.Alignment
+	Margin      int // Space outside the node, mainly reserved for connectors
+	Padding     int // Space inside the node's visual box
+	PaddingChar string
+
+	Border          bool
+	CoordinatesStep int
+	Style           trellis.ConnectorStyle
+	Path            trellis.PathStyle // manathan, direct, curve
+
+	Compact bool
+}
+
+func (b *OptionsBag) Build() (trellis.Options, error) {
+	base := trellis.RenderOptions{
+		Orient:      b.Orient,
+		Size:        trellis.NewDimension(b.Width, b.Height),
+		MinDepth:    b.MinDepth,
+		MaxDepth:    b.MaxDepth,
+		Spacing:     b.Spacing,
+		Reverse:     b.Reverse,
+		AlignY:      b.AlignY,
+		AlignX:      b.AlignX,
+		Margin:      b.Margin,
+		Padding:     b.Padding,
+		PaddingChar: b.PaddingChar,
+	}
+	var opts trellis.Options
+	switch b.Type {
+	case trellis.OutputSvg:
+		opts = &trellis.SvgOptions{
+			RenderOptions:   base,
+			Style:           b.Style,
+			CoordinatesStep: b.CoordinatesStep,
+			Path:            b.Path,
+		}
+	case trellis.OutputScreen:
+		opts = &trellis.ScreenOptions{
+			RenderOptions:   base,
+			Border:          b.Border,
+			Style:           b.Style,
+			CoordinatesStep: b.CoordinatesStep,
+		}
+	case trellis.OutputXml:
+		opts = &trellis.XmlOptions{
+			RenderOptions: base,
+		}
+	case trellis.OutputJson:
+		opts = &trellis.JsonOptions{
+			RenderOptions: base,
+		}
+	default:
+		return nil, fmt.Errorf("unsupported output type")
+	}
+	return opts, nil
+}
+
 type TreeSpec struct {
 	*trellis.Node
-	*trellis.Options
+	Options *OptionsBag
+}
+
+func (t *TreeSpec) Build() (trellis.Options, error) {
+	return t.Options.Build()
 }
 
 func Tree(r io.Reader, opts Options) (*TreeSpec, error) {
@@ -83,7 +154,7 @@ type context struct {
 }
 
 type handler struct {
-	options *trellis.Options
+	options *OptionsBag
 	root    *trellis.Node
 	stack   []*context
 
@@ -93,7 +164,7 @@ type handler struct {
 
 func newHandler() *handler {
 	h := &handler{
-		options: new(trellis.Options),
+		options: new(OptionsBag),
 	}
 	h.setters = makeSetters(h.options)
 	h.flags = makeFlags(h.options)

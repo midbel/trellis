@@ -18,46 +18,130 @@ func main() {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(2)
 	}
-	if err := trellis.Render(os.Stdout, spec.Node, spec.Options); err != nil {
+	options, err := spec.Build()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(2)
+	}
+	if err := trellis.Render(os.Stdout, spec.Node, options); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 }
 
-func loadTree() (*codec.TreeSpec, error) {
-	var (
-		width   = flag.Int("w", 0, "width")
-		height  = flag.Int("h", 0, "height")
-		reverse = flag.Bool("r", false, "reverse")
-		border  = flag.Bool("b", false, "border")
-		orient  trellis.Orientation
-		output  trellis.Output
-		style   trellis.ConnectorStyle
-	)
-	flag.Func("t", "orientation", func(str string) error {
-		v, err := trellis.ParseOrientation(str)
-		if err == nil {
-			orient = v
-		}
-		return err
-	})
-	flag.Func("o", "output", func(str string) error {
-		v, err := trellis.ParseOutput(str)
-		if err == nil {
-			output = v
-		}
-		return err
-	})
-	flag.Func("c", "connector style", func(str string) error {
-		v, err := trellis.ParseConnector(str)
-		if err == nil {
-			style = v
-		}
-		return err
-	})
-	flag.Parse()
+type CliFlags struct {
+	Width   int
+	Height  int
+	Reverse bool
+	Border  bool
+	Orient  trellis.Orientation
+	Output  trellis.Output
+	Style   trellis.ConnectorStyle
+	File    string
+}
 
-	r, err := os.Open(flag.Arg(0))
+func (c CliFlags) Build() (trellis.Options, error) {
+	base := trellis.RenderOptions{
+		Orient:  c.Orient,
+		Reverse: c.Reverse,
+		Size:    trellis.NewDimension(c.Width, c.Height),
+		Padding: trellis.PaddingM,
+		Margin:  trellis.SpacingM,
+		Spacing: trellis.SpacingM,
+		AlignX:  trellis.AlignCenter,
+		AlignY:  trellis.AlignCenter,
+	}
+	var opts trellis.Options
+	switch c.Output {
+	case trellis.OutputScreen:
+		opts = &trellis.ScreenOptions{
+			RenderOptions: base,
+			Border:        c.Border,
+			Style:         c.Style,
+		}
+	case trellis.OutputSvg:
+		opts = &trellis.SvgOptions{
+			RenderOptions: base,
+			Border:        c.Border,
+			Style:         c.Style,
+			Path:          trellis.ManathanPath,
+		}
+	case trellis.OutputXml:
+		opts = &trellis.XmlOptions{
+			RenderOptions: base,
+		}
+	case trellis.OutputJson:
+		opts = &trellis.JsonOptions{
+			RenderOptions: base,
+		}
+	default:
+		return nil, fmt.Errorf("unsupported output type")
+	}
+	return opts, nil
+}
+
+func parseArgs(args []string) (CliFlags, *flag.FlagSet, error) {
+	var (
+		cli CliFlags
+		fs  = flag.NewFlagSet("trellis", flag.ExitOnError)
+	)
+	fs.IntVar(&cli.Width, "w", 0, "width")
+	fs.IntVar(&cli.Height, "h", 0, "height")
+	fs.BoolVar(&cli.Reverse, "r", false, "reverse")
+	fs.BoolVar(&cli.Border, "b", false, "border")
+
+	fs.Func("t", "orientation", func(str string) error {
+		v, err := trellis.ParseOrientation(str)
+		cli.Orient = v
+		return err
+	})
+	fs.Func("o", "output", func(str string) error {
+		v, err := trellis.ParseOutput(str)
+		cli.Output = v
+		return err
+	})
+	fs.Func("c", "connector style", func(str string) error {
+		v, err := trellis.ParseConnector(str)
+		cli.Style = v
+		return err
+	})
+
+	err := fs.Parse(args)
+	if err == nil {
+		cli.File = fs.Arg(0)
+	}
+	return cli, fs, err
+}
+
+func applyOverrides(fs *flag.FlagSet, cli *CliFlags, spec *codec.TreeSpec) {
+	fs.Visit(func(f *flag.Flag) {
+		switch f.Name {
+		case "w":
+			spec.Options.Width = cli.Width
+		case "h":
+			spec.Options.Height = cli.Height
+		case "t":
+			spec.Options.Orient = cli.Orient
+		case "o":
+			spec.Options.Type = cli.Output
+		case "c":
+			spec.Options.Style = cli.Style
+		case "r":
+			spec.Options.Reverse = cli.Reverse
+		case "b":
+			spec.Options.Border = cli.Border
+		default:
+		}
+	})
+}
+
+func loadTree() (*codec.TreeSpec, error) {
+	cli, fs, err := parseArgs(os.Args[1:])
+	if err != nil {
+		return nil, err
+	}
+
+	r, err := os.Open(cli.File)
 	if err != nil {
 		return nil, err
 	}
@@ -70,26 +154,6 @@ func loadTree() (*codec.TreeSpec, error) {
 	if err != nil {
 		return nil, err
 	}
-	if *width > 0 {
-		spec.Options.Width = *width
-	}
-	if *height > 0 {
-		spec.Options.Height = *height
-	}
-	if orient > 0 {
-		spec.Options.Orient = orient
-	}
-	if output > 0 {
-		spec.Options.Output = output
-	}
-	if *reverse != spec.Options.Reverse {
-		spec.Options.Reverse = *reverse
-	}
-	if *border != spec.Options.Border {
-		spec.Options.Border = *border
-	}
-	if style > 0 {
-		spec.Options.Style = style
-	}
+	applyOverrides(fs, &cli, spec)
 	return spec, nil
 }

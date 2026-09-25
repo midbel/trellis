@@ -5,7 +5,10 @@ import (
 	"fmt"
 )
 
-var ErrUnknown = errors.New("unknown")
+var (
+	ErrUnknown = errors.New("unknown")
+	ErrOptions = errors.New("options should be provided")
+)
 
 const (
 	PaddingS = 1
@@ -25,39 +28,92 @@ const (
 	DefaultMargin  = 1
 )
 
-type LayoutOptions struct {
-	Orient Orientation
-	Dimension
-	MinDepth int
-	MaxDepth int
-	Spacing  int // Distance between sibling allocation regions.
-	Reverse  bool
-	Render   func(*Node, *Options) Content
+type Options interface {
+	Layout() RenderOptions
+	Format() Output
+}
+
+type ScreenOptions struct {
+	RenderOptions
+	Border          bool
+	CoordinatesStep int
+	Style           ConnectorStyle
+}
+
+func (o *ScreenOptions) Layout() RenderOptions {
+	return o.RenderOptions
+}
+
+func (*ScreenOptions) Format() Output {
+	return OutputScreen
+}
+
+type SvgOptions struct {
+	RenderOptions
+	Border          bool
+	CoordinatesStep int
+	Style           ConnectorStyle
+	Path            PathStyle // manathan, direct, curve
+}
+
+func (o *SvgOptions) Layout() RenderOptions {
+	return o.RenderOptions
+}
+
+func (*SvgOptions) Format() Output {
+	return OutputSvg
+}
+
+type JsonOptions struct {
+	RenderOptions
+	Compact bool
+}
+
+func (o *JsonOptions) Layout() RenderOptions {
+	return o.RenderOptions
+}
+
+func (*JsonOptions) Format() Output {
+	return OutputJson
+}
+
+type XmlOptions struct {
+	RenderOptions
+	Compact bool
+}
+
+func (o *XmlOptions) Layout() RenderOptions {
+	return o.RenderOptions
+}
+
+func (*XmlOptions) Format() Output {
+	return OutputXml
 }
 
 type RenderOptions struct {
-	CoordinatesStep int
-	Border          bool
-}
-
-type StyleOptions struct {
+	Orient      Orientation
+	Size        Dimension
+	MinDepth    int
+	MaxDepth    int
+	Spacing     int // Distance between sibling allocation regions.
+	Reverse     bool
 	AlignY      Alignment
 	AlignX      Alignment
 	Margin      int // Space outside the node, mainly reserved for connectors
 	Padding     int // Space inside the node's visual box
 	PaddingChar string
-	Style       ConnectorStyle
+	Transform   func(*Node, RenderOptions) Content
 }
 
-type Options struct {
-	Output Output
-	LayoutOptions
-	RenderOptions
-	StyleOptions
+func (o *RenderOptions) Render(n *Node, opts RenderOptions) Content {
+	if o.Transform == nil {
+		return defaultRenderContent(n, opts)
+	}
+	return o.Transform(n, opts)
 }
 
-func (o *Options) Validate() error {
-	if err := o.Dimension.Validate(); err != nil {
+func (o *RenderOptions) Validate() error {
+	if err := o.Size.Validate(); err != nil {
 		return err
 	}
 	if o.Margin < 0 {
@@ -69,9 +125,6 @@ func (o *Options) Validate() error {
 	if o.Spacing < 0 {
 		return fmt.Errorf("spacing can not be negative")
 	}
-	if o.CoordinatesStep < 0 {
-		return fmt.Errorf("coordinates step can not be negative")
-	}
 	if o.MinDepth < 0 {
 		return fmt.Errorf("minimum depth can not be negative")
 	}
@@ -81,30 +134,36 @@ func (o *Options) Validate() error {
 	return nil
 }
 
-func prepareOptions(options *Options) (*Options, error) {
-	opts := options
-	if opts == nil {
-		opts = defaultOptions.Clone()
-	} else {
-		opts = opts.Clone()
-	}
-	applyDefaults(opts)
-	return opts, opts.Validate()
+func (t *RenderOptions) ResetSize() {
+	t.Size.Width = 0
+	t.Size.Height = 0
 }
 
-func applyDefaults(opts *Options) {
-	if opts.Margin == 0 {
-		opts.Margin++
+func (t *RenderOptions) Clone() RenderOptions {
+	x := *t
+	return x
+}
+
+func (t *RenderOptions) Align() Alignment {
+	if t.Orient == HorizontalLayout {
+		return t.AlignX
 	}
-	if opts.Spacing == 0 {
-		opts.Spacing++
+	return t.AlignY
+}
+
+func (t *RenderOptions) ApplyDefaults() {
+	if t.Margin == 0 {
+		t.Margin = SpacingL
 	}
-	if opts.Render == nil {
-		opts.Render = defaultRenderContent
+	if t.Spacing == 0 {
+		t.Spacing = SpacingM
+	}
+	if t.Transform == nil {
+		t.Transform = defaultRenderContent
 	}
 }
 
-func defaultRenderContent(node *Node, opts *Options) Content {
+func defaultRenderContent(node *Node, opts RenderOptions) Content {
 	value := []rune(node.Value)
 	if opts.Padding > 0 {
 		var (
@@ -130,44 +189,12 @@ func defaultRenderContent(node *Node, opts *Options) Content {
 	}
 }
 
-var defaultOptions = &Options{
-	LayoutOptions: LayoutOptions{
-		Spacing: DefaultSpacing,
-	},
-	StyleOptions: StyleOptions{
-		Style:   ConnectorAscii,
-		Margin:  DefaultMargin,
-		Padding: PaddingS,
-		AlignX:  AlignCenter,
-		AlignY:  AlignCenter,
-	},
-	RenderOptions: RenderOptions{
-		Border: true,
-	},
-}
-
-func (t *Options) ResetSize() {
-	t.Width = 0
-	t.Height = 0
-}
-
-func (t *Options) Clone() *Options {
-	x := *t
-	return &x
-}
-
-func (t *Options) borderWidth() int {
-	if t.Border {
-		return 1
-	}
-	return 0
-}
-
-func (t *Options) Align() Alignment {
-	if t.Orient == HorizontalLayout {
-		return t.AlignX
-	}
-	return t.AlignY
+var defaultOptions = &RenderOptions{
+	Spacing: DefaultSpacing,
+	Margin:  DefaultMargin,
+	Padding: PaddingS,
+	AlignX:  AlignCenter,
+	AlignY:  AlignCenter,
 }
 
 func unknown(what, value string) error {

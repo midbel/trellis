@@ -5,24 +5,6 @@ import (
 	"slices"
 )
 
-type CoordinateMap struct {
-	Width       int
-	Height      int
-	Coordinates []Coordinate
-}
-
-type Coordinate struct {
-	Value    string
-	Ideal    Point
-	Computed Point
-	Bounds   Rect
-}
-
-func ComputeLayout(root *Node, options *Options) (CoordinateMap, error) {
-	var res CoordinateMap
-	return res, nil
-}
-
 type Segment struct {
 	Start Point
 	End   Point
@@ -96,7 +78,7 @@ func (p Point) String() string {
 	return fmt.Sprintf("point(%d, %d)", p.X, p.Y)
 }
 
-func horizontalPath(from, to *Item, opts *Options) Connector {
+func horizontalPath(from, to *Item, opts RenderOptions) Connector {
 	if !from.Position.BeforeX(to.Position) {
 		from, to = to, from
 	}
@@ -138,7 +120,7 @@ func horizontalPath(from, to *Item, opts *Options) Connector {
 	return NewConnector([]Segment{f, v, t})
 }
 
-func verticalPath(from, to *Item, opts *Options) Connector {
+func verticalPath(from, to *Item, opts RenderOptions) Connector {
 	if !from.Position.BeforeY(to.Position) {
 		from, to = to, from
 	}
@@ -334,7 +316,7 @@ func (i *Item) Size() int {
 	return i.DisplayWidth()
 }
 
-func stdVerticalLayout(root *Node, opts *Options) *ItemsSet {
+func stdVerticalLayout(root *Node, opts RenderOptions) *ItemsSet {
 	var (
 		mk  = defaultTreeLayout()
 		is  = mk.Make(root, opts)
@@ -358,25 +340,21 @@ func stdVerticalLayout(root *Node, opts *Options) *ItemsSet {
 		extent = opts.Spacing
 	}
 	computeVerticalCoordinates(is[ix], opts, extent, level)
-
-	opts.Width = maxFromItems(is, func(i *Item) int { return i.Bounds.EndX() })
-	opts.Height = maxFromItems(is, func(i *Item) int { return i.Bounds.EndY() })
-
-	set.Width = opts.Width
-	set.Height = opts.Height
+	set.Width = maxFromItems(is, func(i *Item) int { return i.Bounds.EndX() })
+	set.Height = maxFromItems(is, func(i *Item) int { return i.Bounds.EndY() })
 	set.Items = is
 	return &set
 }
 
-func computeVerticalCoordinates(node *Item, opts *Options, spacing, level int) {
-	height := opts.Height / (level + 1)
+func computeVerticalCoordinates(node *Item, opts RenderOptions, spacing, level int) {
+	height := opts.Size.Height / (level + 1)
 
 	computeVerticalChildren(node, opts, spacing, level, height)
 	resolveVerticalChildren(node, opts)
 	computeVerticalNode(node, opts, spacing, height)
 }
 
-func computeVerticalChildren(node *Item, opts *Options, spacing, level, height int) {
+func computeVerticalChildren(node *Item, opts RenderOptions, spacing, level, height int) {
 	for _, x := range node.Children {
 		if !x.Leaf() {
 			computeVerticalCoordinates(x, opts, spacing, level)
@@ -384,8 +362,8 @@ func computeVerticalChildren(node *Item, opts *Options, spacing, level, height i
 		}
 		var (
 			startY = (x.Ideal.Y * height)
-			startX = (x.Ideal.X * opts.Width / spacing)
-			endX   = ((x.Ideal.X + opts.Spacing) * opts.Width) / spacing
+			startX = (x.Ideal.X * opts.Size.Width / spacing)
+			endX   = ((x.Ideal.X + opts.Spacing) * opts.Size.Width) / spacing
 		)
 		x.Position.X = startX
 		x.Position.Y = startY
@@ -405,7 +383,7 @@ func computeVerticalChildren(node *Item, opts *Options, spacing, level, height i
 	}
 }
 
-func resolveVerticalChildren(node *Item, opts *Options) {
+func resolveVerticalChildren(node *Item, opts RenderOptions) {
 	if len(node.Children) < 1 {
 		return
 	}
@@ -418,7 +396,7 @@ func resolveVerticalChildren(node *Item, opts *Options) {
 	}
 }
 
-func computeVerticalNode(node *Item, opts *Options, spacing, height int) {
+func computeVerticalNode(node *Item, opts RenderOptions, spacing, height int) {
 	var (
 		first = node.FirstLeaf()
 		last  = node.LastLeaf()
@@ -426,7 +404,7 @@ func computeVerticalNode(node *Item, opts *Options, spacing, height int) {
 	if spacing == 0 {
 		spacing++
 	}
-	node.Position.X = node.Ideal.X * opts.Width / spacing
+	node.Position.X = node.Ideal.X * opts.Size.Width / spacing
 	node.Position.Y = node.Ideal.Y * height
 
 	node.Bounds = Rect{
@@ -452,7 +430,7 @@ func countLeaves(root *Node) int {
 	return sum
 }
 
-func stdHorizontalLayout(root *Node, opts *Options) *ItemsSet {
+func stdHorizontalLayout(root *Node, opts RenderOptions) *ItemsSet {
 	var (
 		mk     = defaultTreeLayout()
 		is     = mk.Make(root, opts)
@@ -471,25 +449,21 @@ func stdHorizontalLayout(root *Node, opts *Options) *ItemsSet {
 	}
 
 	computeHorizontalCoordinates(is[ix], opts, extent, level)
-	opts.Width = maxFromItems(is, func(i *Item) int { return i.Bounds.EndX() })
-	opts.Height = maxFromItems(is, func(i *Item) int { return i.Bounds.EndY() })
-
+	set.Width = maxFromItems(is, func(i *Item) int { return i.Bounds.EndX() })
+	set.Height = maxFromItems(is, func(i *Item) int { return i.Bounds.EndY() })
 	set.Items = is
-	set.Width = opts.Width
-	set.Height = opts.Height
-
 	return &set
 }
 
-func computeHorizontalCoordinates(node *Item, opts *Options, spacing, level int) {
-	width := opts.Width / (level + 1)
+func computeHorizontalCoordinates(node *Item, opts RenderOptions, spacing, level int) {
+	width := opts.Size.Width / (level + 1)
 
 	computeHorizontalChildren(node, opts, spacing, level, width)
 	resolveHorizontalChildren(node, opts)
 	computeHorizontalNode(node, opts, spacing, width)
 }
 
-func computeHorizontalChildren(node *Item, opts *Options, spacing, level, width int) {
+func computeHorizontalChildren(node *Item, opts RenderOptions, spacing, level, width int) {
 	for _, x := range node.Children {
 		if !x.Leaf() {
 			computeHorizontalCoordinates(x, opts, spacing, level)
@@ -497,8 +471,8 @@ func computeHorizontalChildren(node *Item, opts *Options, spacing, level, width 
 		}
 		var (
 			startX = x.Ideal.X * width
-			startY = (x.Ideal.Y * opts.Height / spacing)
-			endY   = ((x.Ideal.Y + opts.Spacing) * opts.Height) / spacing
+			startY = (x.Ideal.Y * opts.Size.Height / spacing)
+			endY   = ((x.Ideal.Y + opts.Spacing) * opts.Size.Height) / spacing
 		)
 		x.Position.X = startX
 		x.Position.Y = startY
@@ -518,7 +492,7 @@ func computeHorizontalChildren(node *Item, opts *Options, spacing, level, width 
 	}
 }
 
-func resolveHorizontalChildren(node *Item, opts *Options) {
+func resolveHorizontalChildren(node *Item, opts RenderOptions) {
 	if len(node.Children) < 1 {
 		return
 	}
@@ -531,7 +505,7 @@ func resolveHorizontalChildren(node *Item, opts *Options) {
 	}
 }
 
-func computeHorizontalNode(node *Item, opts *Options, spacing, width int) {
+func computeHorizontalNode(node *Item, opts RenderOptions, spacing, width int) {
 	var (
 		first = node.FirstLeaf()
 		last  = node.LastLeaf()
@@ -540,7 +514,7 @@ func computeHorizontalNode(node *Item, opts *Options, spacing, width int) {
 		spacing++
 	}
 	node.Position.X = node.Ideal.X * width
-	node.Position.Y = node.Ideal.Y * opts.Height / spacing
+	node.Position.Y = node.Ideal.Y * opts.Size.Height / spacing
 
 	node.Bounds = Rect{
 		X:      node.Position.X,
@@ -556,7 +530,7 @@ func computeHorizontalNode(node *Item, opts *Options, spacing, width int) {
 
 const compactBarWidth = 2
 
-func compactLayout(root *Node, opts *Options) *ItemsSet {
+func compactLayout(root *Node, opts RenderOptions) *ItemsSet {
 	clone := opts.Clone()
 	clone.Spacing = 1
 
@@ -566,8 +540,8 @@ func compactLayout(root *Node, opts *Options) *ItemsSet {
 		set   ItemsSet
 	)
 	items[0].Bounds = Rect{
-		Width:  opts.Width,
-		Height: opts.Height,
+		Width:  opts.Size.Width,
+		Height: opts.Size.Height,
 		X:      items[0].Position.X,
 		Y:      items[0].Position.Y,
 	}
@@ -576,15 +550,15 @@ func compactLayout(root *Node, opts *Options) *ItemsSet {
 		for items[i].Position.Y <= items[i-1].Position.Y {
 			items[i].Position.Y++
 		}
-		opts.Height = items[i].Position.Y
+		set.Height = items[i].Position.Y
 		items[i].Bounds = Rect{
 			X:      items[i].Position.X,
 			Y:      items[i].Position.Y,
-			Width:  opts.Width - items[i].Position.X,
+			Width:  opts.Size.Width - items[i].Position.X,
 			Height: 1,
 		}
 	}
-	opts.Height++
+	set.Height++
 
 	ix := slices.IndexFunc(items, func(i *Item) bool {
 		return i.Root()
@@ -611,11 +585,7 @@ func defaultTreeLayout() *treeLayout {
 	return &treeLayout{}
 }
 
-func (m *treeLayout) Single(node *Node, opts *Options) *Item {
-	return m.makeLayout(node, 0, opts)
-}
-
-func (m *treeLayout) Make(node *Node, opts *Options) []*Item {
+func (m *treeLayout) Make(node *Node, opts RenderOptions) []*Item {
 	var (
 		root = m.makeLayout(node, 0, opts)
 		res  = m.flatten(root)
@@ -638,7 +608,7 @@ func (m *treeLayout) Spacing() int {
 	return m.siblingsSpacing
 }
 
-func (m *treeLayout) makeLayout(node *Node, depth int, opts *Options) *Item {
+func (m *treeLayout) makeLayout(node *Node, depth int, opts RenderOptions) *Item {
 	sub := Item{
 		Content: opts.Render(node, opts),
 		root:    depth == 0,

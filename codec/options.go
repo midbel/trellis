@@ -7,7 +7,7 @@ import (
 	"github.com/midbel/trellis"
 )
 
-func makeFlags(opts *trellis.Options) map[string]func() {
+func makeFlags(opts *OptionsBag) map[string]func() {
 	return map[string]func(){
 		"border": func() {
 			opts.Border = true
@@ -27,7 +27,7 @@ func makeFlags(opts *trellis.Options) map[string]func() {
 	}
 }
 
-func makeSetters(opts *trellis.Options) map[string]func(any) error {
+func makeSetters(opts *OptionsBag) map[string]func(any) error {
 	return map[string]func(any) error{
 		"width":       assignValue(&opts.Width, parseInt),
 		"height":      assignValue(&opts.Height, parseInt),
@@ -41,7 +41,7 @@ func makeSetters(opts *trellis.Options) map[string]func(any) error {
 		"align-x":     assignValue(&opts.AlignX, parseAlignment),
 		"align-y":     assignValue(&opts.AlignY, parseAlignment),
 		"connector":   assignValue(&opts.Style, parseConnectorStyle),
-		"output":      assignValue(&opts.Output, parseOutput),
+		"output":      assignValue(&opts.Type, parseOutput),
 		"min-depth":   assignValue(&opts.MinDepth, parseInt),
 		"max-depth":   assignValue(&opts.MaxDepth, parseInt),
 	}

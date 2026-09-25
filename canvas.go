@@ -11,6 +11,14 @@ type Dimension struct {
 	Height int
 }
 
+func NewDimension(w int, h int) Dimension {
+	d := Dimension{
+		Width:  w,
+		Height: h,
+	}
+	return d
+}
+
 func (d Dimension) Validate() error {
 	if d.Width <= 0 {
 		return fmt.Errorf("width can not be equal to 0 or negative")
@@ -97,18 +105,14 @@ func (c Content) DisplayWidth() int {
 type Canvas struct {
 	origin   Point
 	dim      Dimension
-	opts     *Options
+	opts     Options
 	cells    []Placement
 	children []*Canvas
 }
 
-func NewCanvas(opts *Options) (*Canvas, error) {
+func NewCanvas(size Dimension) (*Canvas, error) {
 	canvas := &Canvas{
-		dim: Dimension{
-			Width:  opts.Width,
-			Height: opts.Height,
-		},
-		opts: opts,
+		dim: size,
 	}
 	if err := canvas.dim.Validate(); err != nil {
 		return nil, err
@@ -129,82 +133,65 @@ func (c *Canvas) Append(other *Canvas) {
 	c.children = append(c.children, other)
 }
 
-func (c *Canvas) Screen() (View, error) {
-	clone := c.cloneOptions()
-	view, err := NewScreen(clone)
+func (c *Canvas) Screen(opts ScreenOptions) (View, error) {
+	opts.RenderOptions = c.adjustSize(opts.RenderOptions)
+	view, err := NewScreen(opts, opts.Size)
 	if err != nil {
 		return nil, err
 	}
 	return view, c.fillView(view)
 }
 
-func (c *Canvas) Xml() (View, error) {
-	clone := c.cloneOptions()
-	view, err := NewXml(clone)
-	if err != nil {
-		return nil, err
-	}
-	return view, c.fillView(view)
-	// if n := len(c.children); n > 1 {
-	// 	for _, cv := range c.children {
-	// 		if err := view.put(cv.origin.X, cv.origin.Y, cv); err != nil {
-	// 			return nil, err
-	// 		}
-	// 	}
-	// 	return view, nil
-	// } else {
-	// 	if n == 0 {
-	// 		return view, nil
-	// 	}
-	// 	return view, c.children[0].fillView(view)
-	// }
-}
-
-func (c *Canvas) Svg() (View, error) {
-	clone := c.cloneOptions()
-	view, err := NewSvg(clone)
+func (c *Canvas) Xml(opts XmlOptions) (View, error) {
+	opts.RenderOptions = c.adjustSize(opts.RenderOptions)
+	view, err := NewXml(opts, opts.Orient, opts.Size)
 	if err != nil {
 		return nil, err
 	}
 	return view, c.fillView(view)
 }
 
-func (c *Canvas) Json() (View, error) {
-	clone := c.cloneOptions()
-	view, err := NewJson(clone)
+func (c *Canvas) Svg(opts SvgOptions) (View, error) {
+	opts.RenderOptions = c.adjustSize(opts.RenderOptions)
+	view, err := NewSvg(opts, opts.Size)
 	if err != nil {
 		return nil, err
 	}
 	return view, c.fillView(view)
 }
 
-func (c *Canvas) Table() (View, error) {
+func (c *Canvas) Json(opts JsonOptions) (View, error) {
+	opts.RenderOptions = c.adjustSize(opts.RenderOptions)
+	view, err := NewJson(opts, opts.Orient, opts.Size)
+	if err != nil {
+		return nil, err
+	}
+	return view, c.fillView(view)
+}
+
+func (c *Canvas) Table(opts Options) (View, error) {
 	return NewTable()
 }
 
-func (c *Canvas) cloneOptions() *Options {
-	clone := c.opts.Clone()
-	clone.Width = c.dim.Width
-	clone.Height = c.dim.Height
-
+func (c *Canvas) adjustSize(opts RenderOptions) RenderOptions {
 	if len(c.children) > 0 {
-		clone.ResetSize()
-		if clone.Orient == HorizontalLayout {
-			clone.Width = c.opts.Width
+		opts.ResetSize()
+		if opts.Orient == HorizontalLayout {
+			opts.Size.Width = c.dim.Width
 		} else {
-			clone.Height = c.opts.Height
+			opts.Size.Height = c.dim.Height
 		}
 		for _, x := range c.children {
-			if clone.Orient == HorizontalLayout {
-				clone.Height += x.dim.Height
-				clone.Width = max(clone.Width, x.dim.Width)
-			} else if clone.Orient == VerticalLayout {
-				clone.Width += x.dim.Width
-				clone.Height = max(clone.Height, x.dim.Height)
+			if opts.Orient == HorizontalLayout {
+				opts.Size.Height += x.dim.Height
+				opts.Size.Width = max(opts.Size.Width, x.dim.Width)
+			} else if opts.Orient == VerticalLayout {
+				opts.Size.Width += x.dim.Width
+				opts.Size.Height = max(opts.Size.Height, x.dim.Height)
 			}
 		}
 	}
-	return clone
+	return opts
 }
 
 func (c *Canvas) fillView(view View) error {

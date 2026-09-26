@@ -343,6 +343,11 @@ func stdVerticalLayout(root *Node, opts RenderOptions) *ItemsSet {
 	if extent == 0 {
 		extent = opts.Spacing
 	}
+
+	// if extent > opts.Size.Width {
+	// 	opts.Size.Width = extent
+	// }
+	
 	computeVerticalCoordinates(is[ix], opts, extent, level)
 	set.Width = maxFromItems(is, func(i *Item) int { return i.Bounds.EndX() })
 	set.Height = maxFromItems(is, func(i *Item) int { return i.Bounds.EndY() })
@@ -462,6 +467,10 @@ func stdHorizontalLayout(root *Node, opts RenderOptions) *ItemsSet {
 	if extent == 0 {
 		extent = opts.Spacing
 	}
+
+	// if extent > opts.Size.Height {
+	// 	opts.Size.Height = extent
+	// }
 
 	computeHorizontalCoordinates(is[ix], opts, extent, level)
 	set.Width = maxFromItems(is, func(i *Item) int { return i.Bounds.EndX() })

@@ -19,7 +19,7 @@ func NewDimension(w int, h int) Dimension {
 	return d
 }
 
-func (d Dimension) Validate() error {
+func (d *Dimension) Validate() error {
 	if d.Width <= 0 {
 		return fmt.Errorf("width can not be equal to 0 or negative")
 	}
@@ -29,7 +29,13 @@ func (d Dimension) Validate() error {
 	return nil
 }
 
-func (d Dimension) Valid(x, y int) bool {
+func (d *Dimension) Resize(w, h int) error {
+	d.Width = w
+	d.Height = h
+	return d.Validate()
+}
+
+func (d *Dimension) Valid(x, y int) bool {
 	return x >= 0 && x < d.Width && y >= 0 && y < d.Height
 }
 
@@ -59,10 +65,10 @@ func NewConnector(paths []Segment) Connector {
 func (c Connector) Move(x, y int) Connector {
 	cp := NewConnector(slices.Clone(c.Paths))
 	for i := range cp.Paths {
-		c.Paths[i].Start.X += x
-		c.Paths[i].Start.Y += y
-		c.Paths[i].End.X += x
-		c.Paths[i].End.Y += y
+		cp.Paths[i].Start.X += x
+		cp.Paths[i].Start.Y += y
+		cp.Paths[i].End.X += x
+		cp.Paths[i].End.Y += y
 	}
 	return cp
 }

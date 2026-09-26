@@ -34,15 +34,20 @@ func Horizontal(w io.Writer, root *Node, options Options) error {
 		nodes  = traverse(root, opts.MinDepth)
 		offset int
 	)
+	if len(nodes) == 0 {
+		return nil
+	}
 	master, err := NewCanvas(opts.Size)
 	if err != nil {
 		return err
 	}
 	for _, n := range nodes {
-		clone := opts.Clone()
-		set := stdHorizontalLayout(n, clone)
+		var (
+			clone = opts.Clone()
+			set   = stdHorizontalLayout(n, clone)
+		)
 
-		canvas, err := NewCanvas(clone.Size)
+		canvas, err := NewCanvas(set.Dimension())
 		if err != nil {
 			return err
 		}
@@ -67,26 +72,30 @@ func Vertical(w io.Writer, root *Node, options Options) error {
 
 	var (
 		opts   = options.Layout()
-		nodes  = traverse(root, 1)
+		nodes  = traverse(root, opts.MinDepth)
 		offset int
 	)
-	fmt.Println(opts.Size)
+	if len(nodes) == 0 {
+		return nil
+	}
+	opts.Size.Width /= len(nodes)
 	master, err := NewCanvas(opts.Size)
 	if err != nil {
 		return err
 	}
 	for _, n := range nodes {
-		clone := opts.Clone()
-		set := stdVerticalLayout(n, clone)
-
-		canvas, err := NewCanvas(clone.Size)
+		var (
+			clone = opts.Clone()
+			set   = stdVerticalLayout(n, clone)
+		)
+		canvas, err := NewCanvas(set.Dimension())
 		if err != nil {
 			return err
 		}
 		for _, i := range set.Items {
 			canvas.Put(i.Position.X, i.Position.Y, i.Content)
 			for _, x := range i.Children {
-				conn := verticalPath(i, x, opts)
+				conn := verticalPath(i, x, clone)
 				canvas.Put(conn.X(), conn.Y(), conn)
 			}
 		}
@@ -94,16 +103,6 @@ func Vertical(w io.Writer, root *Node, options Options) error {
 		master.Append(canvas)
 		offset += set.Width
 	}
-	// if err := canvas.Resize(set.Width, set.Height); err != nil {
-	// 	return err
-	// }
-	// for _, i := range set.Items {
-	// 	canvas.Put(i.Position.X, i.Position.Y, i.Content)
-	// 	for _, x := range i.Children {
-	// 		conn := verticalPath(i, x, opts)
-	// 		canvas.Put(conn.X(), conn.Y(), conn)
-	// 	}
-	// }
 	return renderCanvas(w, master, options)
 }
 

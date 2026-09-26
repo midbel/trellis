@@ -215,6 +215,10 @@ type ItemsSet struct {
 	Items  []*Item
 }
 
+func (s ItemsSet) Dimension() Dimension {
+	return NewDimension(s.Width, s.Height)
+}
+
 type Item struct {
 	Content
 
@@ -373,6 +377,7 @@ func computeVerticalChildren(node *Item, opts RenderOptions, spacing, level, hei
 			Width:  endX - startX,
 			Height: height,
 		}
+
 		x.Bounds = applyMargins(x.Bounds, opts.Margin)
 
 		if x.Bounds.Width < opts.Spacing+1 {
@@ -407,12 +412,22 @@ func computeVerticalNode(node *Item, opts RenderOptions, spacing, height int) {
 	node.Position.X = node.Ideal.X * opts.Size.Width / spacing
 	node.Position.Y = node.Ideal.Y * height
 
-	node.Bounds = Rect{
-		X:      first.Bounds.StartX(),
-		Y:      node.Position.Y,
-		Width:  last.Bounds.EndX() - first.Bounds.StartX(),
-		Height: height,
+	if node.Leaf() {
+		node.Bounds = Rect{
+			X:      node.Position.X,
+			Y:      node.Position.Y,
+			Width:  opts.Size.Width / spacing,
+			Height: height,
+		}
+	} else {
+		node.Bounds = Rect{
+			X:      first.Bounds.StartX(),
+			Y:      node.Position.Y,
+			Width:  last.Bounds.EndX() - first.Bounds.StartX(),
+			Height: height,
+		}
 	}
+
 	node.Bounds = applyMargins(node.Bounds, opts.Margin)
 
 	node.AlignX(opts.AlignX)

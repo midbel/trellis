@@ -233,3 +233,16 @@ const (
 	ManathanPath
 	CurvePath
 )
+
+func ParsePath(str string) (PathStyle, error) {
+	switch str {
+	case "direct":
+		return DirectPath, nil
+	case "manathan":
+		return ManathanPath, nil
+	case "curve":
+		return CurvePath, nil
+	default:
+		return 0, unknown("path", str)
+	}
+}

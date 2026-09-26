@@ -249,20 +249,70 @@ func (s *Svg) put(x, y int, cell Cell) error {
 	case Content:
 		el = svg.NewText(float64(x), float64(y), string(c.Value))
 	case Connector:
-		p := svg.NewPath()
-		for i, s := range c.Paths {
-			if i == 0 {
-				p.MoveTo(float64(s.Start.X), float64(s.Start.Y))
-			} else {
-				p.LineTo(float64(s.Start.X), float64(s.Start.Y))
-			}
-			p.LineTo(float64(s.End.X), float64(s.End.Y))
+		x, err := s.putConnector(c)
+		if err != nil {
+			return err
 		}
-		el = p
+		el = x
 	default:
 	}
 	s.root.Append(el)
 	return nil
+}
+
+func (s *Svg) putConnector(c Connector) (svg.Element, error) {
+	switch s.opts.Path {
+	case ManathanPath:
+		return s.manathanPath(c)
+	case DirectPath:
+		return s.directPath(c)
+	case CurvePath:
+		return s.curvePath(c)
+	default:
+		return nil, fmt.Errorf("unsupported path type")
+	}
+}
+
+func (s *Svg) curvePath(c Connector) (svg.Element, error) {
+	p := svg.NewPath()
+	p.MoveTo(float64(c.X()), float64(c.Y()))
+	if n := len(c.Paths) - 1; n > 0 {
+		x := c.Paths[n].End.X
+		y := c.Paths[n].End.Y
+		d := x - c.X()
+		p.CurveTo(
+			float64(x),
+			float64(y),
+			float64(c.X()+d),
+			float64(c.Y()),
+			float64(x-d),
+			float64(y),
+		)
+	}
+	return p, nil
+}
+
+func (s *Svg) directPath(c Connector) (svg.Element, error) {
+	p := svg.NewPath()
+	p.MoveTo(float64(c.X()), float64(c.Y()))
+
+	if n := len(c.Paths) - 1; n > 0 {
+		p.LineTo(float64(c.Paths[n].End.X), float64(c.Paths[n].End.Y))
+	}
+	return p, nil
+}
+
+func (s *Svg) manathanPath(c Connector) (svg.Element, error) {
+	p := svg.NewPath()
+	for i, s := range c.Paths {
+		if i == 0 {
+			p.MoveTo(float64(s.Start.X), float64(s.Start.Y))
+		} else {
+			p.LineTo(float64(s.Start.X), float64(s.Start.Y))
+		}
+		p.LineTo(float64(s.End.X), float64(s.End.Y))
+	}
+	return p, nil
 }
 
 type Table struct{}

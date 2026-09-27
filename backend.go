@@ -277,7 +277,7 @@ func (s *Svg) curvePath(c Connector) (svg.Element, error) {
 	p := svg.NewPath()
 	p.MoveTo(float64(c.X()), float64(c.Y()))
 	if len(c.Paths) == 1 {
-		p.LineTo(float64(c.Paths[0].End.X), float64(c.Paths[0].End.X))
+		p.LineTo(float64(c.Paths[0].End.X), float64(c.Paths[0].End.Y))
 		return p, nil
 	}
 	if n := len(c.Paths) - 1; n > 0 {
@@ -300,7 +300,7 @@ func (s *Svg) directPath(c Connector) (svg.Element, error) {
 	p := svg.NewPath()
 	p.MoveTo(float64(c.X()), float64(c.Y()))
 	if len(c.Paths) == 1 {
-		p.LineTo(float64(c.Paths[0].End.X), float64(c.Paths[0].End.X))
+		p.LineTo(float64(c.Paths[0].End.X), float64(c.Paths[0].End.Y))
 		return p, nil
 	}
 	if n := len(c.Paths) - 1; n > 0 {
@@ -343,21 +343,17 @@ type Screen struct {
 
 	opts ScreenOptions
 
-	// connector ConnectorStyle
-	// border    bool
-	// ticksStep int
-
 	crossings []Point
 }
 
 func NewScreen(opts ScreenOptions) (View, error) {
+	if err := opts.Size.Validate(); err != nil {
+		return nil, err
+	}
 	sc := &Screen{
 		lines: make([][]rune, opts.Size.Height),
 		dim:   opts.Size,
 		opts:  opts,
-	}
-	if err := sc.dim.Validate(); err != nil {
-		return nil, err
 	}
 	for i := range sc.lines {
 		sc.lines[i] = make([]rune, opts.Size.Width)

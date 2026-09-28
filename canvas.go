@@ -200,22 +200,32 @@ func (c *Canvas) adjustSize(opts RenderOptions) RenderOptions {
 }
 
 func (c *Canvas) fillView(view View) error {
+	if err := c.drawCells(view); err != nil {
+		return err
+	}
+	for _, x := range c.children {
+		err := view.fill(x.origin.X, x.origin.Y, func(draw drawer) error {
+			return x.drawCells(draw)
+		})
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (c *Canvas) drawCells(d drawer) error {
 	for _, p := range c.cells {
 		p.X += c.origin.X
 		p.Y += c.origin.Y
 		if conn, ok := p.Cell.(Connector); ok {
 			p.Cell = conn.Move(c.origin.X, c.origin.Y)
 		}
-		if err := view.put(p.X, p.Y, p.Cell); err != nil {
+		if err := d.draw(p.X, p.Y, p.Cell); err != nil {
 			return err
 		}
 	}
-	for _, x := range c.children {
-		if err := x.fillView(view); err != nil {
-			return err
-		}
-	}
-	return nil
+	return nil	
 }
 
 func (c *Canvas) Resize(width, height int) error {

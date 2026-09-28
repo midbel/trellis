@@ -14,9 +14,15 @@ import (
 
 const space = ' '
 
+type drawer interface {
+	draw(int, int, Cell) error
+	// put(int, int, Cell) error
+}
+
 type View interface {
 	Render(io.Writer) error
-	put(int, int, Cell) error
+	fill(int, int, func(drawer) error) error
+	drawer
 }
 
 type JsonFile struct {
@@ -48,7 +54,7 @@ func (f *JsonFile) Render(w io.Writer) error {
 	return ws.Write(f.root)
 }
 
-func (f *JsonFile) put(x, y int, cell Cell) error {
+func (f *JsonFile) draw(x, y int, cell Cell) error {
 	switch c := cell.(type) {
 	case Content:
 		f.appendContent(x, y, c)
@@ -58,6 +64,10 @@ func (f *JsonFile) put(x, y int, cell Cell) error {
 		f.appendCanvas(x, y, c)
 	default:
 	}
+	return nil
+}
+
+func (f *JsonFile) fill(x, y int, fill func(drawer) error) error {
 	return nil
 }
 
@@ -107,7 +117,7 @@ func (f *JsonFile) appendCanvas(x, y int, c *Canvas) {
 	f.root = root
 
 	for _, p := range c.cells {
-		f.put(p.X, p.Y, p.Cell)
+		f.draw(p.X, p.Y, p.Cell)
 	}
 
 	vs, ok := tmp["canvas"].([]any)
@@ -146,20 +156,35 @@ func (f *XmlFile) Render(w io.Writer) error {
 	return enc.Encode(doc)
 }
 
-func (f *XmlFile) put(x, y int, cell Cell) error {
+func (f *XmlFile) draw(x, y int, cell Cell) error {
+	var node xml.Node
 	switch c := cell.(type) {
 	case Content:
-		f.createElementForContent(x, y, c)
+		node = createElementForContent(x, y, c)
 	case Connector:
-		f.createElementForConnector(x, y, c)
-	case *Canvas:
-		f.createElementForCanvas(x, y, c)
+		node = createElementForConnector(x, y, c)
 	default:
+	}
+	if node != nil {
+		f.root.Children = append(f.root.Children, node)
 	}
 	return nil
 }
 
-func (f *XmlFile) createElementForCanvas(x, y int, cv *Canvas) {
+func (f *XmlFile) fill(x, y int, fill func(drawer) error) error {
+	el := newXmlElement(x, y)
+	if err := fill(el); err != nil {
+		return err
+	}
+	f.root.Children = append(f.root.Children, el.root)
+	return nil
+}
+
+type xmlElement struct {
+	root *xml.Element
+}
+
+func newXmlElement(x, y int) *xmlElement {
 	el := &xml.Element{
 		Name: xml.NewName("canvas"),
 		Attributes: []xml.Attribute{
@@ -167,16 +192,27 @@ func (f *XmlFile) createElementForCanvas(x, y int, cv *Canvas) {
 			xml.NewAttribute(xml.NewName("y"), strconv.Itoa(y)),
 		},
 	}
-	root := f.root
-	f.root = el
-	for _, p := range cv.cells {
-		f.put(p.X, p.Y, p.Cell)
+	return &xmlElement{
+		root: el,
 	}
-	f.root = root
-	f.root.Children = append(f.root.Children, el)
 }
 
-func (f *XmlFile) createElementForContent(x, y int, val Content) {
+func (e *xmlElement) draw(x, y int, cell Cell) error {
+	var node xml.Node
+	switch c := cell.(type) {
+	case Content:
+		node = createElementForContent(x, y, c)
+	case Connector:
+		node = createElementForConnector(x, y, c)
+	default:
+	}
+	if node != nil {
+		e.root.Children = append(e.root.Children, node)
+	}
+	return nil
+}
+
+func createElementForContent(x, y int, val Content) xml.Node {
 	el := xml.Element{
 		Name: xml.NewName("content"),
 		Attributes: []xml.Attribute{
@@ -187,21 +223,21 @@ func (f *XmlFile) createElementForContent(x, y int, val Content) {
 			xml.NewText(string(val.Value)),
 		},
 	}
-	f.root.Children = append(f.root.Children, &el)
+	return &el
 }
 
-func (f *XmlFile) createElementForConnector(x, y int, conn Connector) {
+func createElementForConnector(x, y int, conn Connector) xml.Node {
 	el := &xml.Element{
 		Name: xml.NewName("connector"),
 	}
 	for _, seg := range conn.Paths {
-		sub := f.createElementForSegment(seg)
+		sub := createElementForSegment(seg)
 		el.Children = append(el.Children, sub)
 	}
-	f.root.Children = append(f.root.Children, el)
+	return el
 }
 
-func (f *XmlFile) createElementForSegment(seg Segment) *xml.Element {
+func createElementForSegment(seg Segment) xml.Node {
 	start := &xml.Element{
 		Name: xml.NewName("start"),
 		Attributes: []xml.Attribute{
@@ -243,7 +279,7 @@ func (s *Svg) Render(w io.Writer) error {
 	return s.root.Render(w)
 }
 
-func (s *Svg) put(x, y int, cell Cell) error {
+func (s *Svg) draw(x, y int, cell Cell) error {
 	var el svg.Element
 	switch c := cell.(type) {
 	case Content:
@@ -257,6 +293,10 @@ func (s *Svg) put(x, y int, cell Cell) error {
 	default:
 	}
 	s.root.Append(el)
+	return nil
+}
+
+func (s *Svg) fill(x, y int, fill func(drawer) error) error {
 	return nil
 }
 
@@ -333,7 +373,11 @@ func (t *Table) Render(w io.Writer) error {
 	return nil
 }
 
-func (t *Table) put(x, y int, cell Cell) error {
+func (t *Table) draw(x, y int, cell Cell) error {
+	return nil
+}
+
+func (t *Table) fill(x, y int, fill func(drawer) error) error {
 	return nil
 }
 
@@ -494,7 +538,7 @@ func (s *Screen) coordinatesX() []rune {
 	return line
 }
 
-func (s *Screen) put(x, y int, cell Cell) error {
+func (s *Screen) draw(x, y int, cell Cell) error {
 	var err error
 	if !s.dim.Valid(x, y) {
 		return fmt.Errorf("invalid coordinates (%d, %d)", x, y)
@@ -508,6 +552,10 @@ func (s *Screen) put(x, y int, cell Cell) error {
 	default:
 	}
 	return err
+}
+
+func (s *Screen) fill(x, y int, fill func(drawer) error) error {
+	return nil
 }
 
 func (s *Screen) writeCrossings() {

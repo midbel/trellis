@@ -6,7 +6,6 @@ import (
 	"io"
 	"strconv"
 	"strings"
-	"text/tabwriter"
 
 	"github.com/midbel/angle/svg"
 	"github.com/midbel/angle/xml"
@@ -396,9 +395,10 @@ func NewTable() (View, error) {
 }
 
 func (t *Table) Render(w io.Writer) error {
-	wt := tabwriter.NewWriter(w, 0, 4, 2, '\t', 0)
+	fmt.Fprintf(w, "%-16s | %6s | %6s", "Value", "X", "Y")
+	fmt.Fprintln(w)
 	for _, p := range t.cells {
-		var lines []string
+		var lines []any
 		switch c := p.Cell.(type) {
 		case Content:
 			lines = t.getContentInfo(p.X, p.Y, c)
@@ -410,12 +410,10 @@ func (t *Table) Render(w io.Writer) error {
 		if len(lines) == 0 {
 			continue
 		}
-		str := strings.Join(lines, "\t")
-		if _, err := io.WriteString(wt, str + "\n"); err != nil {
-			return err
-		}
+		fmt.Fprintf(w, "%-16s | %6d | %6d", lines...)
+		fmt.Fprintln(w)
 	}
-	return wt.Flush()
+	return nil
 }
 
 func (t *Table) draw(x, y int, cell Cell) error {
@@ -431,19 +429,19 @@ func (t *Table) fill(x, y int, fill func(drawer) error) error {
 	return fill(t)
 }
 
-func (t *Table) getContentInfo(x, y int, c Content) []string {
-	return []string{
-		string(c.Value),
-		strconv.Itoa(x),
-		strconv.Itoa(y),
+func (t *Table) getContentInfo(x, y int, c Content) []any {
+	return []any{
+		strings.TrimSpace(string(c.Value)),
+		x,
+		y,
 	}
 }
 
-func (t *Table) getConnectorInfo(x, y int, c Connector) []string {
-	return []string{
+func (t *Table) getConnectorInfo(x, y int, c Connector) []any {
+	return []any{
 		"connector",
-		strconv.Itoa(c.X()),
-		strconv.Itoa(c.Y()),
+		c.X(),
+		c.Y(),
 	}
 }
 

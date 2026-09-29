@@ -16,7 +16,6 @@ const space = ' '
 
 type drawer interface {
 	draw(int, int, Cell) error
-	// put(int, int, Cell) error
 }
 
 type View interface {
@@ -57,33 +56,81 @@ func (f *JsonFile) Render(w io.Writer) error {
 func (f *JsonFile) draw(x, y int, cell Cell) error {
 	switch c := cell.(type) {
 	case Content:
-		f.appendContent(x, y, c)
+		v := createJsonContent(x, y, c)
+		vs, ok := f.root["cells"].([]any)
+		if ok {
+			f.root["cells"] = append(vs, v)
+		}
 	case Connector:
-		f.appendConnector(x, y, c)
-	case *Canvas:
-		f.appendCanvas(x, y, c)
+		v := createJsonConnector(x, y, c)
+		vs, ok := f.root["connectors"].([]any)
+		if ok {
+			f.root["connectors"] = append(vs, v)
+		}
 	default:
+		return fmt.Errorf("element can not be draw")
 	}
 	return nil
 }
 
 func (f *JsonFile) fill(x, y int, fill func(drawer) error) error {
+	j := newJsonElement(x, y)
+	if err := fill(j); err != nil {
+		return err
+	}
+	vs, ok := f.root["canvas"].([]any)
+	if ok {
+		f.root["canvas"] = append(vs, j.canvas)
+	}
 	return nil
 }
 
-func (f *JsonFile) appendContent(x, y int, c Content) {
+type jsonElement struct{
+	canvas map[string]any
+}
+
+func newJsonElement(x, y int) *jsonElement{
+	e := &jsonElement{
+		canvas: make(map[string]any),
+	}
+	e.canvas["x"] = x
+	e.canvas["y"] = y
+	e.canvas["cells"] = []any{}
+	e.canvas["connectors"] = []any{}
+	e.canvas["canvas"] = []any{}
+	return e
+}
+
+func (e *jsonElement) draw(x, y int, cell Cell) error {
+	switch c := cell.(type) {
+	case Content:
+		v := createJsonContent(x, y, c)
+		vs, ok := e.canvas["cells"].([]any)
+		if ok {
+			e.canvas["cells"] = append(vs, v)
+		}
+	case Connector:
+		v := createJsonConnector(x, y, c)
+		vs, ok := e.canvas["connectors"].([]any)
+		if ok {
+			e.canvas["connectors"] = append(vs, v)
+		}
+	default:
+		return fmt.Errorf("element can not be draw")
+	}
+	return nil
+}
+
+func createJsonContent(x, y int, c Content) any {
 	v := map[string]any{
 		"content": string(c.Value),
 		"x":       x,
 		"y":       y,
 	}
-	vs, ok := f.root["cells"].([]any)
-	if ok {
-		f.root["cells"] = append(vs, v)
-	}
+	return v
 }
 
-func (f *JsonFile) appendConnector(x, y int, c Connector) {
+func createJsonConnector(x, y int, c Connector) any {
 	var list []any
 	for _, p := range c.Paths {
 		s := map[string]any{
@@ -100,31 +147,7 @@ func (f *JsonFile) appendConnector(x, y int, c Connector) {
 		}
 		list = append(list, g)
 	}
-	vs, ok := f.root["connectors"].([]any)
-	if ok {
-		f.root["connectors"] = append(vs, list)
-	}
-}
-
-func (f *JsonFile) appendCanvas(x, y int, c *Canvas) {
-	root := map[string]any{
-		"x":          x,
-		"y":          y,
-		"cells":      []any{},
-		"connectors": []any{},
-	}
-	tmp := f.root
-	f.root = root
-
-	for _, p := range c.cells {
-		f.draw(p.X, p.Y, p.Cell)
-	}
-
-	vs, ok := tmp["canvas"].([]any)
-	if ok {
-		f.root = tmp
-		f.root["canvas"] = append(vs, root)
-	}
+	return list
 }
 
 type XmlFile struct {
@@ -297,7 +320,7 @@ func (s *Svg) draw(x, y int, cell Cell) error {
 }
 
 func (s *Svg) fill(x, y int, fill func(drawer) error) error {
-	return nil
+	return fill(s)
 }
 
 func (s *Svg) putConnector(c Connector) (svg.Element, error) {
@@ -510,34 +533,6 @@ func (s *Screen) Render(w io.Writer) error {
 	return ws.Flush()
 }
 
-func (s *Screen) connector() ConnectorStyle {
-	return s.opts.Style
-}
-
-func (s *Screen) showBorder() bool {
-	return s.opts.Border
-}
-
-func (s *Screen) showCoordinates() bool {
-	return s.opts.CoordinatesStep > 0
-}
-
-func (s *Screen) coordinatesX() []rune {
-	line := make([]rune, s.dim.Width)
-	for i := range line {
-		line[i] = space
-	}
-	for i := 0; i < s.dim.Width; i += s.opts.CoordinatesStep {
-		ix := strconv.Itoa(i)
-		if i == 0 {
-			copy(line[i:i+1], []rune(ix))
-		} else {
-			copy(line[i-len(ix):i], []rune(ix))
-		}
-	}
-	return line
-}
-
 func (s *Screen) draw(x, y int, cell Cell) error {
 	var err error
 	if !s.dim.Valid(x, y) {
@@ -555,7 +550,7 @@ func (s *Screen) draw(x, y int, cell Cell) error {
 }
 
 func (s *Screen) fill(x, y int, fill func(drawer) error) error {
-	return nil
+	return fill(s)
 }
 
 func (s *Screen) writeCrossings() {
@@ -665,6 +660,34 @@ func (s *Screen) horizontalConnector(seg Segment) {
 	for x := start.X; x <= end.X; x++ {
 		s.writeSymbol(x, start.Y, char)
 	}
+}
+
+func (s *Screen) connector() ConnectorStyle {
+	return s.opts.Style
+}
+
+func (s *Screen) showBorder() bool {
+	return s.opts.Border
+}
+
+func (s *Screen) showCoordinates() bool {
+	return s.opts.CoordinatesStep > 0
+}
+
+func (s *Screen) coordinatesX() []rune {
+	line := make([]rune, s.dim.Width)
+	for i := range line {
+		line[i] = space
+	}
+	for i := 0; i < s.dim.Width; i += s.opts.CoordinatesStep {
+		ix := strconv.Itoa(i)
+		if i == 0 {
+			copy(line[i:i+1], []rune(ix))
+		} else {
+			copy(line[i-len(ix):i], []rune(ix))
+		}
+	}
+	return line
 }
 
 func (s *Screen) writeChar(x, y int, char rune) {

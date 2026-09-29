@@ -31,7 +31,8 @@ func Horizontal(w io.Writer, root *Node, options Options) error {
 
 	var (
 		opts   = options.Layout()
-		nodes  = traverse(root, opts.MinDepth)
+		// nodes  = traverse(root, opts.MinDepth)
+		nodes  = traverse(root, 0)
 		offset int
 	)
 	if len(nodes) == 0 {
@@ -72,13 +73,13 @@ func Vertical(w io.Writer, root *Node, options Options) error {
 
 	var (
 		opts   = options.Layout()
-		nodes  = traverse(root, opts.MinDepth)
+		// nodes  = traverse(root, opts.MinDepth)
+		nodes  = traverse(root, 0)
 		offset int
 	)
 	if len(nodes) == 0 {
 		return nil
 	}
-	opts.Size.Width /= len(nodes)
 	master, err := NewCanvas(opts.Size)
 	if err != nil {
 		return err

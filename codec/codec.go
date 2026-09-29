@@ -38,19 +38,20 @@ var dispatch = map[Format]func(io.Reader) (*TreeSpec, error){
 }
 
 type OptionsBag struct {
-	Type        trellis.Output
-	Orient      trellis.Orientation
-	Width       int
-	Height      int
-	MinDepth    int
-	MaxDepth    int
-	Spacing     int // Distance between sibling allocation regions.
-	Reverse     bool
-	AlignY      trellis.Alignment
-	AlignX      trellis.Alignment
-	Margin      int // Space outside the node, mainly reserved for connectors
-	Padding     int // Space inside the node's visual box
-	PaddingChar string
+	Type         trellis.Output
+	Orient       trellis.Orientation
+	AllocateMode trellis.Allocate
+	Width        int
+	Height       int
+	MinDepth     int
+	MaxDepth     int
+	Spacing      int // Distance between sibling allocation regions.
+	Reverse      bool
+	AlignY       trellis.Alignment
+	AlignX       trellis.Alignment
+	Margin       int // Space outside the node, mainly reserved for connectors
+	Padding      int // Space inside the node's visual box
+	PaddingChar  string
 
 	Border          bool
 	CoordinatesStep int
@@ -62,17 +63,18 @@ type OptionsBag struct {
 
 func (b *OptionsBag) Build() (trellis.Options, error) {
 	base := trellis.RenderOptions{
-		Orient:      b.Orient,
-		Size:        trellis.NewDimension(b.Width, b.Height),
-		MinDepth:    b.MinDepth,
-		MaxDepth:    b.MaxDepth,
-		Spacing:     b.Spacing,
-		Reverse:     b.Reverse,
-		AlignY:      b.AlignY,
-		AlignX:      b.AlignX,
-		Margin:      b.Margin,
-		Padding:     b.Padding,
-		PaddingChar: b.PaddingChar,
+		AllocateMode: b.AllocateMode,
+		Orient:       b.Orient,
+		Size:         trellis.NewDimension(b.Width, b.Height),
+		MinDepth:     b.MinDepth,
+		MaxDepth:     b.MaxDepth,
+		Spacing:      b.Spacing,
+		Reverse:      b.Reverse,
+		AlignY:       b.AlignY,
+		AlignX:       b.AlignX,
+		Margin:       b.Margin,
+		Padding:      b.Padding,
+		PaddingChar:  b.PaddingChar,
 	}
 	var opts trellis.Options
 	switch b.Type {

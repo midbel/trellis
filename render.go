@@ -30,24 +30,31 @@ func Horizontal(w io.Writer, root *Node, options Options) error {
 	}
 
 	var (
-		opts = options.Layout()
-		// nodes  = traverse(root, opts.MinDepth)
-		nodes  = traverse(root, 0)
+		opts   = options.Layout()
+		nodes  = traverse(root, opts.MinDepth)
 		offset int
 	)
 	if len(nodes) == 0 {
 		return nil
 	}
+
+	sizes, err := allocateFromSize(opts.Size, nodes, opts.AllocateMode, HorizontalLayout)
+	if err != nil {
+		return err
+	}
+	if opts.Size, err = adjustSizes(sizes, HorizontalLayout); err != nil {
+		return err
+	}
+
 	master, err := NewCanvas(opts.Size)
 	if err != nil {
 		return err
 	}
-	for _, n := range nodes {
-		var (
-			clone = opts.Clone()
-			set   = stdHorizontalLayout(n, clone)
-		)
+	for i, n := range nodes {
+		clone := opts.Clone()
+		clone.Size = sizes[i]
 
+		set := stdHorizontalLayout(n, clone)
 		canvas, err := NewCanvas(set.Dimension())
 		if err != nil {
 			return err
@@ -72,23 +79,32 @@ func Vertical(w io.Writer, root *Node, options Options) error {
 	}
 
 	var (
-		opts = options.Layout()
-		// nodes  = traverse(root, opts.MinDepth)
-		nodes  = traverse(root, 0)
+		opts   = options.Layout()
+		nodes  = traverse(root, opts.MinDepth)
 		offset int
 	)
 	if len(nodes) == 0 {
 		return nil
 	}
+
+	sizes, err := allocateFromSize(opts.Size, nodes, opts.AllocateMode, VerticalLayout)
+	if err != nil {
+		return err
+	}
+	if opts.Size, err = adjustSizes(sizes, VerticalLayout); err != nil {
+		return err
+	}
+
 	master, err := NewCanvas(opts.Size)
 	if err != nil {
 		return err
 	}
-	for _, n := range nodes {
-		var (
-			clone = opts.Clone()
-			set   = stdVerticalLayout(n, clone)
-		)
+	for i, n := range nodes {
+		clone := opts.Clone()
+		clone.Size = sizes[i]
+
+		set := stdVerticalLayout(n, clone)
+
 		canvas, err := NewCanvas(set.Dimension())
 		if err != nil {
 			return err

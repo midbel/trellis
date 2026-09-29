@@ -103,18 +103,19 @@ func (*XmlOptions) Format() Output {
 }
 
 type RenderOptions struct {
-	Orient      Orientation
-	Size        Dimension
-	MinDepth    int
-	MaxDepth    int
-	Spacing     int // Distance between sibling allocation regions.
-	Reverse     bool
-	AlignY      Alignment
-	AlignX      Alignment
-	Margin      int // Space outside the node, mainly reserved for connectors
-	Padding     int // Space inside the node's visual box
-	PaddingChar string
-	Transform   func(*Node, RenderOptions) Content
+	AllocateMode Allocate
+	Orient       Orientation
+	Size         Dimension
+	MinDepth     int
+	MaxDepth     int
+	Spacing      int // Distance between sibling allocation regions.
+	Reverse      bool
+	AlignY       Alignment
+	AlignX       Alignment
+	Margin       int // Space outside the node, mainly reserved for connectors
+	Padding      int // Space inside the node's visual box
+	PaddingChar  string
+	Transform    func(*Node, RenderOptions) Content
 }
 
 func (o *RenderOptions) Render(n *Node, opts RenderOptions) Content {
@@ -172,6 +173,9 @@ func (t *RenderOptions) ApplyDefaults() {
 	}
 	if t.Transform == nil {
 		t.Transform = defaultRenderContent
+	}
+	if t.AllocateMode == 0 {
+		t.AllocateMode = AllocateEqual
 	}
 }
 

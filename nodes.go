@@ -15,6 +15,17 @@ func (n *Node) Leaf() bool {
 	return len(n.Nodes) == 0
 }
 
+func (n *Node) Weight() int {
+	if n.Leaf() {
+		return 1
+	}
+	var count int
+	for _, c := range n.Nodes {
+		count += c.Weight()
+	}
+	return count + 1
+}
+
 func traverse(node *Node, target int) []*Node {
 	if target == 0 {
 		return []*Node{node}

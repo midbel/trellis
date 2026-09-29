@@ -30,66 +30,34 @@ func main() {
 }
 
 type CliFlags struct {
-	Width   int
-	Height  int
-	Reverse bool
-	Border  bool
-	Orient  trellis.Orientation
-	Output  trellis.Output
-	Style   trellis.ConnectorStyle
-	File    string
+	AllocateMode trellis.Allocate
+	Width        int
+	Height       int
+	Reverse      bool
+	Border       bool
+	Orient       trellis.Orientation
+	Output       trellis.Output
+	Style        trellis.ConnectorStyle
+	File         string
 }
-
-// func (c CliFlags) Build() (trellis.Options, error) {
-// 	base := trellis.RenderOptions{
-// 		Orient:  c.Orient,
-// 		Reverse: c.Reverse,
-// 		Size:    trellis.NewDimension(c.Width, c.Height),
-// 		Padding: trellis.PaddingM,
-// 		Margin:  trellis.SpacingM,
-// 		Spacing: trellis.SpacingM,
-// 		AlignX:  trellis.AlignCenter,
-// 		AlignY:  trellis.AlignCenter,
-// 	}
-// 	var opts trellis.Options
-// 	switch c.Output {
-// 	case trellis.OutputScreen:
-// 		opts = &trellis.ScreenOptions{
-// 			RenderOptions: base,
-// 			Border:        c.Border,
-// 			Style:         c.Style,
-// 		}
-// 	case trellis.OutputSvg:
-// 		opts = &trellis.SvgOptions{
-// 			RenderOptions: base,
-// 			Border:        c.Border,
-// 			Style:         c.Style,
-// 			Path:          trellis.ManathanPath,
-// 		}
-// 	case trellis.OutputXml:
-// 		opts = &trellis.XmlOptions{
-// 			RenderOptions: base,
-// 		}
-// 	case trellis.OutputJson:
-// 		opts = &trellis.JsonOptions{
-// 			RenderOptions: base,
-// 		}
-// 	default:
-// 		return nil, fmt.Errorf("unsupported output type")
-// 	}
-// 	return opts, nil
-// }
 
 func parseArgs(args []string) (CliFlags, *flag.FlagSet, error) {
 	var (
-		cli CliFlags
-		fs  = flag.NewFlagSet("trellis", flag.ExitOnError)
+		cli = CliFlags{
+			AllocateMode: trellis.AllocateEqual,
+		}
+		fs = flag.NewFlagSet("trellis", flag.ExitOnError)
 	)
 	fs.IntVar(&cli.Width, "w", 0, "width")
 	fs.IntVar(&cli.Height, "h", 0, "height")
 	fs.BoolVar(&cli.Reverse, "r", false, "reverse")
 	fs.BoolVar(&cli.Border, "b", false, "border")
 
+	fs.Func("a", "allocation", func(str string) error {
+		v, err := trellis.ParseAllocate(str)
+		cli.AllocateMode = v
+		return err
+	})
 	fs.Func("t", "orientation", func(str string) error {
 		v, err := trellis.ParseOrientation(str)
 		cli.Orient = v
@@ -116,6 +84,8 @@ func parseArgs(args []string) (CliFlags, *flag.FlagSet, error) {
 func applyOverrides(fs *flag.FlagSet, cli *CliFlags, spec *codec.TreeSpec) {
 	fs.Visit(func(f *flag.Flag) {
 		switch f.Name {
+		case "a":
+			spec.Options.AllocateMode = cli.AllocateMode
 		case "w":
 			spec.Options.Width = cli.Width
 		case "h":
@@ -154,6 +124,7 @@ func loadTree() (*codec.TreeSpec, error) {
 	if err != nil {
 		return nil, err
 	}
+	spec.Options.AllocateMode = trellis.AllocateEqual
 	applyOverrides(fs, &cli, spec)
 	return spec, nil
 }

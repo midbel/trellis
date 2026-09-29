@@ -174,8 +174,12 @@ func (c *Canvas) Json(opts JsonOptions) (View, error) {
 	return view, c.fillView(view)
 }
 
-func (c *Canvas) Table(opts Options) (View, error) {
-	return NewTable()
+func (c *Canvas) Table(opts TableOptions) (View, error) {
+	view, err := NewTable()
+	if err != nil {
+		return nil, err
+	}
+	return view, c.fillView(view)
 }
 
 func (c *Canvas) adjustSize(opts RenderOptions) RenderOptions {
@@ -225,7 +229,7 @@ func (c *Canvas) drawCells(d drawer) error {
 			return err
 		}
 	}
-	return nil	
+	return nil
 }
 
 func (c *Canvas) Resize(width, height int) error {

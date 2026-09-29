@@ -30,7 +30,7 @@ func Horizontal(w io.Writer, root *Node, options Options) error {
 	}
 
 	var (
-		opts   = options.Layout()
+		opts = options.Layout()
 		// nodes  = traverse(root, opts.MinDepth)
 		nodes  = traverse(root, 0)
 		offset int
@@ -72,7 +72,7 @@ func Vertical(w io.Writer, root *Node, options Options) error {
 	}
 
 	var (
-		opts   = options.Layout()
+		opts = options.Layout()
 		// nodes  = traverse(root, opts.MinDepth)
 		nodes  = traverse(root, 0)
 		offset int
@@ -166,8 +166,8 @@ func renderCanvas(w io.Writer, canvas *Canvas, opts Options) error {
 		view, err = canvas.Xml(*opts)
 	case *JsonOptions:
 		view, err = canvas.Json(*opts)
-	// case TableOptions:
-	// 	view, err = canvas.Table()
+	case *TableOptions:
+		view, err = canvas.Table(*opts)
 	default:
 		return fmt.Errorf("unsupported output type")
 	}

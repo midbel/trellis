@@ -76,6 +76,10 @@ func (b *OptionsBag) Build() (trellis.Options, error) {
 	}
 	var opts trellis.Options
 	switch b.Type {
+	case trellis.OutputTable:
+		opts = &trellis.TableOptions{
+			RenderOptions: base,
+		}
 	case trellis.OutputSvg:
 		opts = &trellis.SvgOptions{
 			RenderOptions:   base,

@@ -33,6 +33,18 @@ type Options interface {
 	Format() Output
 }
 
+type TableOptions struct {
+	RenderOptions
+}
+
+func (o *TableOptions) Layout() RenderOptions {
+	return o.RenderOptions
+}
+
+func (*TableOptions) Format() Output {
+	return OutputTable
+}
+
 type ScreenOptions struct {
 	RenderOptions
 	Border          bool

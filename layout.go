@@ -347,7 +347,7 @@ func stdVerticalLayout(root *Node, opts RenderOptions) *ItemsSet {
 	// if extent > opts.Size.Width {
 	// 	opts.Size.Width = extent
 	// }
-	
+
 	computeVerticalCoordinates(is[ix], opts, extent, level)
 	set.Width = maxFromItems(is, func(i *Item) int { return i.Bounds.EndX() })
 	set.Height = maxFromItems(is, func(i *Item) int { return i.Bounds.EndY() })

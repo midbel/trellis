@@ -6,6 +6,7 @@ import (
 	"io"
 	"strconv"
 	"strings"
+	"text/tabwriter"
 
 	"github.com/midbel/angle/svg"
 	"github.com/midbel/angle/xml"
@@ -85,11 +86,11 @@ func (f *JsonFile) fill(x, y int, fill func(drawer) error) error {
 	return nil
 }
 
-type jsonElement struct{
+type jsonElement struct {
 	canvas map[string]any
 }
 
-func newJsonElement(x, y int) *jsonElement{
+func newJsonElement(x, y int) *jsonElement {
 	e := &jsonElement{
 		canvas: make(map[string]any),
 	}
@@ -385,7 +386,9 @@ func (s *Svg) manathanPath(c Connector) (svg.Element, error) {
 	return p, nil
 }
 
-type Table struct{}
+type Table struct {
+	cells []Placement
+}
 
 func NewTable() (View, error) {
 	t := &Table{}
@@ -393,15 +396,55 @@ func NewTable() (View, error) {
 }
 
 func (t *Table) Render(w io.Writer) error {
-	return nil
+	wt := tabwriter.NewWriter(w, 0, 4, 2, '\t', 0)
+	for _, p := range t.cells {
+		var lines []string
+		switch c := p.Cell.(type) {
+		case Content:
+			lines = t.getContentInfo(p.X, p.Y, c)
+		case Connector:
+			lines = t.getConnectorInfo(p.X, p.Y, c)
+		default:
+			return fmt.Errorf("element can not be rendered")
+		}
+		if len(lines) == 0 {
+			continue
+		}
+		str := strings.Join(lines, "\t")
+		if _, err := io.WriteString(wt, str + "\n"); err != nil {
+			return err
+		}
+	}
+	return wt.Flush()
 }
 
 func (t *Table) draw(x, y int, cell Cell) error {
+	p := Placement{
+		Point: NewPoint(x, y),
+		Cell:  cell,
+	}
+	t.cells = append(t.cells, p)
 	return nil
 }
 
 func (t *Table) fill(x, y int, fill func(drawer) error) error {
-	return nil
+	return fill(t)
+}
+
+func (t *Table) getContentInfo(x, y int, c Content) []string {
+	return []string{
+		string(c.Value),
+		strconv.Itoa(x),
+		strconv.Itoa(y),
+	}
+}
+
+func (t *Table) getConnectorInfo(x, y int, c Connector) []string {
+	return []string{
+		"connector",
+		strconv.Itoa(c.X()),
+		strconv.Itoa(c.Y()),
+	}
 }
 
 type Screen struct {

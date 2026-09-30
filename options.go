@@ -116,6 +116,8 @@ type RenderOptions struct {
 	Padding      int // Space inside the node's visual box
 	PaddingChar  string
 	Transform    func(*Node, RenderOptions) Content
+
+	estimateMinSize int
 }
 
 func (o *RenderOptions) Render(n *Node, opts RenderOptions) Content {

@@ -58,6 +58,18 @@ func adjustSizes(sizes []Dimension, orient Orientation) (Dimension, error) {
 	return dim, nil
 }
 
+func estimateMinSize(node *Node, size int) int {
+	count := node.Count()
+	if count == 0 {
+		return size
+	}
+	tmp := size / count
+	if mod := size % count; mod != 0 {
+		tmp += mod
+	}
+	return tmp
+}
+
 func allocateFromSize(size Dimension, nodes []*Node, mode Allocate, orient Orientation) ([]Dimension, error) {
 	if len(nodes) == 1 {
 		return []Dimension{size}, nil

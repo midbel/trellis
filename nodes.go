@@ -26,6 +26,29 @@ func (n *Node) Weight() int {
 	return count + 1
 }
 
+func (n *Node) Count() int {
+	if n.Leaf() {
+		return 1
+	}
+	var count int
+	for i := range n.Nodes {
+		count += n.Nodes[i].Count()
+	}
+	return count
+}
+
+func (n *Node) Depth() int {
+	if n.Leaf() {
+		return 0
+	}
+	var depth int
+	for i := range n.Nodes {
+		z := n.Nodes[i].Depth()
+		depth = max(depth, z)
+	}
+	return depth + 1
+}
+
 func traverse(node *Node, target int) []*Node {
 	if target == 0 {
 		return []*Node{node}

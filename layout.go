@@ -431,6 +431,9 @@ func computeVerticalNode(node *Item, opts RenderOptions, spacing, height int) {
 			Width:  last.Bounds.EndX() - first.Bounds.StartX(),
 			Height: height,
 		}
+		if len(node.Children) == 1 {
+			node.Bounds.Width = opts.estimateMinSize
+		}
 	}
 
 	node.Bounds = applyMargins(node.Bounds, opts.Margin)
@@ -475,6 +478,7 @@ func stdHorizontalLayout(root *Node, opts RenderOptions) *ItemsSet {
 	computeHorizontalCoordinates(is[ix], opts, extent, level)
 	set.Width = maxFromItems(is, func(i *Item) int { return i.Bounds.EndX() })
 	set.Height = maxFromItems(is, func(i *Item) int { return i.Bounds.EndY() })
+	set.Height = max(set.Height, opts.Size.Height)
 	set.Items = is
 	return &set
 }
@@ -546,6 +550,10 @@ func computeHorizontalNode(node *Item, opts RenderOptions, spacing, width int) {
 		Width:  width,
 		Height: last.Bounds.EndY() - first.Bounds.StartY(),
 	}
+	if node.Len() == 1 {
+		node.Bounds.Height = opts.estimateMinSize // opts.Size.Height
+	}
+
 	node.Bounds = applyMargins(node.Bounds, opts.Margin)
 
 	node.AlignX(opts.AlignX)

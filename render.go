@@ -38,6 +38,8 @@ func Horizontal(w io.Writer, root *Node, options Options) error {
 		return nil
 	}
 
+	opts.estimateMinSize = estimateMinSize(root, opts.Size.Height)
+
 	sizes, err := allocateFromSize(opts.Size, nodes, opts.AllocateMode, HorizontalLayout)
 	if err != nil {
 		return err
@@ -86,6 +88,8 @@ func Vertical(w io.Writer, root *Node, options Options) error {
 	if len(nodes) == 0 {
 		return nil
 	}
+
+	opts.estimateMinSize = estimateMinSize(root, opts.Size.Width)
 
 	sizes, err := allocateFromSize(opts.Size, nodes, opts.AllocateMode, VerticalLayout)
 	if err != nil {

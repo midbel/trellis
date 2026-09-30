@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/midbel/trellis"
 	"github.com/midbel/trellis/codec"
@@ -117,8 +118,18 @@ func loadTree() (*codec.TreeSpec, error) {
 	}
 	defer r.Close()
 
+	var format codec.Format
+	switch filepath.Ext(cli.File) {
+	case ".sexpr":
+		format = codec.FormatSexpr
+	case ".json":
+		format = codec.FormatJson
+	default:
+		return nil, fmt.Errorf("file type not supported")
+	}
+
 	opts := codec.Options{
-		Format: codec.FormatSexpr,
+		Format: format,
 	}
 	spec, err := codec.Tree(r, opts)
 	if err != nil {

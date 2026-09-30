@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/midbel/curly"
 	"github.com/midbel/sexpr"
 	"github.com/midbel/trellis"
 )
@@ -138,7 +139,45 @@ func treeFromXml(r io.Reader) (*TreeSpec, error) {
 }
 
 func treeFromJson(r io.Reader) (*TreeSpec, error) {
-	return nil, nil
+	data, err := curly.Decode(r)
+	if err != nil {
+		return nil, err
+	}
+	tree, err := buildNodeFromJson(data)
+	if err != nil {
+		return nil, err
+	}
+	spec := &TreeSpec{
+		Node:    tree,
+		Options: new(OptionsBag),
+	}
+	return spec, nil
+}
+
+func buildNodeFromJson(data any) (*trellis.Node, error) {
+	root, ok := data.(map[string]any)
+	if !ok {
+		return nil, fmt.Errorf("expected object")
+	}
+	name, ok := root["name"].(string)
+	if !ok {
+		return nil, fmt.Errorf("missing name property")
+	}
+	n := &trellis.Node{
+		Value: name,
+	}
+	if children, ok := root["children"].([]any); ok {
+		for _, c := range children {
+			sub, err := buildNodeFromJson(c)
+			if err != nil {
+				return nil, err
+			}
+			if sub != nil {
+				n.Nodes = append(n.Nodes, sub)
+			}
+		}
+	}
+	return n, nil
 }
 
 func treeFromSexpr(r io.Reader) (*TreeSpec, error) {

@@ -23,11 +23,6 @@ const (
 	SpacingX = 8
 )
 
-const (
-	DefaultSpacing = 2
-	DefaultMargin  = 1
-)
-
 type Options interface {
 	Layout() (RenderOptions, error)
 	Format() Output
@@ -235,14 +230,6 @@ func defaultRenderContent(node *Node, opts RenderOptions) Content {
 	return Content{
 		Value: value,
 	}
-}
-
-var defaultOptions = &RenderOptions{
-	Spacing: DefaultSpacing,
-	Margin:  DefaultMargin,
-	Padding: PaddingS,
-	AlignX:  AlignCenter,
-	AlignY:  AlignCenter,
 }
 
 func unknown(what, value string) error {

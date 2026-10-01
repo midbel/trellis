@@ -63,16 +63,17 @@ type OptionsBag struct {
 }
 
 func defaultBag() *OptionsBag {
-	return &OptionsBag{
-		Type:         trellis.OutputScreen,
-		Orient:       trellis.HorizontalLayout,
-		AllocateMode: trellis.AllocateEqual,
-		Spacing:      trellis.SpacingS,
-		Margin:       trellis.SpacingS,
-		Padding:      trellis.PaddingS,
-		AlignX:       trellis.AlignCenter,
-		AlignY:       trellis.AlignCenter,
-	}
+	// return &OptionsBag{
+	// 	Type:         trellis.OutputScreen,
+	// 	Orient:       trellis.HorizontalLayout,
+	// 	AllocateMode: trellis.AllocateEqual,
+	// 	Spacing:      trellis.SpacingS,
+	// 	Margin:       trellis.SpacingS,
+	// 	Padding:      trellis.PaddingS,
+	// 	AlignX:       trellis.AlignCenter,
+	// 	AlignY:       trellis.AlignCenter,
+	// }
+	return new(OptionsBag)
 }
 
 func (b *OptionsBag) Build() (trellis.Options, error) {

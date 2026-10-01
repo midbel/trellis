@@ -68,7 +68,7 @@ func (f *JsonFile) draw(x, y int, cell Cell) error {
 			f.root["connectors"] = append(vs, v)
 		}
 	default:
-		return fmt.Errorf("element can not be draw")
+		return fmt.Errorf("invalid cell type")
 	}
 	return nil
 }
@@ -116,7 +116,7 @@ func (e *jsonElement) draw(x, y int, cell Cell) error {
 			e.canvas["connectors"] = append(vs, v)
 		}
 	default:
-		return fmt.Errorf("element can not be draw")
+		return fmt.Errorf("invalid cell type")
 	}
 	return nil
 }
@@ -187,6 +187,7 @@ func (f *XmlFile) draw(x, y int, cell Cell) error {
 	case Connector:
 		node = createElementForConnector(x, y, c)
 	default:
+		return fmt.Errorf("invalid cell type")
 	}
 	if node != nil {
 		f.root.Children = append(f.root.Children, node)
@@ -228,6 +229,7 @@ func (e *xmlElement) draw(x, y int, cell Cell) error {
 	case Connector:
 		node = createElementForConnector(x, y, c)
 	default:
+		return fmt.Errorf("invalid cell type")
 	}
 	if node != nil {
 		e.root.Children = append(e.root.Children, node)
@@ -314,6 +316,7 @@ func (s *Svg) draw(x, y int, cell Cell) error {
 		}
 		el = x
 	default:
+		return fmt.Errorf("invalid cell type")
 	}
 	s.root.Append(el)
 	return nil
@@ -405,7 +408,7 @@ func (t *Table) Render(w io.Writer) error {
 		case Connector:
 			lines = t.getConnectorInfo(p.X, p.Y, c)
 		default:
-			return fmt.Errorf("element can not be rendered")
+			return fmt.Errorf("invalid cell type")
 		}
 		if len(lines) == 0 {
 			continue
@@ -586,6 +589,7 @@ func (s *Screen) draw(x, y int, cell Cell) error {
 	case Connector:
 		err = s.putConnector(x, y, c)
 	default:
+		err = fmt.Errorf("invalid cell type")
 	}
 	return err
 }

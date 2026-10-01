@@ -28,17 +28,10 @@ func Render(w io.Writer, root *Node, options Options) error {
 }
 
 func Horizontal(w io.Writer, root *Node, options Options) error {
-	if options == nil {
-		return fmt.Errorf("options should be provided")
-	}
-	opts, err := options.Layout()
+	nodes, opts, err := prepareRender(root, options)
 	if err != nil {
 		return err
 	}
-	var (
-		nodes  = traverse(root, opts.MinDepth)
-		offset int
-	)
 	if len(nodes) == 0 {
 		return nil
 	}
@@ -57,6 +50,7 @@ func Horizontal(w io.Writer, root *Node, options Options) error {
 	if err != nil {
 		return err
 	}
+	var offset int
 	for i, n := range nodes {
 		clone := opts.Clone()
 		clone.Size = sizes[i]
@@ -81,17 +75,10 @@ func Horizontal(w io.Writer, root *Node, options Options) error {
 }
 
 func Vertical(w io.Writer, root *Node, options Options) error {
-	if options == nil {
-		return fmt.Errorf("options should be provided")
-	}
-	opts, err := options.Layout()
+	nodes, opts, err := prepareRender(root, options)
 	if err != nil {
 		return err
 	}
-	var (
-		nodes  = traverse(root, opts.MinDepth)
-		offset int
-	)
 	if len(nodes) == 0 {
 		return nil
 	}
@@ -110,6 +97,7 @@ func Vertical(w io.Writer, root *Node, options Options) error {
 	if err != nil {
 		return err
 	}
+	var offset int
 	for i, n := range nodes {
 		clone := opts.Clone()
 		clone.Size = sizes[i]
@@ -205,4 +193,16 @@ func renderCanvas(w io.Writer, canvas *Canvas, opts Options) error {
 		return err
 	}
 	return view.Render(w)
+}
+
+func prepareRender(node *Node, options Options) ([]*Node, RenderOptions, error) {
+	if options == nil {
+		return nil, RenderOptions{}, fmt.Errorf("options should be provided")
+	}
+	opts, err := options.Layout()
+	if err != nil {
+		return nil, opts, err
+	}
+	nodes := traverse(node, opts.MinDepth)
+	return nodes, opts, nil
 }

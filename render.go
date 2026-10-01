@@ -16,7 +16,10 @@ func Render(w io.Writer, root *Node, options Options) error {
 	if options == nil {
 		return fmt.Errorf("options should be provided")
 	}
-	rdr := options.Layout()
+	rdr, err := options.Layout()
+	if err != nil {
+		return err
+	}
 	fn, ok := renderers[rdr.Orient]
 	if !ok {
 		return fmt.Errorf("unsupported layout given")
@@ -28,9 +31,11 @@ func Horizontal(w io.Writer, root *Node, options Options) error {
 	if options == nil {
 		return fmt.Errorf("options should be provided")
 	}
-
+	opts, err := options.Layout()
+	if err != nil {
+		return err
+	}
 	var (
-		opts   = options.Layout()
 		nodes  = traverse(root, opts.MinDepth)
 		offset int
 	)
@@ -79,9 +84,11 @@ func Vertical(w io.Writer, root *Node, options Options) error {
 	if options == nil {
 		return fmt.Errorf("options should be provided")
 	}
-
+	opts, err := options.Layout()
+	if err != nil {
+		return err
+	}
 	var (
-		opts   = options.Layout()
 		nodes  = traverse(root, opts.MinDepth)
 		offset int
 	)
@@ -131,7 +138,10 @@ func Compact(w io.Writer, root *Node, options Options) error {
 	if options == nil {
 		return ErrOptions
 	}
-	opts := options.Layout()
+	opts, err := options.Layout()
+	if err != nil {
+		return err
+	}
 
 	opts.Spacing = SpacingL
 	opts.AlignY = AlignStart

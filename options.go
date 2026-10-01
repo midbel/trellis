@@ -29,7 +29,7 @@ const (
 )
 
 type Options interface {
-	Layout() RenderOptions
+	Layout() (RenderOptions, error)
 	Format() Output
 }
 
@@ -37,8 +37,8 @@ type TableOptions struct {
 	RenderOptions
 }
 
-func (o *TableOptions) Layout() RenderOptions {
-	return o.RenderOptions
+func (o *TableOptions) Layout() (RenderOptions, error) {
+	return o.RenderOptions, o.RenderOptions.Validate()
 }
 
 func (*TableOptions) Format() Output {
@@ -52,8 +52,8 @@ type ScreenOptions struct {
 	Style           ConnectorStyle
 }
 
-func (o *ScreenOptions) Layout() RenderOptions {
-	return o.RenderOptions
+func (o *ScreenOptions) Layout() (RenderOptions, error) {
+	return o.RenderOptions, o.RenderOptions.Validate()
 }
 
 func (*ScreenOptions) Format() Output {
@@ -68,8 +68,8 @@ type SvgOptions struct {
 	Path            PathStyle // manathan, direct, curve
 }
 
-func (o *SvgOptions) Layout() RenderOptions {
-	return o.RenderOptions
+func (o *SvgOptions) Layout() (RenderOptions, error) {
+	return o.RenderOptions, o.RenderOptions.Validate()
 }
 
 func (*SvgOptions) Format() Output {
@@ -81,8 +81,8 @@ type JsonOptions struct {
 	Compact bool
 }
 
-func (o *JsonOptions) Layout() RenderOptions {
-	return o.RenderOptions
+func (o *JsonOptions) Layout() (RenderOptions, error) {
+	return o.RenderOptions, o.RenderOptions.Validate()
 }
 
 func (*JsonOptions) Format() Output {
@@ -94,8 +94,8 @@ type XmlOptions struct {
 	Compact bool
 }
 
-func (o *XmlOptions) Layout() RenderOptions {
-	return o.RenderOptions
+func (o *XmlOptions) Layout() (RenderOptions, error) {
+	return o.RenderOptions, o.RenderOptions.Validate()
 }
 
 func (*XmlOptions) Format() Output {

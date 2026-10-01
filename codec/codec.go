@@ -62,6 +62,19 @@ type OptionsBag struct {
 	Compact bool
 }
 
+func defaultBag() *OptionsBag {
+	return &OptionsBag{
+		Type:         trellis.OutputScreen,
+		Orient:       trellis.HorizontalLayout,
+		AllocateMode: trellis.AllocateEqual,
+		Spacing:      trellis.SpacingS,
+		Margin:       trellis.SpacingS,
+		Padding:      trellis.PaddingS,
+		AlignX:       trellis.AlignCenter,
+		AlignY:       trellis.AlignCenter,
+	}
+}
+
 func (b *OptionsBag) Build() (trellis.Options, error) {
 	base := trellis.RenderOptions{
 		AllocateMode: b.AllocateMode,
@@ -143,13 +156,27 @@ func treeFromJson(r io.Reader) (*TreeSpec, error) {
 	if err != nil {
 		return nil, err
 	}
-	tree, err := buildNodeFromJson(data)
+	return buildSpecFromJson(data)
+}
+
+func buildSpecFromJson(data any) (*TreeSpec, error) {
+	root, ok := data.(map[string]any)
+	if !ok {
+		return nil, fmt.Errorf("expected object")
+	}
+	var source any
+	if d, ok := root["data"]; ok {
+		source = d
+	} else {
+		source = data
+	}
+	tree, err := buildNodeFromJson(source)
 	if err != nil {
 		return nil, err
 	}
 	spec := &TreeSpec{
 		Node:    tree,
-		Options: new(OptionsBag),
+		Options: defaultBag(),
 	}
 	return spec, nil
 }
@@ -211,7 +238,7 @@ type handler struct {
 
 func newHandler() *handler {
 	h := &handler{
-		options: new(OptionsBag),
+		options: defaultBag(),
 	}
 	h.setters = makeSetters(h.options)
 	h.flags = makeFlags(h.options)

@@ -41,7 +41,7 @@ func makeSetters(opts *OptionsBag) map[string]func(any) error {
 		"align-x":     assignValue(&opts.AlignX, parseAlignment),
 		"align-y":     assignValue(&opts.AlignY, parseAlignment),
 		"connector":   assignValue(&opts.Style, parseConnectorStyle),
-		"path":        assignValue(&opts.Path, parsePathStyle),
+		"path":        assignValue(&opts.Path, parsePathType),
 		"output":      assignValue(&opts.Type, parseOutput),
 		"min-depth":   assignValue(&opts.MinDepth, parseInt),
 		"max-depth":   assignValue(&opts.MaxDepth, parseInt),
@@ -153,7 +153,7 @@ func parseOutput(value any) (trellis.Output, error) {
 	}
 }
 
-func parsePathStyle(value any) (trellis.PathStyle, error) {
+func parsePathType(value any) (trellis.PathType, error) {
 	switch v := value.(type) {
 	case sexpr.Ident:
 		return trellis.ParsePath(string(v))

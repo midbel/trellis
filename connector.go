@@ -6,6 +6,84 @@ import (
 	"strings"
 )
 
+type PathType uint8
+
+const (
+	DirectPath PathType = 1 << iota
+	ManathanPath
+	CurvePath
+)
+
+func ParsePath(str string) (PathType, error) {
+	switch str {
+	case "direct":
+		return DirectPath, nil
+	case "manathan":
+		return ManathanPath, nil
+	case "curve":
+		return CurvePath, nil
+	default:
+		return 0, unknown("path", str)
+	}
+}
+
+type Path struct {
+	Kind PathType
+
+	Controls []Point
+	Segments []Segment
+}
+
+type Connector struct {
+	Start Point
+	End   Point
+	Path  Path
+	
+	Paths []Segment
+}
+
+func NewConnector(paths []Segment) Connector {
+	// if len(paths) == 0 {
+	// 	return
+	// }
+	return Connector{
+		Paths: paths,
+	}
+}
+
+func (c Connector) Move(x, y int) Connector {
+	cp := NewConnector(slices.Clone(c.Paths))
+	for i := range cp.Paths {
+		cp.Paths[i].Start.X += x
+		cp.Paths[i].Start.Y += y
+		cp.Paths[i].End.X += x
+		cp.Paths[i].End.Y += y
+	}
+	return cp
+}
+
+func (c Connector) X() int {
+	return c.Paths[0].Start.X
+}
+
+func (c Connector) Y() int {
+	return c.Paths[0].Start.Y
+}
+
+func (c Connector) String() string {
+	var str strings.Builder
+	str.WriteString("connector(")
+	for i, p := range c.Paths {
+		if i > 0 {
+			str.WriteRune(',')
+			str.WriteRune(' ')
+		}
+		str.WriteString(p.String())
+	}
+	str.WriteString(")")
+	return str.String()
+}
+
 type Segment struct {
 	Start Point
 	End   Point
@@ -130,50 +208,4 @@ func verticalPath(from, to *Item, opts RenderOptions) Connector {
 		v.Start, v.End = t.Start, f.End
 	}
 	return NewConnector([]Segment{f, v, t})
-}
-
-type Connector struct {
-	Paths []Segment
-}
-
-func NewConnector(paths []Segment) Connector {
-	// if len(paths) == 0 {
-	// 	return
-	// }
-	return Connector{
-		Paths: paths,
-	}
-}
-
-func (c Connector) Move(x, y int) Connector {
-	cp := NewConnector(slices.Clone(c.Paths))
-	for i := range cp.Paths {
-		cp.Paths[i].Start.X += x
-		cp.Paths[i].Start.Y += y
-		cp.Paths[i].End.X += x
-		cp.Paths[i].End.Y += y
-	}
-	return cp
-}
-
-func (c Connector) X() int {
-	return c.Paths[0].Start.X
-}
-
-func (c Connector) Y() int {
-	return c.Paths[0].Start.Y
-}
-
-func (c Connector) String() string {
-	var str strings.Builder
-	str.WriteString("connector(")
-	for i, p := range c.Paths {
-		if i > 0 {
-			str.WriteRune(',')
-			str.WriteRune(' ')
-		}
-		str.WriteString(p.String())
-	}
-	str.WriteString(")")
-	return str.String()
 }

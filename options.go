@@ -72,7 +72,7 @@ type SvgOptions struct {
 	Border          bool
 	CoordinatesStep int
 	Style           ConnectorStyle
-	Path            PathStyle // manathan, direct, curve
+	Path            PathType // manathan, direct, curve
 }
 
 func (o *SvgOptions) Layout() (RenderOptions, error) {

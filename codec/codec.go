@@ -179,7 +179,28 @@ func buildSpecFromJson(data any) (*TreeSpec, error) {
 		Node:    tree,
 		Options: defaultBag(),
 	}
-	return spec, nil
+	return spec, getOptionsFromJson(root["rendering"], spec.Options)
+}
+
+func getOptionsFromJson(data any, options *OptionsBag) error {
+	if data == nil {
+		return nil
+	}
+	opts, ok := data.(map[string]any)
+	if !ok {
+		return fmt.Errorf("options should be an object")
+	}
+	setters := makeSetters(options)
+	for k, o := range opts {
+		fn, ok := setters[k]
+		if !ok {
+			continue
+		}
+		if err := fn(o); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func buildNodeFromJson(data any) (*trellis.Node, error) {

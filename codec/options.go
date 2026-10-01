@@ -45,6 +45,7 @@ func makeSetters(opts *OptionsBag) map[string]func(any) error {
 		"output":      assignValue(&opts.Type, parseOutput),
 		"min-depth":   assignValue(&opts.MinDepth, parseInt),
 		"max-depth":   assignValue(&opts.MaxDepth, parseInt),
+		"orientation": assignValue(&opts.Orient, parseOrientation),
 	}
 }
 
@@ -127,6 +128,17 @@ func parsePadding(value any) (int, error) {
 		return get(string(v))
 	default:
 		return parseInt(value)
+	}
+}
+
+func parseOrientation(value any) (trellis.Orientation, error) {
+	switch v := value.(type) {
+	case sexpr.Ident:
+		return trellis.ParseOrientation(string(v))
+	case string:
+		return trellis.ParseOrientation(v)
+	default:
+		return 0, ErrType
 	}
 }
 

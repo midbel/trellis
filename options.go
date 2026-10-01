@@ -31,6 +31,7 @@ const (
 type Options interface {
 	Layout() (RenderOptions, error)
 	Format() Output
+	applyDefaults()
 }
 
 type TableOptions struct {
@@ -43,6 +44,10 @@ func (o *TableOptions) Layout() (RenderOptions, error) {
 
 func (*TableOptions) Format() Output {
 	return OutputTable
+}
+
+func (o *TableOptions) applyDefaults() {
+	o.RenderOptions.applyDefaults()
 }
 
 type ScreenOptions struct {
@@ -58,6 +63,13 @@ func (o *ScreenOptions) Layout() (RenderOptions, error) {
 
 func (*ScreenOptions) Format() Output {
 	return OutputScreen
+}
+
+func (o *ScreenOptions) applyDefaults() {
+	o.RenderOptions.applyDefaults()
+	if o.Style == 0 {
+		o.Style = ConnectorUnicode
+	}
 }
 
 type SvgOptions struct {
@@ -76,6 +88,16 @@ func (*SvgOptions) Format() Output {
 	return OutputSvg
 }
 
+func (o *SvgOptions) applyDefaults() {
+	o.RenderOptions.applyDefaults()
+	if o.Style == 0 {
+		o.Style = ConnectorUnicode
+	}
+	if o.Path == 0 {
+		o.Path = ManathanPath
+	}
+}
+
 type JsonOptions struct {
 	RenderOptions
 	Compact bool
@@ -89,6 +111,10 @@ func (*JsonOptions) Format() Output {
 	return OutputJson
 }
 
+func (o *JsonOptions) applyDefaults() {
+	o.RenderOptions.applyDefaults()
+}
+
 type XmlOptions struct {
 	RenderOptions
 	Compact bool
@@ -100,6 +126,10 @@ func (o *XmlOptions) Layout() (RenderOptions, error) {
 
 func (*XmlOptions) Format() Output {
 	return OutputXml
+}
+
+func (o *XmlOptions) applyDefaults() {
+	o.RenderOptions.applyDefaults()
 }
 
 type RenderOptions struct {
@@ -166,7 +196,7 @@ func (t *RenderOptions) Align() Alignment {
 	return t.AlignY
 }
 
-func (t *RenderOptions) ApplyDefaults() {
+func (t *RenderOptions) applyDefaults() {
 	if t.Margin == 0 {
 		t.Margin = SpacingL
 	}

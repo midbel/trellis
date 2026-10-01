@@ -16,6 +16,7 @@ func Render(w io.Writer, root *Node, options Options) error {
 	if options == nil {
 		return fmt.Errorf("options should be provided")
 	}
+	options.applyDefaults()
 	rdr, err := options.Layout()
 	if err != nil {
 		return err
@@ -203,6 +204,8 @@ func prepareRender(node *Node, options Options) ([]*Node, RenderOptions, error) 
 	if err != nil {
 		return nil, opts, err
 	}
+	// opts.applyDefaults()
+
 	nodes := traverse(node, opts.MinDepth)
 	return nodes, opts, nil
 }

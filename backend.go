@@ -147,7 +147,10 @@ func createJsonConnector(x, y int, c Connector) any {
 		}
 		list = append(list, g)
 	}
-	return list
+	conn := map[string]any{
+		"segments": list,
+	}
+	return conn
 }
 
 type XmlFile struct {

@@ -9,8 +9,8 @@ import (
 type PathType uint8
 
 const (
-	DirectPath PathType = 1 << iota
-	ManathanPath
+	ManathanPath PathType = iota
+	DirectPath
 	CurvePath
 )
 
@@ -28,24 +28,42 @@ func ParsePath(str string) (PathType, error) {
 }
 
 type Path struct {
-	Kind PathType
+	Start Point
+	End   Point
+}
 
-	Controls []Point
-	Segments []Segment
+func NewPath(start, end Point) Path {
+	return Path{
+		Start: start,
+		End:   end,
+	}
+}
+
+func (p Path) X() int {
+	return p.Start.X
+}
+
+func (p Path) Y() int {
+	return p.Start.Y
+}
+
+func (p Path) Move(x, y int) Path {
+	p.Start.X += x
+	p.Start.Y += y
+	p.End.X += x
+	p.End.Y += y
+	return p
 }
 
 type Connector struct {
 	Start Point
 	End   Point
 	Path  Path
-	
+
 	Paths []Segment
 }
 
 func NewConnector(paths []Segment) Connector {
-	// if len(paths) == 0 {
-	// 	return
-	// }
 	return Connector{
 		Paths: paths,
 	}
@@ -125,7 +143,7 @@ func (s Segment) String() string {
 	return fmt.Sprintf("segment(%s -> %s)", s.Start, s.End)
 }
 
-func horizontalPath(from, to *Item, opts RenderOptions) Connector {
+func horizontalPath(from, to *Item) Path {
 	if !from.Position.BeforeX(to.Position) {
 		from, to = to, from
 	}
@@ -134,40 +152,12 @@ func horizontalPath(from, to *Item, opts RenderOptions) Connector {
 		end    = to.Position
 		offset = from.DisplayWidth()
 	)
-	if start.Y == end.Y {
-		s := Segment{
-			Start: start,
-			End:   end,
-		}
-		s.Start.X += offset
-		s.End.X--
-		return NewConnector([]Segment{s})
-	}
-	f := Segment{
-		Start: start,
-		End:   start,
-	}
-	f.Start.X += offset
-	f.End.X = from.Bounds.EndX() + opts.Margin
-
-	t := Segment{
-		Start: end,
-		End:   end,
-	}
-	t.Start.X = to.Bounds.StartX() - opts.Margin
-	t.End.X--
-
-	var v Segment
-	if f.End.BeforeY(t.Start) {
-		v.Start, v.End = f.End, t.Start
-	} else {
-		v.Start, v.End = t.Start, f.End
-	}
-
-	return NewConnector([]Segment{f, v, t})
+	start.X += offset
+	end.X--
+	return NewPath(start, end)
 }
 
-func verticalPath(from, to *Item, opts RenderOptions) Connector {
+func verticalPath(from, to *Item) Path {
 	if !from.Position.BeforeY(to.Position) {
 		from, to = to, from
 	}
@@ -178,34 +168,8 @@ func verticalPath(from, to *Item, opts RenderOptions) Connector {
 	start.X += from.Size() / 2
 	end.X += to.Size() / 2
 
-	if start.X == end.X {
-		s := Segment{
-			Start: start,
-			End:   end,
-		}
-		s.Start.Y++
-		s.End.Y--
-		return NewConnector([]Segment{s})
-	}
-	f := Segment{
-		Start: start,
-		End:   start,
-	}
-	f.Start.Y++
-	f.End.Y = from.Bounds.EndY() + opts.Margin
+	start.Y++
+	end.Y--
 
-	t := Segment{
-		Start: end,
-		End:   end,
-	}
-	t.Start.Y = to.Bounds.StartY() - opts.Margin
-	t.End.Y--
-
-	var v Segment
-	if f.End.BeforeX(t.Start) {
-		v.Start, v.End = f.End, t.Start
-	} else {
-		v.Start, v.End = t.Start, f.End
-	}
-	return NewConnector([]Segment{f, v, t})
+	return NewPath(start, end)
 }

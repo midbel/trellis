@@ -53,7 +53,14 @@ type ScreenOptions struct {
 }
 
 func (o *ScreenOptions) Layout() (RenderOptions, error) {
-	return o.RenderOptions, o.RenderOptions.Validate()
+	var err error
+	if o.Path != ManathanPath {
+		err = fmt.Errorf("manathan default for screen only")
+	}
+	if err == nil {
+		err = o.RenderOptions.Validate()
+	}
+	return o.RenderOptions, err
 }
 
 func (*ScreenOptions) Format() Output {
@@ -72,7 +79,6 @@ type SvgOptions struct {
 	Border          bool
 	CoordinatesStep int
 	Style           ConnectorStyle
-	Path            PathType // manathan, direct, curve
 }
 
 func (o *SvgOptions) Layout() (RenderOptions, error) {
@@ -131,6 +137,7 @@ type RenderOptions struct {
 	AllocateMode Allocate
 	Orient       Orientation
 	Size         Dimension
+	Path         PathType // manathan, direct, curve
 	MinDepth     int
 	MaxDepth     int
 	Spacing      int // Distance between sibling allocation regions.

@@ -61,11 +61,11 @@ func (f *JsonFile) draw(x, y int, cell Cell) error {
 		if ok {
 			f.root["cells"] = append(vs, v)
 		}
-	case Connector:
-		v := createJsonConnector(x, y, c)
-		vs, ok := f.root["connectors"].([]any)
+	case Path:
+		v := createJsonPath(x, y, c)
+		vs, ok := f.root["paths"].([]any)
 		if ok {
-			f.root["connectors"] = append(vs, v)
+			f.root["paths"] = append(vs, v)
 		}
 	default:
 		return fmt.Errorf("invalid cell type")
@@ -96,7 +96,7 @@ func newJsonElement(x, y int) *jsonElement {
 	e.canvas["x"] = x
 	e.canvas["y"] = y
 	e.canvas["cells"] = []any{}
-	e.canvas["connectors"] = []any{}
+	e.canvas["paths"] = []any{}
 	e.canvas["canvas"] = []any{}
 	return e
 }
@@ -109,11 +109,11 @@ func (e *jsonElement) draw(x, y int, cell Cell) error {
 		if ok {
 			e.canvas["cells"] = append(vs, v)
 		}
-	case Connector:
-		v := createJsonConnector(x, y, c)
-		vs, ok := e.canvas["connectors"].([]any)
+	case Path:
+		v := createJsonPath(x, y, c)
+		vs, ok := e.canvas["paths"].([]any)
 		if ok {
-			e.canvas["connectors"] = append(vs, v)
+			e.canvas["paths"] = append(vs, v)
 		}
 	default:
 		return fmt.Errorf("invalid cell type")
@@ -130,27 +130,20 @@ func createJsonContent(x, y int, c Content) any {
 	return v
 }
 
-func createJsonConnector(x, y int, c Connector) any {
-	var list []any
-	for _, p := range c.Paths {
-		s := map[string]any{
-			"x": p.Start.X,
-			"y": p.Start.Y,
-		}
-		e := map[string]any{
-			"x": p.End.X,
-			"y": p.End.Y,
-		}
-		g := map[string]any{
-			"start": s,
-			"end":   e,
-		}
-		list = append(list, g)
+func createJsonPath(x, y int, c Path) any {
+	s := map[string]any{
+		"x": c.Start.X,
+		"y": c.Start.Y,
 	}
-	conn := map[string]any{
-		"segments": list,
+	e := map[string]any{
+		"x": c.End.X,
+		"y": c.End.Y,
 	}
-	return conn
+	g := map[string]any{
+		"start": s,
+		"end":   e,
+	}
+	return g
 }
 
 type XmlFile struct {
@@ -187,8 +180,8 @@ func (f *XmlFile) draw(x, y int, cell Cell) error {
 	switch c := cell.(type) {
 	case Content:
 		node = createElementForContent(x, y, c)
-	case Connector:
-		node = createElementForConnector(x, y, c)
+	case Path:
+		node = createElementForPath(x, y, c)
 	default:
 		return fmt.Errorf("invalid cell type")
 	}
@@ -229,8 +222,8 @@ func (e *xmlElement) draw(x, y int, cell Cell) error {
 	switch c := cell.(type) {
 	case Content:
 		node = createElementForContent(x, y, c)
-	case Connector:
-		node = createElementForConnector(x, y, c)
+	case Path:
+		node = createElementForPath(x, y, c)
 	default:
 		return fmt.Errorf("invalid cell type")
 	}
@@ -254,40 +247,30 @@ func createElementForContent(x, y int, val Content) xml.Node {
 	return &el
 }
 
-func createElementForConnector(x, y int, conn Connector) xml.Node {
-	el := &xml.Element{
-		Name: xml.NewName("connector"),
-	}
-	for _, seg := range conn.Paths {
-		sub := createElementForSegment(seg)
-		el.Children = append(el.Children, sub)
-	}
-	return el
-}
-
-func createElementForSegment(seg Segment) xml.Node {
+func createElementForPath(x, y int, c Path) xml.Node {
 	start := &xml.Element{
 		Name: xml.NewName("start"),
 		Attributes: []xml.Attribute{
-			xml.NewAttribute(xml.NewName("x"), strconv.Itoa(seg.Start.X)),
-			xml.NewAttribute(xml.NewName("y"), strconv.Itoa(seg.Start.Y)),
+			xml.NewAttribute(xml.NewName("x"), strconv.Itoa(c.Start.X)),
+			xml.NewAttribute(xml.NewName("y"), strconv.Itoa(c.Start.Y)),
 		},
 	}
 	end := &xml.Element{
 		Name: xml.NewName("end"),
 		Attributes: []xml.Attribute{
-			xml.NewAttribute(xml.NewName("x"), strconv.Itoa(seg.End.X)),
-			xml.NewAttribute(xml.NewName("y"), strconv.Itoa(seg.End.Y)),
+			xml.NewAttribute(xml.NewName("x"), strconv.Itoa(c.End.X)),
+			xml.NewAttribute(xml.NewName("y"), strconv.Itoa(c.End.Y)),
 		},
 	}
 
-	return &xml.Element{
-		Name: xml.NewName("segment"),
+	el := &xml.Element{
+		Name: xml.NewName("path"),
 		Children: []xml.Node{
 			start,
 			end,
 		},
 	}
+	return el
 }
 
 type Svg struct {
@@ -312,8 +295,8 @@ func (s *Svg) draw(x, y int, cell Cell) error {
 	switch c := cell.(type) {
 	case Content:
 		el = svg.NewText(float64(x), float64(y), string(c.Value))
-	case Connector:
-		x, err := s.putConnector(c)
+	case Path:
+		x, err := s.putPath(c)
 		if err != nil {
 			return err
 		}
@@ -329,7 +312,7 @@ func (s *Svg) fill(x, y int, fill func(drawer) error) error {
 	return fill(s)
 }
 
-func (s *Svg) putConnector(c Connector) (svg.Element, error) {
+func (s *Svg) putPath(c Path) (svg.Element, error) {
 	switch s.opts.Path {
 	case ManathanPath:
 		return s.manathanPath(c)
@@ -342,52 +325,52 @@ func (s *Svg) putConnector(c Connector) (svg.Element, error) {
 	}
 }
 
-func (s *Svg) curvePath(c Connector) (svg.Element, error) {
+func (s *Svg) curvePath(c Path) (svg.Element, error) {
 	p := svg.NewPath()
-	p.MoveTo(float64(c.X()), float64(c.Y()))
-	if len(c.Paths) == 1 {
-		p.LineTo(float64(c.Paths[0].End.X), float64(c.Paths[0].End.Y))
-		return p, nil
-	}
-	if n := len(c.Paths) - 1; n > 0 {
-		x := c.Paths[n].End.X
-		y := c.Paths[n].End.Y
-		d := x - c.X()
-		p.CurveTo(
-			float64(x),
-			float64(y),
-			float64(c.X()+d),
-			float64(c.Y()),
-			float64(x-d),
-			float64(y),
-		)
-	}
+	// p.MoveTo(float64(c.X()), float64(c.Y()))
+	// if len(c.Paths) == 1 {
+	// 	p.LineTo(float64(c.Paths[0].End.X), float64(c.Paths[0].End.Y))
+	// 	return p, nil
+	// }
+	// if n := len(c.Paths) - 1; n > 0 {
+	// 	x := c.Paths[n].End.X
+	// 	y := c.Paths[n].End.Y
+	// 	d := x - c.X()
+	// 	p.CurveTo(
+	// 		float64(x),
+	// 		float64(y),
+	// 		float64(c.X()+d),
+	// 		float64(c.Y()),
+	// 		float64(x-d),
+	// 		float64(y),
+	// 	)
+	// }
 	return p, nil
 }
 
-func (s *Svg) directPath(c Connector) (svg.Element, error) {
+func (s *Svg) directPath(c Path) (svg.Element, error) {
 	p := svg.NewPath()
-	p.MoveTo(float64(c.X()), float64(c.Y()))
-	if len(c.Paths) == 1 {
-		p.LineTo(float64(c.Paths[0].End.X), float64(c.Paths[0].End.Y))
-		return p, nil
-	}
-	if n := len(c.Paths) - 1; n > 0 {
-		p.LineTo(float64(c.Paths[n].End.X), float64(c.Paths[n].End.Y))
-	}
+	// p.MoveTo(float64(c.X()), float64(c.Y()))
+	// if len(c.Paths) == 1 {
+	// 	p.LineTo(float64(c.Paths[0].End.X), float64(c.Paths[0].End.Y))
+	// 	return p, nil
+	// }
+	// if n := len(c.Paths) - 1; n > 0 {
+	// 	p.LineTo(float64(c.Paths[n].End.X), float64(c.Paths[n].End.Y))
+	// }
 	return p, nil
 }
 
-func (s *Svg) manathanPath(c Connector) (svg.Element, error) {
+func (s *Svg) manathanPath(c Path) (svg.Element, error) {
 	p := svg.NewPath()
-	for i, s := range c.Paths {
-		if i == 0 {
-			p.MoveTo(float64(s.Start.X), float64(s.Start.Y))
-		} else {
-			p.LineTo(float64(s.Start.X), float64(s.Start.Y))
-		}
-		p.LineTo(float64(s.End.X), float64(s.End.Y))
-	}
+	// for i, s := range c.Paths {
+	// 	if i == 0 {
+	// 		p.MoveTo(float64(s.Start.X), float64(s.Start.Y))
+	// 	} else {
+	// 		p.LineTo(float64(s.Start.X), float64(s.Start.Y))
+	// 	}
+	// 	p.LineTo(float64(s.End.X), float64(s.End.Y))
+	// }
 	return p, nil
 }
 
@@ -408,8 +391,8 @@ func (t *Table) Render(w io.Writer) error {
 		switch c := p.Cell.(type) {
 		case Content:
 			lines = t.getContentInfo(p.X, p.Y, c)
-		case Connector:
-			lines = t.getConnectorInfo(p.X, p.Y, c)
+		case Path:
+			lines = t.getPathInfo(p.X, p.Y, c)
 		default:
 			return fmt.Errorf("invalid cell type")
 		}
@@ -443,9 +426,9 @@ func (t *Table) getContentInfo(x, y int, c Content) []any {
 	}
 }
 
-func (t *Table) getConnectorInfo(x, y int, c Connector) []any {
+func (t *Table) getPathInfo(x, y int, c Path) []any {
 	return []any{
-		"connector",
+		"path",
 		c.X(),
 		c.Y(),
 	}
@@ -589,8 +572,8 @@ func (s *Screen) draw(x, y int, cell Cell) error {
 	switch c := cell.(type) {
 	case Content:
 		err = s.putContent(x, y, c)
-	case Connector:
-		err = s.putConnector(x, y, c)
+	case Path:
+		err = s.putPath(x, y, c)
 	default:
 		err = fmt.Errorf("invalid cell type")
 	}
@@ -662,15 +645,15 @@ func (s *Screen) putContent(x, y int, val Content) error {
 	return nil
 }
 
-func (s *Screen) putConnector(x, y int, conn Connector) error {
-	for _, seg := range conn.Paths {
-		s.crossings = append(s.crossings, seg.Start, seg.End)
-		if seg.Horizontal() {
-			s.horizontalConnector(seg)
-		} else {
-			s.verticalConnector(seg)
-		}
-	}
+func (s *Screen) putPath(x, y int, path Path) error {
+	// for _, seg := range conn.Paths {
+	// 	s.crossings = append(s.crossings, seg.Start, seg.End)
+	// 	if seg.Horizontal() {
+	// 		s.horizontalConnector(seg)
+	// 	} else {
+	// 		s.verticalConnector(seg)
+	// 	}
+	// }
 	return nil
 }
 

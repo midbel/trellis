@@ -51,22 +51,20 @@ func (c *Canvas) Put(x, y int, cell Cell) error {
 	return c.put(x, y, cell)
 }
 
-func (c *Canvas) VerticalBar(x, y, size int) error {
+func (c *Canvas) VerticalPath(x, y, size int) error {
 	var (
 		beg = NewPoint(x, y)
 		end = NewPoint(x, y+size)
-		seg = NewSegment(beg, end)
 	)
-	return c.put(x, y, NewConnector([]Segment{seg}))
+	return c.put(x, y, NewPath(beg, end))
 }
 
-func (c *Canvas) HorizontalBar(x, y, size int) error {
+func (c *Canvas) HorizontalPath(x, y, size int) error {
 	var (
 		beg = NewPoint(x, y)
 		end = NewPoint(x+size, y)
-		seg = NewSegment(beg, end)
 	)
-	return c.put(x, y, NewConnector([]Segment{seg}))
+	return c.put(x, y, NewPath(beg, end))
 }
 
 func (c *Canvas) Screen(opts ScreenOptions) (View, error) {
@@ -153,8 +151,8 @@ func (c *Canvas) drawCells(d drawer) error {
 	for _, p := range c.cells {
 		p.X += c.origin.X
 		p.Y += c.origin.Y
-		if conn, ok := p.Cell.(Connector); ok {
-			p.Cell = conn.Move(c.origin.X, c.origin.Y)
+		if path, ok := p.Cell.(Path); ok {
+			p.Cell = path.Move(c.origin.X, c.origin.Y)
 		}
 		if err := d.draw(p.X, p.Y, p.Cell); err != nil {
 			return err

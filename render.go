@@ -64,8 +64,8 @@ func Horizontal(w io.Writer, root *Node, options Options) error {
 		for _, i := range set.Items {
 			canvas.Put(i.Position.X, i.Position.Y, i.Content)
 			for _, x := range i.Children {
-				conn := horizontalPath(i, x, clone)
-				canvas.Put(conn.X(), conn.Y(), conn)
+				path := horizontalPath(i, x)
+				canvas.Put(path.X(), path.Y(), path)
 			}
 		}
 		canvas.Move(0, offset)
@@ -112,8 +112,8 @@ func Vertical(w io.Writer, root *Node, options Options) error {
 		for _, i := range set.Items {
 			canvas.Put(i.Position.X, i.Position.Y, i.Content)
 			for _, x := range i.Children {
-				conn := verticalPath(i, x, clone)
-				canvas.Put(conn.X(), conn.Y(), conn)
+				path := verticalPath(i, x)
+				canvas.Put(path.X(), path.Y(), path)
 			}
 		}
 		canvas.Move(offset, 0)
@@ -153,8 +153,8 @@ func Compact(w io.Writer, root *Node, options Options) error {
 		canvas.Put(i.Position.X, i.Position.Y, i.Content)
 
 		x := i.Position.X - compactBarWidth
-		canvas.HorizontalBar(x, i.Position.Y, compactBarWidth)
-		canvas.VerticalBar(x, i.Position.Y, i.Weight()+1)
+		canvas.HorizontalPath(x, i.Position.Y, compactBarWidth)
+		canvas.VerticalPath(x, i.Position.Y, i.Weight()+1)
 	}
 	return renderCanvas(w, canvas, options)
 }

@@ -2,6 +2,24 @@ package trellis
 
 import "fmt"
 
+type Allocate uint8
+
+const (
+	AllocateEqual Allocate = 1 << iota
+	AllocateProportional
+)
+
+func ParseAllocate(str string) (Allocate, error) {
+	switch str {
+	case "equal":
+		return AllocateEqual, nil
+	case "proportional":
+		return AllocateProportional, nil
+	default:
+		return 0, unknown("allocate", str)
+	}
+}
+
 func adjustSizes(sizes []Dimension, orient Orientation) (Dimension, error) {
 	var dim Dimension
 	switch orient {

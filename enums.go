@@ -1,23 +1,5 @@
 package trellis
 
-type Allocate uint8
-
-const (
-	AllocateEqual Allocate = 1 << iota
-	AllocateProportional
-)
-
-func ParseAllocate(str string) (Allocate, error) {
-	switch str {
-	case "equal":
-		return AllocateEqual, nil
-	case "proportional":
-		return AllocateProportional, nil
-	default:
-		return 0, unknown("allocate", str)
-	}
-}
-
 type Output uint8
 
 const (

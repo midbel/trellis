@@ -1,10 +1,6 @@
 package trellis
 
-import (
-	"fmt"
-	"slices"
-	"strings"
-)
+import "fmt"
 
 type PathType uint8
 
@@ -39,14 +35,6 @@ func NewPath(start, end Point) Path {
 	}
 }
 
-func (p Path) X() int {
-	return p.Start.X
-}
-
-func (p Path) Y() int {
-	return p.Start.Y
-}
-
 func (p Path) Move(x, y int) Path {
 	p.Start.X += x
 	p.Start.Y += y
@@ -55,95 +43,95 @@ func (p Path) Move(x, y int) Path {
 	return p
 }
 
-type Connector struct {
-	Start Point
-	End   Point
-	Path  Path
-
-	Paths []Segment
+func (p Path) Vertical() bool {
+	return p.Start.X == p.End.X
 }
 
-func NewConnector(paths []Segment) Connector {
-	return Connector{
-		Paths: paths,
+func (p Path) Horizontal() bool {
+	return p.Start.Y == p.End.Y
+}
+
+func (p Path) X() int {
+	return p.Start.X
+}
+
+func (p Path) Y() int {
+	return p.Start.Y
+}
+
+func (p Path) DistanceX() int {
+	return p.End.X - p.Start.X
+}
+
+func (p Path) DistanceY() int {
+	return p.End.Y - p.Start.Y
+}
+
+func splitPathH(p Path) (Path, Path, Path) {
+	var (
+		dist  = p.DistanceX()
+		mid   = dist / 2
+		start Path
+		end   Path
+		via   Path
+		from  Point
+		to    Point
+	)
+	if mid % 2 != 0 {
+		mid--
 	}
-}
+	mid = min(p.Start.X+mid, p.End.X-mid)
 
-func (c Connector) Move(x, y int) Connector {
-	cp := NewConnector(slices.Clone(c.Paths))
-	for i := range cp.Paths {
-		cp.Paths[i].Start.X += x
-		cp.Paths[i].Start.Y += y
-		cp.Paths[i].End.X += x
-		cp.Paths[i].End.Y += y
+	from = NewPoint(p.Start.X, p.Start.Y)
+	to = NewPoint(mid, p.Start.Y)
+	start = NewPath(from, to)
+
+	from = NewPoint(mid, p.End.Y)
+	to = NewPoint(p.End.X, p.End.Y)
+	end = NewPath(from, to)
+
+	if start.Start.Y > end.Start.Y {
+		via = NewPath(end.Start, start.End)
+	} else {
+		via = NewPath(start.End, end.Start)
 	}
-	return cp
+
+	return start, via, end
 }
 
-func (c Connector) X() int {
-	return c.Paths[0].Start.X
-}
-
-func (c Connector) Y() int {
-	return c.Paths[0].Start.Y
-}
-
-func (c Connector) String() string {
-	var str strings.Builder
-	str.WriteString("connector(")
-	for i, p := range c.Paths {
-		if i > 0 {
-			str.WriteRune(',')
-			str.WriteRune(' ')
-		}
-		str.WriteString(p.String())
+func splitPathV(p Path) (Path, Path, Path) {
+	var (
+		dist  = p.DistanceY()
+		mid   = dist / 2
+		start Path
+		end   Path
+		via   Path
+		from  Point
+		to    Point
+	)
+	if mid % 2 != 0 {
+		mid--
 	}
-	str.WriteString(")")
-	return str.String()
-}
+	mid = min(p.Start.Y+mid, p.End.Y-mid)
 
-type Segment struct {
-	Start Point
-	End   Point
-}
+	from = NewPoint(p.Start.X, p.Start.Y)
+	to = NewPoint(p.Start.X, mid)
+	start = NewPath(from, to)
 
-func NewSegment(start, end Point) Segment {
-	return Segment{
-		Start: start,
-		End:   end,
+	from = NewPoint(p.End.X, mid)
+	to = NewPoint(p.End.X, p.End.Y)
+	end = NewPath(from, to)
+
+	if start.Start.X > end.Start.X {
+		via = NewPath(end.Start, start.End)
+	} else {
+		via = NewPath(start.End, end.Start)
 	}
+
+	return start, via, end
 }
 
-func (s Segment) DistanceX() int {
-	return s.End.X - s.Start.X
-}
-
-func (s Segment) DistanceY() int {
-	return s.End.Y - s.Start.Y
-}
-
-func (s Segment) One(other Segment) bool {
-	return s.Start.Equal(other.Start) && s.End.Equal(other.End)
-}
-
-func (s Segment) Swap() Segment {
-	s.Start, s.End = s.End, s.Start
-	return s
-}
-
-func (s Segment) Horizontal() bool {
-	return s.Start.Y == s.End.Y
-}
-
-func (s Segment) Vertical() bool {
-	return s.Start.X == s.End.X
-}
-
-func (s Segment) String() string {
-	return fmt.Sprintf("segment(%s -> %s)", s.Start, s.End)
-}
-
-func horizontalPath(from, to *Item) Path {
+func horizontalPath(from, to *Item, opts RenderOptions) Path {
 	if !from.Position.BeforeX(to.Position) {
 		from, to = to, from
 	}
@@ -152,12 +140,12 @@ func horizontalPath(from, to *Item) Path {
 		end    = to.Position
 		offset = from.DisplayWidth()
 	)
-	start.X += offset
-	end.X--
+	start.X += offset + opts.Margin
+	end.X -= opts.Margin
 	return NewPath(start, end)
 }
 
-func verticalPath(from, to *Item) Path {
+func verticalPath(from, to *Item, opts RenderOptions) Path {
 	if !from.Position.BeforeY(to.Position) {
 		from, to = to, from
 	}

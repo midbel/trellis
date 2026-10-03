@@ -48,7 +48,7 @@ func (b *OptionsBag) Build() (trellis.Options, error) {
 		Margin:       b.Margin,
 		Padding:      b.Padding,
 		PaddingChar:  b.PaddingChar,
-		Path: b.Path,
+		Path:         b.Path,
 	}
 	var opts trellis.Options
 	switch b.Type {

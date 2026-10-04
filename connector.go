@@ -12,9 +12,9 @@ func ParsePath(str string) (PathType, error) {
 	switch str {
 	case "direct":
 		return DirectPath, nil
-	case "manathan":
+	case "manathan", "classic":
 		return ManathanPath, nil
-	case "curve":
+	case "curve", "bezier", "cubic":
 		return CurvePath, nil
 	default:
 		return 0, unknown("path", str)

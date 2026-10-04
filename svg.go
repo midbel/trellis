@@ -63,7 +63,7 @@ func (s *Svg) draw(x, y int, cell Cell) error {
 	default:
 		return fmt.Errorf("invalid cell type")
 	}
-	s.root.Append(el)
+	s.root.Add(el)
 	return nil
 }
 
@@ -85,25 +85,30 @@ func (s *Svg) putPath(c Path) (svg.Element, error) {
 }
 
 func (s *Svg) curvePath(c Path) (svg.Element, error) {
-	p := svg.NewPath()
-	// p.MoveTo(float64(c.X()), float64(c.Y()))
-	// if len(c.Paths) == 1 {
-	// 	p.LineTo(float64(c.Paths[0].End.X), float64(c.Paths[0].End.Y))
-	// 	return p, nil
-	// }
-	// if n := len(c.Paths) - 1; n > 0 {
-	// 	x := c.Paths[n].End.X
-	// 	y := c.Paths[n].End.Y
-	// 	d := x - c.X()
-	// 	p.CurveTo(
-	// 		float64(x),
-	// 		float64(y),
-	// 		float64(c.X()+d),
-	// 		float64(c.Y()),
-	// 		float64(x-d),
-	// 		float64(y),
-	// 	)
-	// }
+	var paths []Path
+	if s.opts.Orient == HorizontalLayout {
+		paths = splitPathH(c)
+	} else {
+		paths = splitPathV(c)
+	}
+	if len(paths) <= 1 {
+		return s.directPath(c)
+	}
+	var (
+		fst = paths[0]
+		lst = paths[len(paths)-1]
+		p = svg.NewPath()
+	)
+
+	p.MoveTo(float64(fst.Start.X), float64(fst.Start.Y))
+	p.CurveTo(
+		float64(lst.End.X),
+		float64(lst.End.Y),
+		float64(fst.End.X),
+		float64(fst.End.Y),
+		float64(lst.Start.X),
+		float64(lst.Start.Y),
+	)
 	return p, nil
 }
 

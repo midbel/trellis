@@ -81,7 +81,14 @@ func (f *JsonFile) draw(x, y int, cell Cell) error {
 			f.root["cells"] = append(vs, v)
 		}
 	case Path:
-		v := createManathanJsonPath(c, f.opts.Orient)
+		var v any
+		if f.opts.Path == CurvePath {
+			v = createCurveJsonPath(c, f.opts.Orient)
+		} else if f.opts.Path == DirectPath {
+			v = createDirectJsonPath(c, f.opts.Orient)
+		} else {
+			v = createManathanJsonPath(c, f.opts.Orient)
+		}
 		vs, ok := f.root["paths"].([]any)
 		if ok {
 			f.root["paths"] = append(vs, v)
@@ -131,7 +138,14 @@ func (e *jsonElement) draw(x, y int, cell Cell) error {
 			e.canvas["cells"] = append(vs, v)
 		}
 	case Path:
-		v := createManathanJsonPath(c, e.opts.Orient)
+		var v any
+		if e.opts.Path == CurvePath {
+			v = createCurveJsonPath(c, e.opts.Orient)
+		} else if e.opts.Path == DirectPath {
+			v = createDirectJsonPath(c, e.opts.Orient)
+		} else {
+			v = createManathanJsonPath(c, e.opts.Orient)
+		}
 		vs, ok := e.canvas["paths"].([]any)
 		if ok {
 			e.canvas["paths"] = append(vs, v)
@@ -151,14 +165,6 @@ func createJsonContent(x, y int, c Content) any {
 	return v
 }
 
-func jsonPoint(pt Point) any {
-	p := map[string]any{
-		"x": pt.X,
-		"y": pt.Y,
-	}
-	return p
-}
-
 func createCurveJsonPath(c Path, orient Orientation) any {
 	var paths []Path
 	if orient == HorizontalLayout {
@@ -170,17 +176,20 @@ func createCurveJsonPath(c Path, orient Orientation) any {
 		return createDirectJsonPath(c, orient)
 	}
 	g := map[string]any{
-		"type": "curve",
+		"type":  "curve",
 		"start": jsonPoint(c.Start),
 		"end":   jsonPoint(c.End),
-		"controls": nil,
+		"controls": []any{
+			jsonPoint(paths[0].End),
+			jsonPoint(paths[len(paths)-1].Start),
+		},
 	}
-	return nil
+	return g
 }
 
 func createDirectJsonPath(c Path, orient Orientation) any {
 	g := map[string]any{
-		"type": "direct",
+		"type":  "direct",
 		"start": jsonPoint(c.Start),
 		"end":   jsonPoint(c.End),
 	}
@@ -205,6 +214,14 @@ func createManathanJsonPath(c Path, orient Orientation) any {
 	p := map[string]any{
 		"type": "manathan",
 		"runs": list,
+	}
+	return p
+}
+
+func jsonPoint(pt Point) any {
+	p := map[string]any{
+		"x": pt.X,
+		"y": pt.Y,
 	}
 	return p
 }
@@ -244,7 +261,13 @@ func (f *XmlFile) draw(x, y int, cell Cell) error {
 	case Content:
 		node = createElementForContent(x, y, c)
 	case Path:
-		node = createManathanElement(c, f.opts.Orient)
+		if f.opts.Path == CurvePath {
+			node = createCurveElement(c, f.opts.Orient)
+		} else if f.opts.Path == DirectPath {
+			node = createDirectElement(c, f.opts.Orient)
+		} else {
+			node = createManathanElement(c, f.opts.Orient)
+		}
 	default:
 		return fmt.Errorf("invalid cell type")
 	}
@@ -288,7 +311,13 @@ func (e *xmlElement) draw(x, y int, cell Cell) error {
 	case Content:
 		node = createElementForContent(x, y, c)
 	case Path:
-		node = createManathanElement(c, e.opts.Orient)
+		if e.opts.Path == CurvePath {
+			node = createCurveElement(c, e.opts.Orient)
+		} else if e.opts.Path == DirectPath {
+			node = createDirectElement(c, e.opts.Orient)
+		} else {
+			node = createManathanElement(c, e.opts.Orient)
+		}
 	default:
 		return fmt.Errorf("invalid cell type")
 	}
@@ -312,6 +341,48 @@ func createElementForContent(x, y int, val Content) xml.Node {
 	return &el
 }
 
+func createCurveElement(c Path, orient Orientation) xml.Node {
+	var paths []Path
+	if orient == HorizontalLayout {
+		paths = splitPathH(c)
+	} else {
+		paths = splitPathV(c)
+	}
+	if len(paths) <= 1 {
+		return createDirectElement(c, orient)
+	}
+	var (
+		fst  = paths[0]
+		lst  = paths[len(paths)-1]
+		ctrl = xml.NewElement(xml.NewName("controls"))
+	)
+	ctrl.Children = []xml.Node{
+		xmlPoint("ctrl1", fst.End),
+		xmlPoint("ctrl2", lst.Start),
+	}
+
+	el := xml.NewElement(xml.NewName("path"))
+	attr := xml.NewAttribute(xml.NewName("type"), "curve")
+	el.Attributes = append(el.Attributes, attr)
+	el.Children = []xml.Node{
+		xmlPoint("start", c.Start),
+		xmlPoint("end", c.End),
+		ctrl,
+	}
+	return el
+}
+
+func createDirectElement(c Path, orient Orientation) xml.Node {
+	el := xml.NewElement(xml.NewName("path"))
+	attr := xml.NewAttribute(xml.NewName("type"), "direct")
+	el.Attributes = append(el.Attributes, attr)
+	el.Children = []xml.Node{
+		xmlPoint("start", c.Start),
+		xmlPoint("end", c.End),
+	}
+	return el
+}
+
 func createManathanElement(c Path, orient Orientation) xml.Node {
 	el := xml.NewElement(xml.NewName("path"))
 	attr := xml.NewAttribute(xml.NewName("type"), "manathan")
@@ -331,22 +402,19 @@ func createManathanElement(c Path, orient Orientation) xml.Node {
 }
 
 func createManathanRun(c Path) xml.Node {
-	start := xml.NewElement(xml.NewName("start"))
-	start.Attributes = []xml.Attribute{
-		xml.NewAttribute(xml.NewName("x"), strconv.Itoa(c.Start.X)),
-		xml.NewAttribute(xml.NewName("y"), strconv.Itoa(c.Start.Y)),
-	}
-
-	end := xml.NewElement(xml.NewName("end"))
-	end.Attributes = []xml.Attribute{
-		xml.NewAttribute(xml.NewName("x"), strconv.Itoa(c.End.X)),
-		xml.NewAttribute(xml.NewName("y"), strconv.Itoa(c.End.Y)),
-	}
-
 	run := xml.NewElement(xml.NewName("run"))
 	run.Children = []xml.Node{
-		start,
-		end,
+		xmlPoint("start", c.Start),
+		xmlPoint("end", c.End),
 	}
 	return run
+}
+
+func xmlPoint(name string, pt Point) xml.Node {
+	el := xml.NewElement(xml.NewName(name))
+	el.Attributes = []xml.Attribute{
+		xml.NewAttribute(xml.NewName("x"), strconv.Itoa(pt.X)),
+		xml.NewAttribute(xml.NewName("y"), strconv.Itoa(pt.Y)),
+	}
+	return el
 }

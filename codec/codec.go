@@ -126,6 +126,7 @@ func buildNodeFromJson(data any) (*trellis.Node, error) {
 	n := &trellis.Node{
 		Value: name,
 	}
+	getStyleFromJson(root["options"], &n.Style)
 	if children, ok := root["children"].([]any); ok {
 		for _, c := range children {
 			sub, err := buildNodeFromJson(c)
@@ -138,6 +139,31 @@ func buildNodeFromJson(data any) (*trellis.Node, error) {
 		}
 	}
 	return n, nil
+}
+
+func getStyleFromJson(data any, style *trellis.Style) {
+	y, ok := data.(map[string]any)
+	if !ok {
+		return
+	}
+	if b, ok := y["bold"].(bool); ok && b {
+		style.Flags |= trellis.StyleBold
+	}
+	if i, ok := y["italic"].(bool); ok && i {
+		style.Flags |= trellis.StyleItalic
+	}
+	if u, ok := y["underline"].(bool); ok && u {
+		style.Flags |= trellis.StyleUnderline
+	}
+	if f, ok := y["font-family"].(string); ok && f != "" {
+		style.Family = f
+	}
+	if z, ok := y["font-size"].(float64); ok && z > 0 {
+		style.Size = int(z)
+	}
+	if c, ok := y["color"].(string); ok && c != "" {
+		style.Color = c
+	}
 }
 
 func treeFromSexpr(r io.Reader) (*TreeSpec, error) {

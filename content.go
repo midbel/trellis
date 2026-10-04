@@ -13,8 +13,17 @@ func (c Content) DisplayWidth() int {
 	return DisplayWidth(c.Value)
 }
 
+type StyleFlag uint8
+
+const (
+	StyleBold StyleFlag = 1 << iota
+	StyleItalic
+	StyleUnderline
+)
+
 type Style struct {
-	Bold      bool
-	Italic    bool
-	Underline bool
+	Flags  StyleFlag
+	Size   int
+	Family string
+	Color  string
 }

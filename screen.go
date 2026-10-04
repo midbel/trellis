@@ -8,6 +8,35 @@ import (
 	"strings"
 )
 
+type ScreenOptions struct {
+	RenderOptions
+	Border          bool
+	CoordinatesStep int
+	Style           ConnectorStyle
+}
+
+func (o *ScreenOptions) Layout() (RenderOptions, error) {
+	var err error
+	if o.Path != ManathanPath {
+		err = fmt.Errorf("manathan default for screen only")
+	}
+	if err == nil {
+		err = o.RenderOptions.Validate()
+	}
+	return o.RenderOptions, err
+}
+
+func (*ScreenOptions) Format() Output {
+	return OutputScreen
+}
+
+func (o *ScreenOptions) applyDefaults() {
+	o.RenderOptions.applyDefaults()
+	if o.Style == 0 {
+		o.Style = ConnectorUnicode
+	}
+}
+
 type Screen struct {
 	lines [][]rune
 	dim   Dimension
@@ -177,23 +206,18 @@ func (s *Screen) putPath(x, y int, path Path) error {
 	if s.opts.Path != ManathanPath {
 		return fmt.Errorf("screen only supports manathan path")
 	}
-	switch {
-	case path.Start.X == path.End.X:
-		s.verticalConnector(path)
-	case path.Start.Y == path.End.Y:
-		s.horizontalConnector(path)
-	case s.opts.Orient == HorizontalLayout:
-		fst, via, lst := splitPathH(path)
-		s.horizontalConnector(fst)
-		s.horizontalConnector(lst)
-		s.verticalConnector(via)
-	case s.opts.Orient == VerticalLayout:
-		fst, via, lst := splitPathV(path)
-		s.verticalConnector(fst)
-		s.verticalConnector(lst)
-		s.horizontalConnector(via)
-	default:
-		// not possible
+	var paths []Path
+	if s.opts.Orient == HorizontalLayout {
+		paths = splitPathH(path)
+	} else {
+		paths = splitPathV(path)
+	}
+	for i := range paths {
+		if paths[i].Horizontal() {
+			s.horizontalConnector(paths[i])
+		} else {
+			s.verticalConnector(paths[i])
+		}
 	}
 	return nil
 }

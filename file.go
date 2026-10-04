@@ -4,23 +4,43 @@ import (
 	"fmt"
 	"io"
 	"strconv"
-	"strings"
 
-	"github.com/midbel/angle/svg"
 	"github.com/midbel/angle/xml"
 	"github.com/midbel/curly"
 )
 
-const space = ' '
-
-type drawer interface {
-	draw(int, int, Cell) error
+type JsonOptions struct {
+	RenderOptions
+	Compact bool
 }
 
-type View interface {
-	Render(io.Writer) error
-	fill(int, int, func(drawer) error) error
-	drawer
+func (o *JsonOptions) Layout() (RenderOptions, error) {
+	return o.RenderOptions, o.RenderOptions.Validate()
+}
+
+func (*JsonOptions) Format() Output {
+	return OutputJson
+}
+
+func (o *JsonOptions) applyDefaults() {
+	o.RenderOptions.applyDefaults()
+}
+
+type XmlOptions struct {
+	RenderOptions
+	Compact bool
+}
+
+func (o *XmlOptions) Layout() (RenderOptions, error) {
+	return o.RenderOptions, o.RenderOptions.Validate()
+}
+
+func (*XmlOptions) Format() Output {
+	return OutputXml
+}
+
+func (o *XmlOptions) applyDefaults() {
+	o.RenderOptions.applyDefaults()
 }
 
 type JsonFile struct {
@@ -61,7 +81,7 @@ func (f *JsonFile) draw(x, y int, cell Cell) error {
 			f.root["cells"] = append(vs, v)
 		}
 	case Path:
-		v := createJsonPath(x, y, c)
+		v := createManathanJsonPath(c, f.opts.Orient)
 		vs, ok := f.root["paths"].([]any)
 		if ok {
 			f.root["paths"] = append(vs, v)
@@ -111,7 +131,7 @@ func (e *jsonElement) draw(x, y int, cell Cell) error {
 			e.canvas["cells"] = append(vs, v)
 		}
 	case Path:
-		v := createJsonPath(x, y, c)
+		v := createManathanJsonPath(c, e.opts.Orient)
 		vs, ok := e.canvas["paths"].([]any)
 		if ok {
 			e.canvas["paths"] = append(vs, v)
@@ -131,20 +151,34 @@ func createJsonContent(x, y int, c Content) any {
 	return v
 }
 
-func createJsonPath(x, y int, c Path) any {
-	s := map[string]any{
-		"x": c.Start.X,
-		"y": c.Start.Y,
+func createManathanJsonPath(c Path, orient Orientation) any {
+	var paths []Path
+	if orient == HorizontalLayout {
+		paths = splitPathH(c)
+	} else {
+		paths = splitPathV(c)
 	}
-	e := map[string]any{
-		"x": c.End.X,
-		"y": c.End.Y,
+	var list []any
+	for _, c := range paths {
+		s := map[string]any{
+			"x": c.Start.X,
+			"y": c.Start.Y,
+		}
+		e := map[string]any{
+			"x": c.End.X,
+			"y": c.End.Y,
+		}
+		g := map[string]any{
+			"start": s,
+			"end":   e,
+		}
+		list = append(list, g)
 	}
-	g := map[string]any{
-		"start": s,
-		"end":   e,
+	p := map[string]any{
+		"type": "manathan",
+		"runs": list,
 	}
-	return g
+	return p
 }
 
 type XmlFile struct {
@@ -182,7 +216,7 @@ func (f *XmlFile) draw(x, y int, cell Cell) error {
 	case Content:
 		node = createElementForContent(x, y, c)
 	case Path:
-		node = createElementForPath(x, y, c)
+		node = createManathanElement(c, f.opts.Orient)
 	default:
 		return fmt.Errorf("invalid cell type")
 	}
@@ -226,7 +260,7 @@ func (e *xmlElement) draw(x, y int, cell Cell) error {
 	case Content:
 		node = createElementForContent(x, y, c)
 	case Path:
-		node = createElementForPath(x, y, c)
+		node = createManathanElement(c, e.opts.Orient)
 	default:
 		return fmt.Errorf("invalid cell type")
 	}
@@ -250,189 +284,41 @@ func createElementForContent(x, y int, val Content) xml.Node {
 	return &el
 }
 
-func createElementForPath(x, y int, c Path) xml.Node {
-	start := &xml.Element{
-		Name: xml.NewName("start"),
-		Attributes: []xml.Attribute{
-			xml.NewAttribute(xml.NewName("x"), strconv.Itoa(c.Start.X)),
-			xml.NewAttribute(xml.NewName("y"), strconv.Itoa(c.Start.Y)),
-		},
-	}
-	end := &xml.Element{
-		Name: xml.NewName("end"),
-		Attributes: []xml.Attribute{
-			xml.NewAttribute(xml.NewName("x"), strconv.Itoa(c.End.X)),
-			xml.NewAttribute(xml.NewName("y"), strconv.Itoa(c.End.Y)),
-		},
-	}
+func createManathanElement(c Path, orient Orientation) xml.Node {
+	el := xml.NewElement(xml.NewName("path"))
+	attr := xml.NewAttribute(xml.NewName("type"), "manathan")
+	el.Attributes = append(el.Attributes, attr)
 
-	el := &xml.Element{
-		Name: xml.NewName("path"),
-		Children: []xml.Node{
-			start,
-			end,
-		},
+	var paths []Path
+	if orient == HorizontalLayout {
+		paths = splitPathH(c)
+	} else {
+		paths = splitPathV(c)
+	}
+	for i := range paths {
+		n := createManathanRun(paths[i])
+		el.Children = append(el.Children, n)
 	}
 	return el
 }
 
-type Svg struct {
-	root *svg.Document
-	opts SvgOptions
-}
-
-func NewSvg(opts SvgOptions) (View, error) {
-	doc := svg.NewDocument(float64(opts.Size.Width), float64(opts.Size.Height))
-	return &Svg{
-		root: doc,
-		opts: opts,
-	}, nil
-}
-
-func (s *Svg) Render(w io.Writer) error {
-	return s.root.Render(w)
-}
-
-func (s *Svg) draw(x, y int, cell Cell) error {
-	var el svg.Element
-	switch c := cell.(type) {
-	case Content:
-		el = svg.NewText(float64(x), float64(y), string(c.Value))
-	case Path:
-		x, err := s.putPath(c)
-		if err != nil {
-			return err
-		}
-		el = x
-	default:
-		return fmt.Errorf("invalid cell type")
+func createManathanRun(c Path) xml.Node {
+	start := xml.NewElement(xml.NewName("start"))
+	start.Attributes = []xml.Attribute{
+		xml.NewAttribute(xml.NewName("x"), strconv.Itoa(c.Start.X)),
+		xml.NewAttribute(xml.NewName("y"), strconv.Itoa(c.Start.Y)),
 	}
-	s.root.Append(el)
-	return nil
-}
 
-func (s *Svg) fill(x, y int, fill func(drawer) error) error {
-	return fill(s)
-}
-
-func (s *Svg) putPath(c Path) (svg.Element, error) {
-	switch s.opts.Path {
-	case ManathanPath:
-		return s.manathanPath(c)
-	case DirectPath:
-		return s.directPath(c)
-	case CurvePath:
-		return s.curvePath(c)
-	default:
-		return nil, fmt.Errorf("unsupported path type")
+	end := xml.NewElement(xml.NewName("end"))
+	end.Attributes = []xml.Attribute{
+		xml.NewAttribute(xml.NewName("x"), strconv.Itoa(c.End.X)),
+		xml.NewAttribute(xml.NewName("y"), strconv.Itoa(c.End.Y)),
 	}
-}
 
-func (s *Svg) curvePath(c Path) (svg.Element, error) {
-	p := svg.NewPath()
-	// p.MoveTo(float64(c.X()), float64(c.Y()))
-	// if len(c.Paths) == 1 {
-	// 	p.LineTo(float64(c.Paths[0].End.X), float64(c.Paths[0].End.Y))
-	// 	return p, nil
-	// }
-	// if n := len(c.Paths) - 1; n > 0 {
-	// 	x := c.Paths[n].End.X
-	// 	y := c.Paths[n].End.Y
-	// 	d := x - c.X()
-	// 	p.CurveTo(
-	// 		float64(x),
-	// 		float64(y),
-	// 		float64(c.X()+d),
-	// 		float64(c.Y()),
-	// 		float64(x-d),
-	// 		float64(y),
-	// 	)
-	// }
-	return p, nil
-}
-
-func (s *Svg) directPath(c Path) (svg.Element, error) {
-	p := svg.NewPath()
-	// p.MoveTo(float64(c.X()), float64(c.Y()))
-	// if len(c.Paths) == 1 {
-	// 	p.LineTo(float64(c.Paths[0].End.X), float64(c.Paths[0].End.Y))
-	// 	return p, nil
-	// }
-	// if n := len(c.Paths) - 1; n > 0 {
-	// 	p.LineTo(float64(c.Paths[n].End.X), float64(c.Paths[n].End.Y))
-	// }
-	return p, nil
-}
-
-func (s *Svg) manathanPath(c Path) (svg.Element, error) {
-	p := svg.NewPath()
-	// for i, s := range c.Paths {
-	// 	if i == 0 {
-	// 		p.MoveTo(float64(s.Start.X), float64(s.Start.Y))
-	// 	} else {
-	// 		p.LineTo(float64(s.Start.X), float64(s.Start.Y))
-	// 	}
-	// 	p.LineTo(float64(s.End.X), float64(s.End.Y))
-	// }
-	return p, nil
-}
-
-type Table struct {
-	cells []Placement
-}
-
-func NewTable() (View, error) {
-	t := &Table{}
-	return t, nil
-}
-
-func (t *Table) Render(w io.Writer) error {
-	fmt.Fprintf(w, "%-16s | %6s | %6s", "Value", "X", "Y")
-	fmt.Fprintln(w)
-	for _, p := range t.cells {
-		var lines []any
-		switch c := p.Cell.(type) {
-		case Content:
-			lines = t.getContentInfo(p.X, p.Y, c)
-		case Path:
-			lines = t.getPathInfo(p.X, p.Y, c)
-		default:
-			return fmt.Errorf("invalid cell type")
-		}
-		if len(lines) == 0 {
-			continue
-		}
-		fmt.Fprintf(w, "%-16s | %6d | %6d", lines...)
-		fmt.Fprintln(w)
+	run := xml.NewElement(xml.NewName("run"))
+	run.Children = []xml.Node{
+		start,
+		end,
 	}
-	return nil
-}
-
-func (t *Table) draw(x, y int, cell Cell) error {
-	p := Placement{
-		Point: NewPoint(x, y),
-		Cell:  cell,
-	}
-	t.cells = append(t.cells, p)
-	return nil
-}
-
-func (t *Table) fill(x, y int, fill func(drawer) error) error {
-	return fill(t)
-}
-
-func (t *Table) getContentInfo(x, y int, c Content) []any {
-	return []any{
-		strings.TrimSpace(string(c.Value)),
-		x,
-		y,
-	}
-}
-
-func (t *Table) getPathInfo(x, y int, c Path) []any {
-	return []any{
-		"path",
-		c.X(),
-		c.Y(),
-	}
+	return run
 }

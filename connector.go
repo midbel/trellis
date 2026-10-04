@@ -1,7 +1,5 @@
 package trellis
 
-import "fmt"
-
 type PathType uint8
 
 const (
@@ -67,7 +65,10 @@ func (p Path) DistanceY() int {
 	return p.End.Y - p.Start.Y
 }
 
-func splitPathH(p Path) (Path, Path, Path) {
+func splitPathH(p Path) []Path {
+	if p.Start.Y == p.End.Y {
+		return []Path{p}
+	}
 	var (
 		dist  = p.DistanceX()
 		mid   = dist / 2
@@ -77,7 +78,7 @@ func splitPathH(p Path) (Path, Path, Path) {
 		from  Point
 		to    Point
 	)
-	if mid % 2 != 0 {
+	if mid%2 != 0 {
 		mid--
 	}
 	mid = min(p.Start.X+mid, p.End.X-mid)
@@ -95,11 +96,13 @@ func splitPathH(p Path) (Path, Path, Path) {
 	} else {
 		via = NewPath(start.End, end.Start)
 	}
-
-	return start, via, end
+	return []Path{start, via, end}
 }
 
-func splitPathV(p Path) (Path, Path, Path) {
+func splitPathV(p Path) []Path {
+	if p.Start.X == p.End.X {
+		return []Path{p}
+	}
 	var (
 		dist  = p.DistanceY()
 		mid   = dist / 2
@@ -109,7 +112,7 @@ func splitPathV(p Path) (Path, Path, Path) {
 		from  Point
 		to    Point
 	)
-	if mid % 2 != 0 {
+	if mid%2 != 0 {
 		mid--
 	}
 	mid = min(p.Start.Y+mid, p.End.Y-mid)
@@ -127,8 +130,7 @@ func splitPathV(p Path) (Path, Path, Path) {
 	} else {
 		via = NewPath(start.End, end.Start)
 	}
-
-	return start, via, end
+	return []Path{start, via, end}
 }
 
 func horizontalPath(from, to *Item, opts RenderOptions) Path {

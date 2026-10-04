@@ -151,6 +151,42 @@ func createJsonContent(x, y int, c Content) any {
 	return v
 }
 
+func jsonPoint(pt Point) any {
+	p := map[string]any{
+		"x": pt.X,
+		"y": pt.Y,
+	}
+	return p
+}
+
+func createCurveJsonPath(c Path, orient Orientation) any {
+	var paths []Path
+	if orient == HorizontalLayout {
+		paths = splitPathH(c)
+	} else {
+		paths = splitPathV(c)
+	}
+	if len(paths) <= 1 {
+		return createDirectJsonPath(c, orient)
+	}
+	g := map[string]any{
+		"type": "curve",
+		"start": jsonPoint(c.Start),
+		"end":   jsonPoint(c.End),
+		"controls": nil,
+	}
+	return nil
+}
+
+func createDirectJsonPath(c Path, orient Orientation) any {
+	g := map[string]any{
+		"type": "direct",
+		"start": jsonPoint(c.Start),
+		"end":   jsonPoint(c.End),
+	}
+	return g
+}
+
 func createManathanJsonPath(c Path, orient Orientation) any {
 	var paths []Path
 	if orient == HorizontalLayout {
@@ -160,17 +196,9 @@ func createManathanJsonPath(c Path, orient Orientation) any {
 	}
 	var list []any
 	for _, c := range paths {
-		s := map[string]any{
-			"x": c.Start.X,
-			"y": c.Start.Y,
-		}
-		e := map[string]any{
-			"x": c.End.X,
-			"y": c.End.Y,
-		}
 		g := map[string]any{
-			"start": s,
-			"end":   e,
+			"start": jsonPoint(c.Start),
+			"end":   jsonPoint(c.End),
 		}
 		list = append(list, g)
 	}

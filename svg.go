@@ -97,7 +97,7 @@ func (s *Svg) curvePath(c Path) (svg.Element, error) {
 	var (
 		fst = paths[0]
 		lst = paths[len(paths)-1]
-		p = svg.NewPath()
+		p   = svg.NewPath()
 	)
 
 	p.MoveTo(float64(fst.Start.X), float64(fst.Start.Y))

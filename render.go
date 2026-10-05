@@ -224,7 +224,7 @@ func traverseNodes(nodes []*Node, options RenderOptions) ([]*Item, error) {
 		list = append(list, i)
 	}
 	return list, nil
-} 
+}
 
 func transformNode(n *Node, options RenderOptions) (*Item, error) {
 	it := &Item{

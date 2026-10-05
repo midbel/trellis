@@ -28,14 +28,18 @@ type Style struct {
 	Color  string
 }
 
+func (s Style) Zero() bool {
+	return s.Flags == 0 && s.Size == 0 && s.Family == "" && s.Color == ""
+}
+
 func (s Style) IsBold() bool {
-	return s.Flags & StyleBold != 0
+	return s.Flags&StyleBold != 0
 }
 
 func (s Style) IsItalic() bool {
-	return s.Flags & StyleItalic != 0
+	return s.Flags&StyleItalic != 0
 }
 
 func (s Style) IsUnderline() bool {
-	return s.Flags & StyleUnderline != 0
+	return s.Flags&StyleUnderline != 0
 }

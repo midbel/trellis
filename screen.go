@@ -37,9 +37,15 @@ func (o *ScreenOptions) applyDefaults() {
 	}
 }
 
+type styleExtent struct {
+	Style
+	Length int
+}
+
 type Screen struct {
-	lines [][]rune
-	dim   Dimension
+	lines  [][]rune
+	styles map[Point]styleExtent
+	dim    Dimension
 
 	opts ScreenOptions
 
@@ -51,9 +57,10 @@ func NewScreen(opts ScreenOptions) (View, error) {
 		return nil, err
 	}
 	sc := &Screen{
-		lines: make([][]rune, opts.Size.Height),
-		dim:   opts.Size,
-		opts:  opts,
+		lines:  make([][]rune, opts.Size.Height),
+		styles: make(map[Point]styleExtent),
+		dim:    opts.Size,
+		opts:   opts,
 	}
 	for i := range sc.lines {
 		sc.lines[i] = make([]rune, opts.Size.Width)
@@ -67,103 +74,165 @@ func (s *Screen) Render(w io.Writer) error {
 		ws     = bufio.NewWriter(w)
 		spaces = strings.Repeat(" ", 6)
 	)
+	if err := s.writeCoordinates(ws, spaces); err != nil {
+		return err
+	}
+	if err := s.writeHeader(ws, spaces); err != nil {
+		return err
+	}
+	s.writeCrossings()
+	for i := range s.lines {
+		if err := s.writeLinePrefix(ws, i, spaces); err != nil {
+			return err
+		}
+		if err := s.writeLine(ws, i); err != nil {
+			return err
+		}
+	}
+	if err := s.writeFooter(ws, spaces); err != nil {
+		return err
+	}
+	return ws.Flush()
+}
+
+func (s *Screen) writeHeader(ws *bufio.Writer, spaces string) error {
+	if !s.showBorder() {
+		return nil
+	}
 	if s.showCoordinates() {
 		if _, err := ws.WriteString(spaces); err != nil {
 			return err
 		}
-		if s.showBorder() {
-			if _, err := ws.WriteRune(space); err != nil {
-				return err
-			}
-		}
-		row := s.coordinatesX()
-		for i := range row {
-			if _, err := ws.WriteRune(row[i]); err != nil {
-				return err
-			}
-		}
-		if _, err := ws.WriteRune('\n'); err != nil {
+	}
+	if _, err := ws.WriteRune(s.connector().TopLeft()); err != nil {
+		return err
+	}
+	for range s.dim.Width {
+		if _, err := ws.WriteRune(s.connector().HorizontalBar()); err != nil {
 			return err
 		}
+	}
+	if _, err := ws.WriteRune(s.connector().TopRight()); err != nil {
+		return err
+	}
+	if _, err := ws.WriteRune('\n'); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *Screen) writeFooter(ws *bufio.Writer, spaces string) error {
+	if !s.showBorder() {
+		return nil
+	}
+	if s.showCoordinates() {
+		ws.WriteString(spaces)
+	}
+	if _, err := ws.WriteRune(s.connector().BottomLeft()); err != nil {
+		return err
+	}
+	for range s.dim.Width {
+		if _, err := ws.WriteRune(s.connector().HorizontalBar()); err != nil {
+			return err
+		}
+	}
+	if _, err := ws.WriteRune(s.connector().BottomRight()); err != nil {
+		return err
+	}
+	if _, err := ws.WriteRune('\n'); err != nil {
+		return err
+	}
+	return nil	
+}
+
+func (s *Screen) writeCoordinates(ws *bufio.Writer, spaces string) error {
+	if !s.showCoordinates() {
+		return nil
+	}
+	if _, err := ws.WriteString(spaces); err != nil {
+		return err
 	}
 	if s.showBorder() {
-		if s.showCoordinates() {
-			if _, err := ws.WriteString(spaces); err != nil {
-				return err
-			}
-		}
-		if _, err := ws.WriteRune(s.connector().TopLeft()); err != nil {
-			return err
-		}
-		for range s.dim.Width {
-			if _, err := ws.WriteRune(s.connector().HorizontalBar()); err != nil {
-				return err
-			}
-		}
-		if _, err := ws.WriteRune(s.connector().TopRight()); err != nil {
-			return err
-		}
-		if _, err := ws.WriteRune('\n'); err != nil {
+		if _, err := ws.WriteRune(space); err != nil {
 			return err
 		}
 	}
-	s.writeCrossings()
-	for i := range s.lines {
-		if s.showCoordinates() {
-			if i%s.opts.CoordinatesStep == 0 {
-				y := strconv.Itoa(i)
-				if _, err := ws.WriteString(strings.Repeat(" ", 5-len(y))); err != nil {
-					return err
-				}
-				if _, err := ws.WriteString(y + " "); err != nil {
-					return err
-				}
-			} else {
-				if _, err := ws.WriteString(spaces); err != nil {
-					return err
-				}
-			}
-		}
-		if s.showBorder() {
-			if _, err := ws.WriteRune(s.connector().VerticalBar()); err != nil {
-				return err
-			}
-		}
-		for j := range s.lines[i] {
-			_, err := ws.WriteRune(s.lines[i][j])
-			if err != nil {
-				return err
-			}
-		}
-		if s.showBorder() {
-			if _, err := ws.WriteRune(s.connector().VerticalBar()); err != nil {
-				return err
-			}
-		}
-		if _, err := ws.WriteRune('\n'); err != nil {
+	row := s.coordinatesX()
+	for i := range row {
+		if _, err := ws.WriteRune(row[i]); err != nil {
 			return err
 		}
 	}
+	if _, err := ws.WriteRune('\n'); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *Screen) writeLinePrefix(ws *bufio.Writer, i int, spaces string) error {
+	if !s.showCoordinates() {
+		return nil
+	}
+	if i%s.opts.CoordinatesStep == 0 {
+		y := strconv.Itoa(i)
+		if _, err := ws.WriteString(strings.Repeat(" ", 5-len(y))); err != nil {
+			return err
+		}
+		if _, err := ws.WriteString(y + " "); err != nil {
+			return err
+		}
+	} else {
+		if _, err := ws.WriteString(spaces); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (s *Screen) writeLine(ws *bufio.Writer, i int) error {
 	if s.showBorder() {
-		if s.showCoordinates() {
-			ws.WriteString(spaces)
-		}
-		if _, err := ws.WriteRune(s.connector().BottomLeft()); err != nil {
-			return err
-		}
-		for range s.dim.Width {
-			if _, err := ws.WriteRune(s.connector().HorizontalBar()); err != nil {
-				return err
-			}
-		}
-		if _, err := ws.WriteRune(s.connector().BottomRight()); err != nil {
-			return err
-		}
-		if _, err := ws.WriteRune('\n'); err != nil {
+		if _, err := ws.WriteRune(s.connector().VerticalBar()); err != nil {
 			return err
 		}
 	}
-	return ws.Flush()
+
+	var (
+		count  int
+		length int
+		open   bool
+	)
+	for j := range s.lines[i] {
+		if st, ok := s.styles[NewPoint(j, i)]; ok {
+			count = 0
+			length = st.Length
+			if err := writeAnsiColor(ws, st.Color); err != nil {
+				return err
+			}
+			open = true
+		}
+		_, err := ws.WriteRune(s.lines[i][j])
+		if err != nil {
+			return err
+		}
+		count++
+		if count == length && open {
+			open = false
+			count = 0
+			if err := writeAnsiClose(ws); err != nil {
+				return err
+			}
+		}
+	}
+
+	if s.showBorder() {
+		if _, err := ws.WriteRune(s.connector().VerticalBar()); err != nil {
+			return err
+		}
+	}
+	if _, err := ws.WriteRune('\n'); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (s *Screen) initGrid() {
@@ -195,9 +264,18 @@ func (s *Screen) fill(x, y int, fill func(drawer) error) error {
 }
 
 func (s *Screen) createContent(x, y int, val Content) error {
+	var size int
 	for _, r := range val.Value {
 		s.writeChar(x, y, r)
-		x += RuneWidth(r)
+		z := RuneWidth(r)
+		x += z
+		size += z
+	}
+	if !val.Style.Zero() {
+		s.styles[NewPoint(x-size, y)] = styleExtent{
+			Style:  val.Style,
+			Length: size,
+		}
 	}
 	return nil
 }

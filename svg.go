@@ -80,7 +80,7 @@ func (s *Svg) createText(x, y int, c Content) svg.Element {
 	t = t.Font(svg.NewFont(float64(c.Style.Size), c.Style.Family, weight))
 	if c.Style.Color != "" {
 		t = t.Fill(svg.Color(c.Style.Color))
-	}	
+	}
 	return t
 }
 

@@ -27,3 +27,15 @@ type Style struct {
 	Family string
 	Color  string
 }
+
+func (s Style) IsBold() bool {
+	return s.Flags & StyleBold != 0
+}
+
+func (s Style) IsItalic() bool {
+	return s.Flags & StyleItalic != 0
+}
+
+func (s Style) IsUnderline() bool {
+	return s.Flags & StyleUnderline != 0
+}

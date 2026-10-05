@@ -49,13 +49,17 @@ func (s *Svg) Render(w io.Writer) error {
 	return s.root.Render(w)
 }
 
+func (s *Svg) fill(x, y int, fill func(drawer) error) error {
+	return fill(s)
+}
+
 func (s *Svg) draw(x, y int, cell Cell) error {
 	var el svg.Element
 	switch c := cell.(type) {
 	case Content:
-		el = svg.NewText(float64(x), float64(y), string(c.Value))
+		el = s.createText(x, y, c)
 	case Path:
-		x, err := s.putPath(c)
+		x, err := s.createPath(c)
 		if err != nil {
 			return err
 		}
@@ -67,11 +71,20 @@ func (s *Svg) draw(x, y int, cell Cell) error {
 	return nil
 }
 
-func (s *Svg) fill(x, y int, fill func(drawer) error) error {
-	return fill(s)
+func (s *Svg) createText(x, y int, c Content) svg.Element {
+	t := svg.NewText(float64(x), float64(y), string(c.Value))
+	var weight string
+	if c.Style.IsBold() {
+		weight = svg.WeightBold
+	}
+	t = t.Font(svg.NewFont(float64(c.Style.Size), c.Style.Family, weight))
+	if c.Style.Color != "" {
+		t = t.Fill(svg.Color(c.Style.Color))
+	}	
+	return t
 }
 
-func (s *Svg) putPath(c Path) (svg.Element, error) {
+func (s *Svg) createPath(c Path) (svg.Element, error) {
 	switch s.opts.Path {
 	case ManathanPath:
 		return s.manathanPath(c)

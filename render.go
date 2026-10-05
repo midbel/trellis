@@ -205,6 +205,37 @@ func prepareRender(node *Node, options Options) ([]*Node, RenderOptions, error) 
 		return nil, opts, err
 	}
 
+	// items, err := traverseNodes(traverse(node, opts.MinDepth), opts)
+	// if err != nil {
+	// 	return nil, opts, err
+	// }
 	nodes := traverse(node, opts.MinDepth)
 	return nodes, opts, nil
+}
+
+func traverseNodes(nodes []*Node, options RenderOptions) ([]*Item, error) {
+	list := make([]*Item, 0, len(nodes))
+	for _, n := range nodes {
+		i, err := transformNode(n, options)
+		if err != nil {
+			return nil, err
+		}
+		i.root = true
+		list = append(list, i)
+	}
+	return list, nil
+} 
+
+func transformNode(n *Node, options RenderOptions) (*Item, error) {
+	it := &Item{
+		Content: options.Render(n, options),
+	}
+	for _, n := range n.Nodes {
+		sub, err := transformNode(n, options)
+		if err != nil {
+			return nil, err
+		}
+		it.Children = append(it.Children, sub)
+	}
+	return it, nil
 }

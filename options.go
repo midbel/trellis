@@ -148,6 +148,7 @@ func defaultRenderContent(node *Node, opts RenderOptions) Content {
 	}
 	return Content{
 		Value: value,
+		Style: node.Style,
 	}
 }
 

@@ -158,8 +158,14 @@ func getStyleFromJson(data any, style *trellis.Style) {
 	if f, ok := y["font-family"].(string); ok && f != "" {
 		style.Family = f
 	}
-	if z, ok := y["font-size"].(float64); ok && z > 0 {
+	switch z := y["font-size"].(type) {
+	case float64:
 		style.Size = int(z)
+	case int:
+		style.Size = z
+	case int64:
+		style.Size = int(z)
+	default:
 	}
 	if c, ok := y["color"].(string); ok && c != "" {
 		style.Color = c

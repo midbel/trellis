@@ -181,9 +181,9 @@ func (s *Screen) draw(x, y int, cell Cell) error {
 	}
 	switch c := cell.(type) {
 	case Content:
-		err = s.putContent(x, y, c)
+		err = s.createContent(x, y, c)
 	case Path:
-		err = s.putPath(x, y, c)
+		err = s.createPath(x, y, c)
 	default:
 		err = fmt.Errorf("invalid cell type")
 	}
@@ -194,7 +194,7 @@ func (s *Screen) fill(x, y int, fill func(drawer) error) error {
 	return fill(s)
 }
 
-func (s *Screen) putContent(x, y int, val Content) error {
+func (s *Screen) createContent(x, y int, val Content) error {
 	for _, r := range val.Value {
 		s.writeChar(x, y, r)
 		x += RuneWidth(r)
@@ -202,7 +202,7 @@ func (s *Screen) putContent(x, y int, val Content) error {
 	return nil
 }
 
-func (s *Screen) putPath(x, y int, path Path) error {
+func (s *Screen) createPath(x, y int, path Path) error {
 	if s.opts.Path != ManathanPath {
 		return fmt.Errorf("screen only supports manathan path")
 	}

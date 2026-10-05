@@ -142,7 +142,7 @@ func (s *Screen) writeFooter(ws *bufio.Writer, spaces string) error {
 	if _, err := ws.WriteRune('\n'); err != nil {
 		return err
 	}
-	return nil	
+	return nil
 }
 
 func (s *Screen) writeCoordinates(ws *bufio.Writer, spaces string) error {
@@ -205,7 +205,7 @@ func (s *Screen) writeLine(ws *bufio.Writer, i int) error {
 		if st, ok := s.styles[NewPoint(j, i)]; ok {
 			count = 0
 			length = st.Length
-			if err := writeAnsiColor(ws, st.Color); err != nil {
+			if err := writeAnsiStyle(ws, st.Color, st.IsBold(), st.IsItalic()); err != nil {
 				return err
 			}
 			open = true

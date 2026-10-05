@@ -5,11 +5,32 @@ import (
 )
 
 const (
-	ansiEsc   = 0x1b
-	ansiOpen  = '['
-	ansiCmd   = 'm'
-	ansiReset = 0
+	ansiEsc    = 0x1b
+	ansiOpen   = '['
+	ansiCmd    = 'm'
+	ansiReset  = 0
+	ansiBold   = 1
+	ansiItalic = 3
 )
+
+func writeAnsiStyle(ws io.ByteWriter, color string, bold, italic bool) error {
+	ws.WriteByte(ansiEsc)
+	ws.WriteByte(ansiOpen)
+	if bold {
+		ws.WriteByte(ansiBold)
+		ws.WriteByte(';')
+	}
+	if italic {
+		ws.WriteByte(ansiItalic)
+		ws.WriteByte(';')
+	}
+	if fst, snd := ansiColor(color); fst > 0 && snd > 0 {
+		ws.WriteByte(fst)
+		ws.WriteByte(snd)
+	}
+	ws.WriteByte(ansiCmd)
+	return nil
+}
 
 func writeAnsiColor(ws io.ByteWriter, color string) error {
 	fst, snd := ansiColor(color)

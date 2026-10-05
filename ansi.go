@@ -9,8 +9,9 @@ const (
 	ansiOpen   = '['
 	ansiCmd    = 'm'
 	ansiReset  = 0
-	ansiBold   = 1
-	ansiItalic = 3
+	ansiBold   = '1'
+	ansiItalic = '3'
+	ansiSep    = ';'
 )
 
 func writeAnsiStyle(ws io.ByteWriter, color string, bold, italic bool) error {
@@ -18,13 +19,17 @@ func writeAnsiStyle(ws io.ByteWriter, color string, bold, italic bool) error {
 	ws.WriteByte(ansiOpen)
 	if bold {
 		ws.WriteByte(ansiBold)
-		ws.WriteByte(';')
 	}
 	if italic {
+		if bold {
+			ws.WriteByte(ansiSep)
+		}
 		ws.WriteByte(ansiItalic)
-		ws.WriteByte(';')
 	}
 	if fst, snd := ansiColor(color); fst > 0 && snd > 0 {
+		if bold || italic {
+			ws.WriteByte(ansiSep)
+		}
 		ws.WriteByte(fst)
 		ws.WriteByte(snd)
 	}

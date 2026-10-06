@@ -1,5 +1,9 @@
 package trellis
 
+import (
+	"unicode"
+)
+
 type Content struct {
 	Value []rune
 	Style
@@ -42,4 +46,35 @@ func (s Style) IsItalic() bool {
 
 func (s Style) IsUnderline() bool {
 	return s.Flags&StyleUnderline != 0
+}
+
+type Metrics interface {
+	Width(str []rune) int
+}
+
+type defaultMetric struct{}
+
+func (defaultMetric) Width(str []rune) int {
+	return DisplayWidth(str)
+}
+
+func DisplayWidth(value []rune) int {
+	var width int
+	for _, r := range value {
+		width += RuneWidth(r)
+	}
+	return width
+}
+
+func RuneWidth(r rune) int {
+	switch {
+	case unicode.Is(unicode.Mn, r):
+		return 0
+	case unicode.Is(unicode.Me, r):
+		return 0
+	case unicode.Is(unicode.Cf, r):
+		return 0
+	default:
+		return 1
+	}
 }

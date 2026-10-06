@@ -26,6 +26,7 @@ const (
 type Options interface {
 	Layout() (RenderOptions, error)
 	Format() Output
+	Metrics() Metrics
 	applyDefaults()
 }
 
@@ -62,6 +63,10 @@ type RenderOptions struct {
 	Transform    func(*Node, RenderOptions) Content
 
 	estimateMinSize int
+}
+
+func (o *RenderOptions) Metrics() Metrics {
+	return defaultMetric{}
 }
 
 func (o *RenderOptions) Render(n *Node, opts RenderOptions) Content {

@@ -14,10 +14,10 @@ type SvgOptions struct {
 	Style           ConnectorStyle
 }
 
-func (o *SvgOptions) Metrics() Metrics {
+func (o *SvgOptions) Metrics(n *Node) Metrics {
 	m := svgMetric{
-		font:   svg.SansSerif,
-		size:   12,
+		font:   n.Style.Family,
+		size:   n.Style.Size,
 		margin: o.Margin,
 	}
 	return m

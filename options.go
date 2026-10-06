@@ -26,7 +26,7 @@ const (
 type Options interface {
 	Layout() (RenderOptions, error)
 	Format() Output
-	Metrics() Metrics
+	Metrics(*Node) Metrics
 	applyDefaults()
 }
 
@@ -65,7 +65,7 @@ type RenderOptions struct {
 	estimateMinSize int
 }
 
-func (o *RenderOptions) Metrics() Metrics {
+func (o *RenderOptions) Metrics(_ *Node) Metrics {
 	return defaultMetric{
 		margin: o.Margin,
 	}

@@ -17,6 +17,8 @@ func (s ItemsSet) Dimension() Dimension {
 type Item struct {
 	Content
 
+	Metric Metrics
+
 	Ideal    Point
 	Position Point
 	Bounds   Rect

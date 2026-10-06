@@ -213,7 +213,7 @@ func prepareRender(node *Node, options Options) ([]*Node, RenderOptions, error) 
 	return nodes, opts, nil
 }
 
-func traverseNodes(nodes []*Node, options RenderOptions) ([]*Item, error) {
+func traverseNodes(nodes []*Node, options Options) ([]*Item, error) {
 	list := make([]*Item, 0, len(nodes))
 	for _, n := range nodes {
 		i, err := transformNode(n, options)
@@ -226,9 +226,14 @@ func traverseNodes(nodes []*Node, options RenderOptions) ([]*Item, error) {
 	return list, nil
 }
 
-func transformNode(n *Node, options RenderOptions) (*Item, error) {
+func transformNode(n *Node, options Options) (*Item, error) {
+	opts, err := options.Layout()
+	if err != nil {
+		return nil, err
+	}
 	it := &Item{
-		Content: options.Render(n, options),
+		Content: opts.Render(n, opts),
+		Metric: options.Metrics(n),
 	}
 	for _, n := range n.Nodes {
 		sub, err := transformNode(n, options)

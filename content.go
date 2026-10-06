@@ -2,6 +2,8 @@ package trellis
 
 import (
 	"unicode"
+
+	"github.com/midbel/angle/svg"
 )
 
 type Content struct {
@@ -50,12 +52,38 @@ func (s Style) IsUnderline() bool {
 
 type Metrics interface {
 	Width(str []rune) int
+	Margin() int
 }
 
-type defaultMetric struct{}
+type svgMetric struct {
+	font   string
+	size   int
+	margin int
+}
+
+func (m svgMetric) Width(str []rune) int {
+	z := svg.EstimateTextWidth(string(str), float64(m.size))
+	return int(z)
+}
+
+func (m svgMetric) Height() int {
+	return m.size
+}
+
+func (m svgMetric) Margin() int {
+	return m.margin
+}
+
+type defaultMetric struct {
+	margin int
+}
 
 func (defaultMetric) Width(str []rune) int {
 	return DisplayWidth(str)
+}
+
+func (m defaultMetric) Margin() int {
+	return m.margin
 }
 
 func DisplayWidth(value []rune) int {

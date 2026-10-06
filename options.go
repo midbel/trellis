@@ -66,7 +66,9 @@ type RenderOptions struct {
 }
 
 func (o *RenderOptions) Metrics() Metrics {
-	return defaultMetric{}
+	return defaultMetric{
+		margin: o.Margin,
+	}
 }
 
 func (o *RenderOptions) Render(n *Node, opts RenderOptions) Content {

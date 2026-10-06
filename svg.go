@@ -14,6 +14,15 @@ type SvgOptions struct {
 	Style           ConnectorStyle
 }
 
+func (o *SvgOptions) Metrics() Metrics {
+	m := svgMetric{
+		font:   svg.SansSerif,
+		size:   12,
+		margin: o.Margin,
+	}
+	return m
+}
+
 func (o *SvgOptions) Layout() (RenderOptions, error) {
 	return o.RenderOptions, o.RenderOptions.Validate()
 }

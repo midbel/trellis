@@ -133,21 +133,21 @@ func splitPathV(p Path) []Path {
 	return []Path{start, via, end}
 }
 
-func horizontalPath(from, to *Item, opts RenderOptions) Path {
+func horizontalPath(from, to *Item) Path {
 	if !from.Position.BeforeX(to.Position) {
 		from, to = to, from
 	}
 	var (
 		start  = from.Position
 		end    = to.Position
-		offset = from.DisplayWidth()
+		offset = from.Size()
 	)
-	start.X += offset + opts.Margin
-	end.X -= opts.Margin
+	start.X += offset + from.Metric.Margin()
+	end.X -= to.Metric.Margin()
 	return NewPath(start, end)
 }
 
-func verticalPath(from, to *Item, opts RenderOptions) Path {
+func verticalPath(from, to *Item) Path {
 	if !from.Position.BeforeY(to.Position) {
 		from, to = to, from
 	}

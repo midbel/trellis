@@ -15,10 +15,6 @@ func (c Content) String() string {
 	return string(c.Value)
 }
 
-func (c Content) DisplayWidth() int {
-	return DisplayWidth(c.Value)
-}
-
 type StyleFlag uint8
 
 const (

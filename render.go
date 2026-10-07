@@ -61,7 +61,7 @@ func Horizontal(w io.Writer, root *Node, options Options) error {
 		for _, i := range set.Items {
 			canvas.Put(i.Position.X, i.Position.Y, i.Content)
 			for _, x := range i.Children {
-				path := horizontalPath(i, x, clone)
+				path := horizontalPath(i, x)
 				canvas.Put(path.X(), path.Y(), path)
 			}
 		}
@@ -107,7 +107,7 @@ func Vertical(w io.Writer, root *Node, options Options) error {
 		for _, i := range set.Items {
 			canvas.Put(i.Position.X, i.Position.Y, i.Content)
 			for _, x := range i.Children {
-				path := verticalPath(i, x, clone)
+				path := verticalPath(i, x)
 				canvas.Put(path.X(), path.Y(), path)
 			}
 		}

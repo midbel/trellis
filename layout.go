@@ -88,9 +88,9 @@ func (i *Item) AlignX(align Alignment) {
 	case AlignStart:
 		i.Position.X = i.Bounds.StartX()
 	case AlignEnd:
-		i.Position.X = i.Bounds.EndX() - i.DisplayWidth()
+		i.Position.X = i.Bounds.EndX() - i.Size()
 	default:
-		i.Position.X = i.Bounds.StartX() + i.Bounds.OffsetX() - (i.DisplayWidth() / 2)
+		i.Position.X = i.Bounds.StartX() + i.Bounds.OffsetX() - (i.Size() / 2)
 	}
 }
 
@@ -125,7 +125,7 @@ func (i *Item) Len() int {
 }
 
 func (i *Item) Size() int {
-	return i.DisplayWidth()
+	return i.Metric.Width(i.Value)
 }
 
 func stdVerticalLayout(root *Item, opts RenderOptions) *ItemsSet {
@@ -351,7 +351,7 @@ func computeHorizontalNode(node *Item, opts RenderOptions, spacing, width int) {
 		Height: last.Bounds.EndY() - first.Bounds.StartY(),
 	}
 	if node.Len() == 1 {
-		node.Bounds.Height = opts.estimateMinSize // opts.Size.Height
+		node.Bounds.Height = opts.estimateMinSize
 	}
 
 	node.Bounds = applyMargins(node.Bounds, opts.Margin)

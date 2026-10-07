@@ -163,7 +163,7 @@ func computeVerticalCoordinates(node *Item, opts RenderOptions, spacing, level i
 	height := opts.Size.Height / (level + 1)
 
 	computeVerticalChildren(node, opts, spacing, level, height)
-	resolveVerticalChildren(node, opts)
+	resolveVerticalChildren(node)
 	computeVerticalNode(node, opts, spacing, height)
 }
 
@@ -197,7 +197,7 @@ func computeVerticalChildren(node *Item, opts RenderOptions, spacing, level, hei
 	}
 }
 
-func resolveVerticalChildren(node *Item, opts RenderOptions) {
+func resolveVerticalChildren(node *Item) {
 	if len(node.Children) < 1 {
 		return
 	}
@@ -287,7 +287,7 @@ func computeHorizontalCoordinates(node *Item, opts RenderOptions, spacing, level
 	width := opts.Size.Width / (level + 1)
 
 	computeHorizontalChildren(node, opts, spacing, level, width)
-	resolveHorizontalChildren(node, opts)
+	resolveHorizontalChildren(node)
 	computeHorizontalNode(node, opts, spacing, width)
 }
 
@@ -320,7 +320,7 @@ func computeHorizontalChildren(node *Item, opts RenderOptions, spacing, level, w
 	}
 }
 
-func resolveHorizontalChildren(node *Item, opts RenderOptions) {
+func resolveHorizontalChildren(node *Item) {
 	if len(node.Children) < 1 {
 		return
 	}

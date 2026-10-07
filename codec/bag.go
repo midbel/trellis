@@ -20,7 +20,6 @@ type OptionsBag struct {
 	AlignX       trellis.Alignment
 	Margin       int // Space outside the node, mainly reserved for connectors
 	Padding      int // Space inside the node's visual box
-	PaddingChar  string
 
 	Border          bool
 	CoordinatesStep int
@@ -47,7 +46,6 @@ func (b *OptionsBag) Build() (trellis.Options, error) {
 		AlignX:       b.AlignX,
 		Margin:       b.Margin,
 		Padding:      b.Padding,
-		PaddingChar:  b.PaddingChar,
 		Path:         b.Path,
 	}
 	var opts trellis.Options

@@ -48,6 +48,7 @@ func (s Style) IsUnderline() bool {
 
 type Metrics interface {
 	Width(str []rune) int
+	Height() int
 	Margin() int
 }
 
@@ -76,6 +77,10 @@ type defaultMetric struct {
 
 func (defaultMetric) Width(str []rune) int {
 	return DisplayWidth(str)
+}
+
+func (defaultMetric) Height() int {
+	return 1
 }
 
 func (m defaultMetric) Margin() int {

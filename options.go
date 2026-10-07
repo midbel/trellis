@@ -59,7 +59,7 @@ type RenderOptions struct {
 	AlignX       Alignment
 	Margin       int // Space outside the node, mainly reserved for connectors
 	Padding      int // Space inside the node's visual box
-	PaddingChar  string
+	// PaddingChar  string
 	Transform    func(*Node, RenderOptions) Content
 
 	estimateMinSize int
@@ -138,14 +138,9 @@ func defaultRenderContent(node *Node, opts RenderOptions) Content {
 		var (
 			pad  = make([]rune, opts.Padding)
 			tmp  = make([]rune, 0, len(value))
-			char = rune(' ')
 		)
-		if len(opts.PaddingChar) == 1 {
-			raw := []rune(opts.PaddingChar)
-			char = raw[0]
-		}
 		for i := range pad {
-			pad[i] = char
+			pad[i] = ' '
 		}
 		tmp = append(tmp, pad...)
 		tmp = append(tmp, value...)

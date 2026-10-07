@@ -31,7 +31,6 @@ func makeSetters(opts *OptionsBag) map[string]func(any) error {
 	return map[string]func(any) error{
 		"width":       assignValue(&opts.Width, parseInt),
 		"height":      assignValue(&opts.Height, parseInt),
-		"paddingChar": assignValue(&opts.PaddingChar, parseString),
 		"padding":     assignValue(&opts.Padding, parsePadding),
 		"margin":      assignValue(&opts.Margin, parseMargin),
 		"spacing":     assignValue(&opts.Spacing, parseSpacing),

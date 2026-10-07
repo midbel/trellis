@@ -57,7 +57,7 @@ func NewJson(opts JsonOptions) (View, error) {
 	j.root["height"] = opts.Size.Height
 	j.root["orientation"] = opts.Orient.String()
 	j.root["cells"] = []any{}
-	j.root["connectors"] = []any{}
+	j.root["paths"] = []any{}
 	j.root["canvas"] = []any{}
 	return j, nil
 }

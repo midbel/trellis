@@ -17,8 +17,8 @@ type ScreenOptions struct {
 
 func (o *ScreenOptions) Layout() (RenderOptions, error) {
 	var err error
-	if o.Path != ManathanPath {
-		err = fmt.Errorf("manathan default for screen only")
+	if o.Path != ManatthanPath {
+		err = fmt.Errorf("manatthan default for screen only")
 	}
 	if err == nil {
 		err = o.RenderOptions.Validate()
@@ -214,7 +214,7 @@ func (s *Screen) writeLine(ws *bufio.Writer, i int) error {
 		if err != nil {
 			return err
 		}
-		count++
+		count+=RuneWidth(s.lines[i][j])
 		if count == length && open {
 			open = false
 			count = 0
@@ -281,8 +281,8 @@ func (s *Screen) createContent(x, y int, val Content) error {
 }
 
 func (s *Screen) createPath(x, y int, path Path) error {
-	if s.opts.Path != ManathanPath {
-		return fmt.Errorf("screen only supports manathan path")
+	if s.opts.Path != ManatthanPath {
+		return fmt.Errorf("screen only supports manatthan path")
 	}
 	var paths []Path
 	if s.opts.Orient == HorizontalLayout {

@@ -3,7 +3,7 @@ package trellis
 type PathType uint8
 
 const (
-	ManathanPath PathType = iota
+	ManatthanPath PathType = iota
 	DirectPath
 	CurvePath
 )
@@ -12,8 +12,8 @@ func ParsePath(str string) (PathType, error) {
 	switch str {
 	case "direct":
 		return DirectPath, nil
-	case "manathan", "classic":
-		return ManathanPath, nil
+	case "manatthan", "classic":
+		return ManatthanPath, nil
 	case "curve", "bezier", "cubic":
 		return CurvePath, nil
 	default:

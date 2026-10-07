@@ -37,7 +37,7 @@ func (o *SvgOptions) applyDefaults() {
 		o.Style = ConnectorUnicode
 	}
 	if o.Path == 0 {
-		o.Path = ManathanPath
+		o.Path = ManatthanPath
 	}
 }
 
@@ -95,8 +95,8 @@ func (s *Svg) createText(x, y int, c Content) svg.Element {
 
 func (s *Svg) createPath(c Path) (svg.Element, error) {
 	switch s.opts.Path {
-	case ManathanPath:
-		return s.manathanPath(c)
+	case ManatthanPath:
+		return s.manatthanPath(c)
 	case DirectPath:
 		return s.directPath(c)
 	case CurvePath:
@@ -144,7 +144,7 @@ func (s *Svg) directPath(c Path) (svg.Element, error) {
 	return p, nil
 }
 
-func (s *Svg) manathanPath(c Path) (svg.Element, error) {
+func (s *Svg) manatthanPath(c Path) (svg.Element, error) {
 	var paths []Path
 	if s.opts.Orient == HorizontalLayout {
 		paths = splitPathH(c)

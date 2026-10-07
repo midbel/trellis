@@ -3,7 +3,6 @@ package trellis
 import (
 	"fmt"
 	"io"
-	"slices"
 )
 
 var renderers = map[Orientation]func(io.Writer, *Node, Options) error{
@@ -29,17 +28,15 @@ func Render(w io.Writer, root *Node, options Options) error {
 }
 
 func Horizontal(w io.Writer, root *Node, options Options) error {
-	nodes, opts, err := prepareRender(root, options)
+	items, opts, err := prepareRender(root, options)
 	if err != nil {
 		return err
 	}
-	if len(nodes) == 0 {
+	if len(items) == 0 {
 		return nil
 	}
 
-	opts.estimateMinSize = estimateMinSize(root, opts.Size.Height)
-
-	sizes, err := allocateFromSize(opts.Size, nodes, opts.AllocateMode, HorizontalLayout)
+	sizes, err := allocateFromSize(opts.Size, items, opts.AllocateMode, HorizontalLayout)
 	if err != nil {
 		return err
 	}
@@ -52,11 +49,11 @@ func Horizontal(w io.Writer, root *Node, options Options) error {
 		return err
 	}
 	var offset int
-	for i, n := range nodes {
+	for i := range items {
 		clone := opts.Clone()
 		clone.Size = sizes[i]
 
-		set := stdHorizontalLayout(n, clone)
+		set := stdHorizontalLayout(items[i], clone)
 		canvas, err := NewCanvas(set.Dimension())
 		if err != nil {
 			return err
@@ -76,17 +73,15 @@ func Horizontal(w io.Writer, root *Node, options Options) error {
 }
 
 func Vertical(w io.Writer, root *Node, options Options) error {
-	nodes, opts, err := prepareRender(root, options)
+	items, opts, err := prepareRender(root, options)
 	if err != nil {
 		return err
 	}
-	if len(nodes) == 0 {
+	if len(items) == 0 {
 		return nil
 	}
 
-	opts.estimateMinSize = estimateMinSize(root, opts.Size.Width)
-
-	sizes, err := allocateFromSize(opts.Size, nodes, opts.AllocateMode, VerticalLayout)
+	sizes, err := allocateFromSize(opts.Size, items, opts.AllocateMode, VerticalLayout)
 	if err != nil {
 		return err
 	}
@@ -99,11 +94,11 @@ func Vertical(w io.Writer, root *Node, options Options) error {
 		return err
 	}
 	var offset int
-	for i, n := range nodes {
+	for i := range items {
 		clone := opts.Clone()
 		clone.Size = sizes[i]
 
-		set := stdVerticalLayout(n, clone)
+		set := stdVerticalLayout(items[i], clone)
 
 		canvas, err := NewCanvas(set.Dimension())
 		if err != nil {
@@ -137,26 +132,27 @@ func Compact(w io.Writer, root *Node, options Options) error {
 	opts.AlignX = AlignStart
 	opts.Orient = CompactLayout
 
-	set := compactLayout(root, opts)
-	if ix := slices.IndexFunc(set.Items, func(i *Item) bool { return i.Root() }); ix >= 0 {
-		set.Height = set.Items[ix].Weight()
-	} else {
-		return fmt.Errorf("missing root")
-	}
+	// set := compactLayout(root, opts)
+	// if ix := slices.IndexFunc(set.Items, func(i *Item) bool { return i.Root() }); ix >= 0 {
+	// 	set.Height = set.Items[ix].Weight()
+	// } else {
+	// 	return fmt.Errorf("missing root")
+	// }
 
-	canvas, err := NewCanvas(opts.Size)
-	if err != nil {
-		return err
-	}
+	// canvas, err := NewCanvas(opts.Size)
+	// if err != nil {
+	// 	return err
+	// }
 
-	for _, i := range set.Items {
-		canvas.Put(i.Position.X, i.Position.Y, i.Content)
+	// for _, i := range set.Items {
+	// 	canvas.Put(i.Position.X, i.Position.Y, i.Content)
 
-		x := i.Position.X - compactBarWidth
-		canvas.HorizontalPath(x, i.Position.Y, compactBarWidth)
-		canvas.VerticalPath(x, i.Position.Y, i.Weight()+1)
-	}
-	return renderCanvas(w, canvas, options)
+	// 	x := i.Position.X - compactBarWidth
+	// 	canvas.HorizontalPath(x, i.Position.Y, compactBarWidth)
+	// 	canvas.VerticalPath(x, i.Position.Y, i.Weight()+1)
+	// }
+	// return renderCanvas(w, canvas, options)
+	return nil
 }
 
 func Sunburst(w io.Writer, root *Node, options Options) error {
@@ -196,7 +192,7 @@ func renderCanvas(w io.Writer, canvas *Canvas, opts Options) error {
 	return view.Render(w)
 }
 
-func prepareRender(node *Node, options Options) ([]*Node, RenderOptions, error) {
+func prepareRender(node *Node, options Options) ([]*Item, RenderOptions, error) {
 	if options == nil {
 		return nil, RenderOptions{}, fmt.Errorf("options should be provided")
 	}
@@ -204,13 +200,18 @@ func prepareRender(node *Node, options Options) ([]*Node, RenderOptions, error) 
 	if err != nil {
 		return nil, opts, err
 	}
+	if opts.Orient == HorizontalLayout {
+		opts.estimateMinSize = estimateMinSize(node, opts.Size.Height)
+	} else {
+		opts.estimateMinSize = estimateMinSize(node, opts.Size.Width)
+	}
 
-	// items, err := traverseNodes(traverse(node, opts.MinDepth), opts)
-	// if err != nil {
-	// 	return nil, opts, err
-	// }
-	nodes := traverse(node, opts.MinDepth)
-	return nodes, opts, nil
+	items, err := traverseNodes(traverse(node, opts.MinDepth), options)
+	if err != nil {
+		return nil, opts, err
+	}
+	// nodes := traverse(node, opts.MinDepth)
+	return items, opts, nil
 }
 
 func traverseNodes(nodes []*Node, options Options) ([]*Item, error) {
@@ -233,7 +234,7 @@ func transformNode(n *Node, options Options) (*Item, error) {
 	}
 	it := &Item{
 		Content: opts.Render(n, opts),
-		Metric: options.Metrics(n),
+		Metric:  options.Metrics(n),
 	}
 	for _, n := range n.Nodes {
 		sub, err := transformNode(n, options)

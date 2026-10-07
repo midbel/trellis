@@ -39,8 +39,8 @@ func adjustSizes(sizes []Dimension, orient Orientation) (Dimension, error) {
 	return dim, nil
 }
 
-func estimateMinSize(node *Node, size int) int {
-	count := node.Count()
+func estimateMinSize(root *Node, size int) int {
+	count := root.Count()
 	if count == 0 {
 		return size
 	}
@@ -51,22 +51,22 @@ func estimateMinSize(node *Node, size int) int {
 	return tmp
 }
 
-func allocateFromSize(size Dimension, nodes []*Node, mode Allocate, orient Orientation) ([]Dimension, error) {
-	if len(nodes) == 1 {
+func allocateFromSize(size Dimension, items []*Item, mode Allocate, orient Orientation) ([]Dimension, error) {
+	if len(items) == 1 {
 		return []Dimension{size}, nil
 	}
-	list := make([]Dimension, 0, len(nodes))
+	list := make([]Dimension, 0, len(items))
 	switch mode {
 	case AllocateEqual:
 		if orient == HorizontalLayout {
-			height := size.Height / len(nodes)
-			for range nodes {
+			height := size.Height / len(items)
+			for range items {
 				x := NewDimension(size.Width, height)
 				list = append(list, x)
 			}
 		} else if orient == VerticalLayout {
-			width := size.Width / len(nodes)
-			for range nodes {
+			width := size.Width / len(items)
+			for range items {
 				x := NewDimension(width, size.Height)
 				list = append(list, x)
 			}
@@ -75,18 +75,18 @@ func allocateFromSize(size Dimension, nodes []*Node, mode Allocate, orient Orien
 		}
 	case AllocateProportional:
 		var total int
-		for i := range nodes {
-			total += nodes[i].Weight()
+		for i := range items {
+			total += items[i].Weight()
 		}
 		if orient == HorizontalLayout {
-			for i := range nodes {
-				h := size.Height * nodes[i].Weight() / total
+			for i := range items {
+				h := size.Height * items[i].Weight() / total
 				x := NewDimension(size.Width, h)
 				list = append(list, x)
 			}
 		} else if orient == VerticalLayout {
-			for i := range nodes {
-				w := size.Width * nodes[i].Weight() / total
+			for i := range items {
+				w := size.Width * items[i].Weight() / total
 				x := NewDimension(w, size.Height)
 				list = append(list, x)
 			}

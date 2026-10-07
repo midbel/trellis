@@ -35,15 +35,26 @@ func maxFromItems(is []*Item, get func(*Item) int) int {
 	return res
 }
 
+func (i *Item) Count() int {
+	if i.Leaf() {
+		return 1
+	}
+	var count int
+	for x := range i.Children {
+		count += i.Children[x].Count()
+	}
+	return count
+}
+
 func (i *Item) Weight() int {
 	if i.Leaf() {
 		return 1
 	}
-	var depth int
+	var count int
 	for _, c := range i.Children {
-		depth += c.Weight()
+		count += c.Weight()
 	}
-	return depth + 1
+	return count + 1
 }
 
 func (i *Item) FirstLeaf() *Item {
@@ -117,7 +128,7 @@ func (i *Item) Size() int {
 	return i.DisplayWidth()
 }
 
-func stdVerticalLayout(root *Node, opts RenderOptions) *ItemsSet {
+func stdVerticalLayout(root *Item, opts RenderOptions) *ItemsSet {
 	var (
 		mk  = defaultTreeLayout()
 		is  = mk.Make(root, opts)
@@ -246,7 +257,7 @@ func countLeaves(root *Node) int {
 	return sum
 }
 
-func stdHorizontalLayout(root *Node, opts RenderOptions) *ItemsSet {
+func stdHorizontalLayout(root *Item, opts RenderOptions) *ItemsSet {
 	var (
 		mk     = defaultTreeLayout()
 		is     = mk.Make(root, opts)
@@ -351,7 +362,7 @@ func computeHorizontalNode(node *Item, opts RenderOptions, spacing, width int) {
 
 const compactBarWidth = 2
 
-func compactLayout(root *Node, opts RenderOptions) *ItemsSet {
+func compactLayout(root *Item, opts RenderOptions) *ItemsSet {
 	clone := opts.Clone()
 	clone.Spacing = 1
 
@@ -406,7 +417,7 @@ func defaultTreeLayout() *treeLayout {
 	return &treeLayout{}
 }
 
-func (m *treeLayout) Make(node *Node, opts RenderOptions) []*Item {
+func (m *treeLayout) Make(node *Item, opts RenderOptions) []*Item {
 	var (
 		root = m.makeLayout(node, 0, opts)
 		res  = m.flatten(root)
@@ -429,43 +440,45 @@ func (m *treeLayout) Spacing() int {
 	return m.siblingsSpacing
 }
 
-func (m *treeLayout) makeLayout(node *Node, depth int, opts RenderOptions) *Item {
-	sub := Item{
-		Content: opts.Render(node, opts),
-		root:    depth == 0,
-	}
-	sub.Position.X = depth
+func (m *treeLayout) makeLayout(node *Item, depth int, opts RenderOptions) *Item {
+	// sub := Item{
+	// 	// Content: opts.Render(node, opts),
+	// 	// root:    depth == 0,
+	// }
+	node.Position.X = depth
 	depth++
 	if opts.MaxDepth == 0 || depth <= opts.MaxDepth {
-		for _, n := range node.Nodes {
+		children := node.Children
+		node.Children = node.Children[:0]
+		for _, n := range children {
 			child := m.makeLayout(n, depth, opts)
-			sub.Children = append(sub.Children, child)
+			node.Children = append(node.Children, child)
 		}
 	}
 	if node.Leaf() {
-		sub.Position.Y = m.siblingsSpacing
+		node.Position.Y = m.siblingsSpacing
 		m.siblingsSpacing += opts.Spacing
 	} else {
 		if opts.Align() == AlignStart {
-			sub.Position.Y = sub.Children[0].Position.Y
+			node.Position.Y = node.Children[0].Position.Y
 		} else if opts.Align() == AlignEnd {
-			sub.Position.Y = sub.Children[len(sub.Children)-1].Position.Y
+			node.Position.Y = node.Children[len(node.Children)-1].Position.Y
 		} else {
-			if len(sub.Children) > 0 {
+			if len(node.Children) > 0 {
 				var sum int
-				for i := range sub.Children {
-					sum += sub.Children[i].Position.Y
+				for i := range node.Children {
+					sum += node.Children[i].Position.Y
 				}
-				sub.Position.Y = sum / (len(sub.Children))
+				node.Position.Y = sum / (len(node.Children))
 			} else {
-				sub.Position.Y = m.siblingsSpacing
+				node.Position.Y = m.siblingsSpacing
 				m.siblingsSpacing += opts.Spacing
 			}
 		}
 	}
-	sub.Ideal = sub.Position
+	node.Ideal = node.Position
 	m.levelSpacing = max(depth-1, m.levelSpacing)
-	return &sub
+	return node
 }
 
 func (m *treeLayout) flatten(node *Item) []*Item {

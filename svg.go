@@ -81,12 +81,19 @@ func (s *Svg) draw(x, y int, cell Cell) error {
 }
 
 func (s *Svg) createText(x, y int, c Content) svg.Element {
-	t := svg.NewText(float64(x), float64(y), string(c.Value))
 	var weight string
 	if c.Style.IsBold() {
 		weight = svg.WeightBold
 	}
-	t = t.Font(svg.NewFont(float64(c.Style.Size), c.Style.Family, weight))
+	f := svg.NewFont(float64(c.Style.Size), c.Style.Family, weight)
+	if c.Style.IsItalic() {
+		f = f.Italic()
+	}
+	if c.Style.IsUnderline() {
+		f = f.Underline()
+	}
+	t := svg.NewText(float64(x), float64(y), string(c.Value))
+	t = t.Font(f)
 	if c.Style.Color != "" {
 		t = t.Fill(svg.Color(c.Style.Color))
 	}

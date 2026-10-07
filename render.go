@@ -210,7 +210,6 @@ func prepareRender(node *Node, options Options) ([]*Item, RenderOptions, error) 
 	if err != nil {
 		return nil, opts, err
 	}
-	// nodes := traverse(node, opts.MinDepth)
 	return items, opts, nil
 }
 

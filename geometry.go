@@ -74,21 +74,6 @@ type Rect struct {
 	Height int
 }
 
-func applyMargins(rect Rect, margin int) Rect {
-	if margin == 0 {
-		return rect
-	}
-	if rect.Width > margin+margin {
-		rect.Width -= margin + margin
-	}
-	if rect.Height > margin+margin {
-		rect.Height -= margin + margin
-	}
-	rect.X += margin
-	rect.Y += margin
-	return rect
-}
-
 func (r Rect) StartX() int {
 	return r.X
 }
@@ -111,4 +96,19 @@ func (r Rect) OffsetX() int {
 
 func (r Rect) OffsetY() int {
 	return r.Height / 2
+}
+
+func (r Rect) applyMargins(margin int) Rect {
+	if margin == 0 {
+		return r
+	}
+	if r.Width > margin+margin {
+		r.Width -= margin + margin
+	}
+	if r.Height > margin+margin {
+		r.Height -= margin + margin
+	}
+	r.X += margin
+	r.Y += margin
+	return r
 }

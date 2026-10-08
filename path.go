@@ -142,9 +142,8 @@ func horizontalPath(from, to *Item) Path {
 		end    = to.Position
 		offset = from.Size()
 	)
-	start.X += offset + from.Metric.Margin()
+	start.X += offset
 	end.X--
-	end.X -= to.Metric.Margin()
 	return NewPath(start, end)
 }
 

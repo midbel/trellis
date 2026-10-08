@@ -128,6 +128,10 @@ func (i *Item) Size() int {
 	return i.Metric.Width(i.Value)
 }
 
+func (i *Item) applyMargins() {
+	i.Bounds = i.Bounds.applyMargins(i.Metric.Margin())
+}
+
 func stdVerticalLayout(root *Item, opts RenderOptions) *ItemsSet {
 	var (
 		mk  = defaultTreeLayout()
@@ -187,7 +191,7 @@ func computeVerticalChildren(node *Item, opts RenderOptions, spacing, level, hei
 			Height: height,
 		}
 
-		x.Bounds = applyMargins(x.Bounds, opts.Margin)
+		x.applyMargins()
 
 		if x.Bounds.Width < opts.Spacing+1 {
 			x.Bounds.Width += opts.Spacing + 1
@@ -240,8 +244,7 @@ func computeVerticalNode(node *Item, opts RenderOptions, spacing, height int) {
 		}
 	}
 
-	node.Bounds = applyMargins(node.Bounds, opts.Margin)
-
+	node.applyMargins()
 	node.AlignX(opts.AlignX)
 	node.AlignY(opts.AlignY)
 }
@@ -299,7 +302,7 @@ func computeHorizontalChildren(node *Item, opts RenderOptions, spacing, level, w
 			Width:  width,
 			Height: endY - startY,
 		}
-		x.Bounds = applyMargins(x.Bounds, opts.Margin)
+		x.applyMargins()
 
 		if x.Bounds.Height < opts.Spacing+1 {
 			x.Bounds.Height += opts.Spacing + 1
@@ -342,8 +345,7 @@ func computeHorizontalNode(node *Item, opts RenderOptions, spacing, width int) {
 	if node.Len() == 1 {
 		node.Bounds.Height = opts.estimateMinSize
 	}
-
-	node.Bounds = applyMargins(node.Bounds, opts.Margin)
+	node.applyMargins()
 
 	node.AlignX(opts.AlignX)
 	node.AlignY(opts.AlignY)

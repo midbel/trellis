@@ -16,9 +16,10 @@ type SvgOptions struct {
 
 func (o *SvgOptions) Metrics(n *Node) Metrics {
 	m := svgMetric{
-		font:   n.Style.Family,
-		size:   n.Style.Size,
-		margin: o.Margin,
+		font:    n.Style.Family,
+		size:    n.Style.Size,
+		margin:  o.Margin,
+		padding: o.Padding,
 	}
 	return m
 }

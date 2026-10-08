@@ -1,5 +1,7 @@
 package trellis
 
+import "fmt"
+
 type PathType uint8
 
 const (
@@ -78,6 +80,7 @@ func splitPathH(p Path) []Path {
 		from  Point
 		to    Point
 	)
+	fmt.Println(p.Start, p.End, dist, mid)
 	if mid%2 != 0 {
 		mid--
 	}
@@ -143,6 +146,7 @@ func horizontalPath(from, to *Item) Path {
 		offset = from.Size()
 	)
 	start.X += offset + from.Metric.Margin()
+	end.X--
 	end.X -= to.Metric.Margin()
 	return NewPath(start, end)
 }

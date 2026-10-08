@@ -214,7 +214,7 @@ func (s *Screen) writeLine(ws *bufio.Writer, i int) error {
 		if err != nil {
 			return err
 		}
-		count+=RuneWidth(s.lines[i][j])
+		count += RuneWidth(s.lines[i][j])
 		if count == length && open {
 			open = false
 			count = 0

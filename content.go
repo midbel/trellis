@@ -50,12 +50,14 @@ type Metrics interface {
 	Width(str []rune) int
 	Height() int
 	Margin() int
+	Padding() int
 }
 
 type svgMetric struct {
-	font   string
-	size   int
-	margin int
+	font    string
+	size    int
+	margin  int
+	padding int
 }
 
 func (m svgMetric) Width(str []rune) int {
@@ -71,8 +73,13 @@ func (m svgMetric) Margin() int {
 	return m.margin
 }
 
+func (m svgMetric) Padding() int {
+	return m.padding
+}
+
 type defaultMetric struct {
-	margin int
+	margin  int
+	padding int
 }
 
 func (defaultMetric) Width(str []rune) int {
@@ -85,6 +92,10 @@ func (defaultMetric) Height() int {
 
 func (m defaultMetric) Margin() int {
 	return m.margin
+}
+
+func (m defaultMetric) Padding() int {
+	return m.padding
 }
 
 func DisplayWidth(value []rune) int {

@@ -60,14 +60,15 @@ type RenderOptions struct {
 	Margin       int // Space outside the node, mainly reserved for connectors
 	Padding      int // Space inside the node's visual box
 	// PaddingChar  string
-	Transform    func(*Node, RenderOptions) Content
+	Transform func(*Node, RenderOptions) Content
 
 	estimateMinSize int
 }
 
 func (o *RenderOptions) Metrics(_ *Node) Metrics {
 	return defaultMetric{
-		margin: o.Margin,
+		margin:  o.Margin,
+		padding: o.Padding,
 	}
 }
 
@@ -133,23 +134,8 @@ func (t *RenderOptions) applyDefaults() {
 }
 
 func defaultRenderContent(node *Node, opts RenderOptions) Content {
-	value := []rune(node.Value)
-	if opts.Padding > 0 {
-		var (
-			pad  = make([]rune, opts.Padding)
-			tmp  = make([]rune, 0, len(value))
-		)
-		for i := range pad {
-			pad[i] = ' '
-		}
-		tmp = append(tmp, pad...)
-		tmp = append(tmp, value...)
-		tmp = append(tmp, pad...)
-
-		value = tmp
-	}
 	return Content{
-		Value: value,
+		Value: []rune(node.Value),
 		Style: node.Style,
 	}
 }

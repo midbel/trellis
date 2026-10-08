@@ -246,17 +246,6 @@ func computeVerticalNode(node *Item, opts RenderOptions, spacing, height int) {
 	node.AlignY(opts.AlignY)
 }
 
-func countLeaves(root *Node) int {
-	if root.Leaf() {
-		return 1
-	}
-	var sum int
-	for _, n := range root.Nodes {
-		sum += countLeaves(n)
-	}
-	return sum
-}
-
 func stdHorizontalLayout(root *Item, opts RenderOptions) *ItemsSet {
 	var (
 		mk     = defaultTreeLayout()

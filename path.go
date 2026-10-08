@@ -1,7 +1,5 @@
 package trellis
 
-import "fmt"
-
 type PathType uint8
 
 const (
@@ -80,7 +78,6 @@ func splitPathH(p Path) []Path {
 		from  Point
 		to    Point
 	)
-	fmt.Println(p.Start, p.End, dist, mid)
 	if mid%2 != 0 {
 		mid--
 	}

@@ -75,18 +75,34 @@ func (i *Item) LastLeaf() *Item {
 }
 
 func (i *Item) X() int {
-	return i.Position.X
+	// return i.Position.X
+	switch i.AlignX {
+	case AlignStart:
+		return i.Bounds.StartX()
+	case AlignEnd:
+		return i.Bounds.EndX() - i.Size()
+	default:
+		return i.Bounds.StartX() + i.Bounds.OffsetX() - (i.Size() / 2)
+	}
 }
 
 func (i *Item) Y() int {
-	return i.Position.Y
+	// return i.Position.Y
+	switch i.AlignY {
+	case AlignStart:
+		return i.Bounds.StartY()
+	case AlignEnd:
+		return i.Bounds.EndY()
+	default:
+		return i.Bounds.StartY() + i.Bounds.OffsetY()
+	}
 }
 
 func (i *Item) ContentBounds() Rect {
 	padding := i.Metric.Padding()
 	r := Rect{
-		X:      i.Position.X - padding,
-		Y:      i.Position.Y,
+		X:      i.X() - padding,
+		Y:      i.Y(),
 		Width:  i.Metric.Width(i.Value) + padding + padding,
 		Height: i.Metric.Height(),
 	}

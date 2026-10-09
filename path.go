@@ -39,6 +39,11 @@ func (p Path) Move(x, y int) Path {
 	p.Start.Y += y
 	p.End.X += x
 	p.End.Y += y
+	if x == 0 {
+		p.Pivot += y
+	} else {
+		p.Pivot += x
+	}
 	return p
 }
 

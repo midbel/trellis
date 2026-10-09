@@ -151,7 +151,9 @@ func verticalPath(from, to *Item) Path {
 		start = from.ContentBounds()
 		end   = to.ContentBounds()
 	)
-	p := NewPath(start.LowerMid(), end.UpperMid())
+	ep := end.UpperMid()
+	ep.Y--
+	p := NewPath(start.LowerMid(), ep)
 
 	if to.Bounds.Y == from.Bounds.EndY() {
 		p.Pivot = to.Bounds.X

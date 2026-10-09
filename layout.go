@@ -71,7 +71,7 @@ func (i *Item) X() int {
 	case AlignEnd:
 		return i.Bounds.EndX() - i.Size()
 	default:
-		return i.Bounds.StartX() + (i.Bounds.Width - i.Size()) / 2
+		return i.Bounds.StartX() + (i.Bounds.Width-i.Size())/2
 	}
 }
 
@@ -90,7 +90,7 @@ func (i *Item) Y() int {
 func (i *Item) ContentBounds() Rect {
 	var (
 		padding = i.Metric.Padding()
-		total = padding + padding
+		total   = padding + padding
 	)
 	r := Rect{
 		X:      i.X() - padding,

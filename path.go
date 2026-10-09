@@ -122,7 +122,7 @@ func splitPathV(p Path) []Path {
 }
 
 func horizontalPath(from, to *Item) Path {
-	if !from.Position.BeforeX(to.Position) {
+	if from.Bounds.X > to.Bounds.X {
 		from, to = to, from
 	}
 	var (
@@ -144,7 +144,7 @@ func horizontalPath(from, to *Item) Path {
 }
 
 func verticalPath(from, to *Item) Path {
-	if !from.Position.BeforeY(to.Position) {
+	if from.Bounds.Y > to.Bounds.Y {
 		from, to = to, from
 	}
 	var (
@@ -156,7 +156,7 @@ func verticalPath(from, to *Item) Path {
 	p := NewPath(start.LowerMid(), ep)
 
 	if to.Bounds.Y == from.Bounds.EndY() {
-		p.Pivot = to.Bounds.X
+		p.Pivot = to.Bounds.Y
 	} else {
 		diff := (to.Bounds.Y - from.Bounds.EndY()) / 2
 		p.Pivot = from.Bounds.EndY() + diff

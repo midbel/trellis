@@ -28,19 +28,9 @@ func NewCanvas(size Dimension) (*Canvas, error) {
 	return canvas, nil
 }
 
-func (c *Canvas) SetOrigin(pt Point) {
-	c.origin = pt
-}
-
 func (c *Canvas) Move(x, y int) {
 	c.origin.X += x
 	c.origin.Y += y
-}
-
-func (c *Canvas) Resize(width, height int) error {
-	c.dim.Width = width
-	c.dim.Height = height
-	return c.dim.Validate()
 }
 
 func (c *Canvas) Append(other *Canvas) {
@@ -49,22 +39,6 @@ func (c *Canvas) Append(other *Canvas) {
 
 func (c *Canvas) Put(x, y int, cell Cell) error {
 	return c.put(x, y, cell)
-}
-
-func (c *Canvas) VerticalPath(x, y, size int) error {
-	var (
-		beg = NewPoint(x, y)
-		end = NewPoint(x, y+size)
-	)
-	return c.put(x, y, NewPath(beg, end))
-}
-
-func (c *Canvas) HorizontalPath(x, y, size int) error {
-	var (
-		beg = NewPoint(x, y)
-		end = NewPoint(x+size, y)
-	)
-	return c.put(x, y, NewPath(beg, end))
 }
 
 func (c *Canvas) Screen(opts ScreenOptions) (View, error) {

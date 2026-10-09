@@ -25,12 +25,6 @@ func (d *Dimension) Validate() error {
 	return nil
 }
 
-func (d *Dimension) Resize(w, h int) error {
-	d.Width = w
-	d.Height = h
-	return d.Validate()
-}
-
 func (d *Dimension) Valid(x, y int) bool {
 	return x >= 0 && x < d.Width && y >= 0 && y < d.Height
 }

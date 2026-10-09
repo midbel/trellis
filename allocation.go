@@ -46,7 +46,7 @@ func estimateMinSize(root *Node, size int) int {
 	}
 	tmp := size / count
 	if mod := size % count; mod != 0 {
-		tmp += mod
+		tmp++
 	}
 	return tmp
 }

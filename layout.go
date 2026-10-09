@@ -37,17 +37,6 @@ func maxFromItems(is []*Item, get func(*Item) int) int {
 	return res
 }
 
-func (i *Item) Count() int {
-	if i.Leaf() {
-		return 1
-	}
-	var count int
-	for x := range i.Children {
-		count += i.Children[x].Count()
-	}
-	return count
-}
-
 func (i *Item) Weight() int {
 	if i.Leaf() {
 		return 1
@@ -82,7 +71,7 @@ func (i *Item) X() int {
 	case AlignEnd:
 		return i.Bounds.EndX() - i.Size()
 	default:
-		return i.Bounds.StartX() + i.Bounds.OffsetX() - (i.Size() / 2)
+		return i.Bounds.StartX() + (i.Bounds.Width - i.Size()) / 2
 	}
 }
 
@@ -92,19 +81,22 @@ func (i *Item) Y() int {
 	case AlignStart:
 		return i.Bounds.StartY()
 	case AlignEnd:
-		return i.Bounds.EndY()
+		return i.Bounds.EndY() - i.Metric.Height()
 	default:
 		return i.Bounds.StartY() + i.Bounds.OffsetY()
 	}
 }
 
 func (i *Item) ContentBounds() Rect {
-	padding := i.Metric.Padding()
+	var (
+		padding = i.Metric.Padding()
+		total = padding + padding
+	)
 	r := Rect{
 		X:      i.X() - padding,
 		Y:      i.Y(),
-		Width:  i.Metric.Width(i.Value) + padding + padding,
-		Height: i.Metric.Height(),
+		Width:  i.Metric.Width(i.Value) + total,
+		Height: i.Metric.Height(), // + total,
 	}
 	return r
 }
@@ -145,30 +137,6 @@ func (i *Item) Size() int {
 
 func (i *Item) applyMargins() {
 	i.Bounds = i.Bounds.applyMargins(i.Metric.Margin())
-	i.alignX()
-	i.alignY()
-}
-
-func (i *Item) alignY() {
-	switch i.AlignY {
-	case AlignStart:
-		i.Position.Y = i.Bounds.StartY()
-	case AlignEnd:
-		i.Position.Y = i.Bounds.EndY()
-	default:
-		i.Position.Y = i.Bounds.StartY() + i.Bounds.OffsetY()
-	}
-}
-
-func (i *Item) alignX() {
-	switch i.AlignX {
-	case AlignStart:
-		i.Position.X = i.Bounds.StartX()
-	case AlignEnd:
-		i.Position.X = i.Bounds.EndX() - i.Size()
-	default:
-		i.Position.X = i.Bounds.StartX() + i.Bounds.OffsetX() - (i.Size() / 2)
-	}
 }
 
 func stdVerticalLayout(root *Item, opts RenderOptions) *ItemsSet {

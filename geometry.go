@@ -74,6 +74,26 @@ type Rect struct {
 	Height int
 }
 
+func (r Rect) UpperLeft() Point {
+	return NewPoint(r.X, r.Y)
+}
+
+func (r Rect) UpperMid() Point {
+	return NewPoint(r.X+r.OffsetX(), r.Y)
+}
+
+func (r Rect) LowerMid() Point {
+	return NewPoint(r.X+r.OffsetX(), r.EndY())
+}
+
+func (r Rect) UpperRight() Point {
+	return NewPoint(r.EndX(), r.Y)
+}
+
+func (r Rect) LowerRight() Point {
+	return NewPoint(r.EndX(), r.EndY())
+}
+
 func (r Rect) StartX() int {
 	return r.X
 }

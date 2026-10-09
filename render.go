@@ -234,6 +234,8 @@ func transformNode(n *Node, options Options) (*Item, error) {
 	it := &Item{
 		Content: opts.Render(n, opts),
 		Metric:  options.Metrics(n),
+		AlignX:  opts.AlignX,
+		AlignY:  opts.AlignY,
 	}
 	for _, n := range n.Nodes {
 		sub, err := transformNode(n, options)

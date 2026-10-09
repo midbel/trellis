@@ -24,6 +24,7 @@ func ParsePath(str string) (PathType, error) {
 type Path struct {
 	Start Point
 	End   Point
+	Pivot int
 }
 
 func NewPath(start, end Point) Path {
@@ -70,24 +71,17 @@ func splitPathH(p Path) []Path {
 		return []Path{p}
 	}
 	var (
-		dist  = p.DistanceX()
-		mid   = dist / 2
 		start Path
 		end   Path
 		via   Path
 		from  Point
 		to    Point
 	)
-	if mid%2 != 0 {
-		mid--
-	}
-	mid = min(p.Start.X+mid, p.End.X-mid)
-
 	from = NewPoint(p.Start.X, p.Start.Y)
-	to = NewPoint(mid, p.Start.Y)
+	to = NewPoint(p.Pivot, p.Start.Y)
 	start = NewPath(from, to)
 
-	from = NewPoint(mid, p.End.Y)
+	from = NewPoint(p.Pivot, p.End.Y)
 	to = NewPoint(p.End.X, p.End.Y)
 	end = NewPath(from, to)
 
@@ -104,24 +98,18 @@ func splitPathV(p Path) []Path {
 		return []Path{p}
 	}
 	var (
-		dist  = p.DistanceY()
-		mid   = dist / 2
 		start Path
 		end   Path
 		via   Path
 		from  Point
 		to    Point
 	)
-	if mid%2 != 0 {
-		mid--
-	}
-	mid = min(p.Start.Y+mid, p.End.Y-mid)
 
 	from = NewPoint(p.Start.X, p.Start.Y)
-	to = NewPoint(p.Start.X, mid)
+	to = NewPoint(p.Start.X, p.Pivot)
 	start = NewPath(from, to)
 
-	from = NewPoint(p.End.X, mid)
+	from = NewPoint(p.End.X, p.Pivot)
 	to = NewPoint(p.End.X, p.End.Y)
 	end = NewPath(from, to)
 
@@ -138,13 +126,21 @@ func horizontalPath(from, to *Item) Path {
 		from, to = to, from
 	}
 	var (
-		start  = from.Position
-		end    = to.Position
-		offset = from.Size()
+		start = from.ContentBounds()
+		end   = to.ContentBounds()
 	)
-	start.X += offset
-	end.X--
-	return NewPath(start, end)
+
+	ep := end.UpperLeft()
+	ep.X--
+	p := NewPath(start.UpperRight(), ep)
+
+	if to.Bounds.X == from.Bounds.EndX() {
+		p.Pivot = to.Bounds.X
+	} else {
+		diff := (to.Bounds.X - from.Bounds.EndX()) / 2
+		p.Pivot = from.Bounds.EndX() + diff
+	}
+	return p
 }
 
 func verticalPath(from, to *Item) Path {
@@ -152,14 +148,16 @@ func verticalPath(from, to *Item) Path {
 		from, to = to, from
 	}
 	var (
-		start = from.Position
-		end   = to.Position
+		start = from.ContentBounds()
+		end   = to.ContentBounds()
 	)
-	start.X += from.Size() / 2
-	end.X += to.Size() / 2
+	p := NewPath(start.LowerMid(), end.UpperMid())
 
-	start.Y++
-	end.Y--
-
-	return NewPath(start, end)
+	if to.Bounds.Y == from.Bounds.EndY() {
+		p.Pivot = to.Bounds.X
+	} else {
+		diff := (to.Bounds.Y - from.Bounds.EndY()) / 2
+		p.Pivot = from.Bounds.EndY() + diff
+	}
+	return p
 }

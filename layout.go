@@ -19,6 +19,8 @@ type Item struct {
 
 	Metric Metrics
 
+	AlignX   Alignment
+	AlignY   Alignment
 	Ideal    Point
 	Position Point
 	Bounds   Rect
@@ -72,26 +74,23 @@ func (i *Item) LastLeaf() *Item {
 	return i.Children[n].LastLeaf()
 }
 
-func (i *Item) AlignY(align Alignment) {
-	switch align {
-	case AlignStart:
-		i.Position.Y = i.Bounds.StartY()
-	case AlignEnd:
-		i.Position.Y = i.Bounds.EndY()
-	default:
-		i.Position.Y = i.Bounds.StartY() + i.Bounds.OffsetY()
-	}
+func (i *Item) X() int {
+	return i.Position.X
 }
 
-func (i *Item) AlignX(align Alignment) {
-	switch align {
-	case AlignStart:
-		i.Position.X = i.Bounds.StartX()
-	case AlignEnd:
-		i.Position.X = i.Bounds.EndX() - i.Size()
-	default:
-		i.Position.X = i.Bounds.StartX() + i.Bounds.OffsetX() - (i.Size() / 2)
+func (i *Item) Y() int {
+	return i.Position.Y
+}
+
+func (i *Item) ContentBounds() Rect {
+	padding := i.Metric.Padding()
+	r := Rect{
+		X:      i.Position.X - padding,
+		Y:      i.Position.Y,
+		Width:  i.Metric.Width(i.Value) + padding + padding,
+		Height: i.Metric.Height(),
 	}
+	return r
 }
 
 func (i *Item) MoveX(delta int) {
@@ -130,6 +129,30 @@ func (i *Item) Size() int {
 
 func (i *Item) applyMargins() {
 	i.Bounds = i.Bounds.applyMargins(i.Metric.Margin())
+	i.alignX()
+	i.alignY()
+}
+
+func (i *Item) alignY() {
+	switch i.AlignY {
+	case AlignStart:
+		i.Position.Y = i.Bounds.StartY()
+	case AlignEnd:
+		i.Position.Y = i.Bounds.EndY()
+	default:
+		i.Position.Y = i.Bounds.StartY() + i.Bounds.OffsetY()
+	}
+}
+
+func (i *Item) alignX() {
+	switch i.AlignX {
+	case AlignStart:
+		i.Position.X = i.Bounds.StartX()
+	case AlignEnd:
+		i.Position.X = i.Bounds.EndX() - i.Size()
+	default:
+		i.Position.X = i.Bounds.StartX() + i.Bounds.OffsetX() - (i.Size() / 2)
+	}
 }
 
 func stdVerticalLayout(root *Item, opts RenderOptions) *ItemsSet {
@@ -192,12 +215,9 @@ func computeVerticalChildren(node *Item, opts RenderOptions, spacing, level, hei
 		}
 
 		x.applyMargins()
-
 		if x.Bounds.Width < opts.Spacing+1 {
 			x.Bounds.Width += opts.Spacing + 1
 		}
-		x.AlignX(opts.AlignX)
-		x.AlignY(opts.AlignY)
 	}
 }
 
@@ -245,8 +265,6 @@ func computeVerticalNode(node *Item, opts RenderOptions, spacing, height int) {
 	}
 
 	node.applyMargins()
-	node.AlignX(opts.AlignX)
-	node.AlignY(opts.AlignY)
 }
 
 func stdHorizontalLayout(root *Item, opts RenderOptions) *ItemsSet {
@@ -307,8 +325,6 @@ func computeHorizontalChildren(node *Item, opts RenderOptions, spacing, level, w
 		if x.Bounds.Height < opts.Spacing+1 {
 			x.Bounds.Height += opts.Spacing + 1
 		}
-		x.AlignX(opts.AlignX)
-		x.AlignY(opts.AlignY)
 	}
 }
 
@@ -346,9 +362,6 @@ func computeHorizontalNode(node *Item, opts RenderOptions, spacing, width int) {
 		node.Bounds.Height = opts.estimateMinSize
 	}
 	node.applyMargins()
-
-	node.AlignX(opts.AlignX)
-	node.AlignY(opts.AlignY)
 }
 
 const compactBarWidth = 2

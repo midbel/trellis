@@ -21,10 +21,15 @@ func ParsePath(str string) (PathType, error) {
 	}
 }
 
+type Axis struct {
+	Orient Orientation
+	Pos    int
+}
+
 type Path struct {
 	Start Point
 	End   Point
-	Pivot int
+	Pivot Axis
 }
 
 func NewPath(start, end Point) Path {
@@ -39,10 +44,10 @@ func (p Path) Move(x, y int) Path {
 	p.Start.Y += y
 	p.End.X += x
 	p.End.Y += y
-	if x == 0 {
-		p.Pivot += y
+	if p.Pivot.Orient == HorizontalLayout {
+		p.Pivot.Pos += x
 	} else {
-		p.Pivot += x
+		p.Pivot.Pos += y
 	}
 	return p
 }
@@ -83,10 +88,10 @@ func splitPathH(p Path) []Path {
 		to    Point
 	)
 	from = NewPoint(p.Start.X, p.Start.Y)
-	to = NewPoint(p.Pivot, p.Start.Y)
+	to = NewPoint(p.Pivot.Pos, p.Start.Y)
 	start = NewPath(from, to)
 
-	from = NewPoint(p.Pivot, p.End.Y)
+	from = NewPoint(p.Pivot.Pos, p.End.Y)
 	to = NewPoint(p.End.X, p.End.Y)
 	end = NewPath(from, to)
 
@@ -111,10 +116,10 @@ func splitPathV(p Path) []Path {
 	)
 
 	from = NewPoint(p.Start.X, p.Start.Y)
-	to = NewPoint(p.Start.X, p.Pivot)
+	to = NewPoint(p.Start.X, p.Pivot.Pos)
 	start = NewPath(from, to)
 
-	from = NewPoint(p.End.X, p.Pivot)
+	from = NewPoint(p.End.X, p.Pivot.Pos)
 	to = NewPoint(p.End.X, p.End.Y)
 	end = NewPath(from, to)
 
@@ -139,11 +144,12 @@ func horizontalPath(from, to *Item) Path {
 	ep.X--
 	p := NewPath(start.UpperRight(), ep)
 
+	p.Pivot.Orient = HorizontalLayout
 	if to.Bounds.X == from.Bounds.EndX() {
-		p.Pivot = to.Bounds.X
+		p.Pivot.Pos = to.Bounds.X
 	} else {
 		diff := (to.Bounds.X - from.Bounds.EndX()) / 2
-		p.Pivot = from.Bounds.EndX() + diff
+		p.Pivot.Pos = from.Bounds.EndX() + diff
 	}
 	return p
 }
@@ -160,11 +166,12 @@ func verticalPath(from, to *Item) Path {
 	ep.Y--
 	p := NewPath(start.LowerMid(), ep)
 
+	p.Pivot.Orient = VerticalLayout
 	if to.Bounds.Y == from.Bounds.EndY() {
-		p.Pivot = to.Bounds.Y
+		p.Pivot.Pos = to.Bounds.Y
 	} else {
 		diff := (to.Bounds.Y - from.Bounds.EndY()) / 2
-		p.Pivot = from.Bounds.EndY() + diff
+		p.Pivot.Pos = from.Bounds.EndY() + diff
 	}
 	return p
 }

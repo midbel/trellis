@@ -77,13 +77,11 @@ func (m svgMetric) Height() int {
 }
 
 func (m svgMetric) Margin() int {
-	z := svg.EstimateSpacingWidth(float64(m.margin), float64(m.size))
-	return int(z)
+	return m.margin
 }
 
 func (m svgMetric) Padding() int {
-	z := svg.EstimateSpacingWidth(float64(m.padding), float64(m.size))
-	return int(z)
+	return m.padding
 }
 
 type defaultMetric struct {

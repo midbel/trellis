@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/midbel/angle/xml"
 	"github.com/midbel/curly"
 	"github.com/midbel/sexpr"
 	"github.com/midbel/trellis"
@@ -59,12 +60,8 @@ func treeFromDot(r io.Reader) (*TreeSpec, error) {
 	return nil, ErrFormat
 }
 
-func treeFromXml(r io.Reader) (*TreeSpec, error) {
-	return nil, nil
-}
-
 func treeFromJson(r io.Reader) (*TreeSpec, error) {
-	data, err := curly.Decode(r)
+	data, err := curly.Decode5(r)
 	if err != nil {
 		return nil, err
 	}
@@ -126,7 +123,7 @@ func buildNodeFromJson(data any) (*trellis.Node, error) {
 	n := &trellis.Node{
 		Value: name,
 	}
-	getStyleFromJson(root["options"], &n.Style)
+	getStyleFromJson(root["style"], &n.Style)
 	if children, ok := root["children"].([]any); ok {
 		for _, c := range children {
 			sub, err := buildNodeFromJson(c)
@@ -172,8 +169,19 @@ func getStyleFromJson(data any, style *trellis.Style) {
 	}
 }
 
+func treeFromXml(r io.Reader) (*TreeSpec, error) {
+	var (
+		rs = xml.NewReader(r)
+		xh = handleXml()
+	)
+	if err := rs.Read(xh); err != nil {
+		return nil, err
+	}
+	return nil, nil
+}
+
 func treeFromSexpr(r io.Reader) (*TreeSpec, error) {
-	h := newHandler()
+	h := handleSexpr()
 	if err := sexpr.Process(r, h, nil); err != nil {
 		return nil, err
 	}
@@ -192,7 +200,7 @@ type context struct {
 	children []*trellis.Node
 }
 
-type handler struct {
+type xHandler struct {
 	options *OptionsBag
 	root    *trellis.Node
 	stack   []*context
@@ -201,8 +209,8 @@ type handler struct {
 	flags   map[string]func()
 }
 
-func newHandler() *handler {
-	h := &handler{
+func handleXml() *xHandler {
+	h := &xHandler{
 		options: defaultBag(),
 	}
 	h.setters = makeSetters(h.options)
@@ -210,13 +218,51 @@ func newHandler() *handler {
 	return h
 }
 
-func (h *handler) BeginList() error {
+func (h *xHandler) OnStartElement(el xml.Element, self bool) error {
+	return nil
+}
+
+func (h *xHandler) OnCloseElement(name xml.Name) error {
+	return nil
+}
+
+func (h *xHandler) OnText(txt xml.Text) error {
+	return nil
+}
+
+func (h *xHandler) OnComment(comment xml.Comment) error {
+	return nil
+}
+
+func (h *xHandler) OnPI(pi xml.PI) error {
+	return nil
+}
+
+type sHandler struct {
+	options *OptionsBag
+	root    *trellis.Node
+	stack   []*context
+
+	setters map[string]func(any) error
+	flags   map[string]func()
+}
+
+func handleSexpr() *sHandler {
+	h := &sHandler{
+		options: defaultBag(),
+	}
+	h.setters = makeSetters(h.options)
+	h.flags = makeFlags(h.options)
+	return h
+}
+
+func (h *sHandler) BeginList() error {
 	var ctx context
 	h.stack = append(h.stack, &ctx)
 	return nil
 }
 
-func (h *handler) EndList() error {
+func (h *sHandler) EndList() error {
 	if len(h.stack) == 0 {
 		return nil
 	}
@@ -255,7 +301,7 @@ func (h *handler) EndList() error {
 	return nil
 }
 
-func (h *handler) Atom(atom any) error {
+func (h *sHandler) Atom(atom any) error {
 	if len(h.stack) == 0 {
 		return nil
 	}
@@ -264,7 +310,7 @@ func (h *handler) Atom(atom any) error {
 	return nil
 }
 
-func (h *handler) Directive(expr []any) error {
+func (h *sHandler) Directive(expr []any) error {
 	switch len(expr) {
 	default:
 		return fmt.Errorf("directive malformed")
@@ -276,7 +322,7 @@ func (h *handler) Directive(expr []any) error {
 	return nil
 }
 
-func (h *handler) handleFlag(expr any) error {
+func (h *sHandler) handleFlag(expr any) error {
 	name, ok := expr.(sexpr.Ident)
 	if !ok {
 		return ErrIdent
@@ -289,7 +335,7 @@ func (h *handler) handleFlag(expr any) error {
 	return nil
 }
 
-func (h *handler) handleOption(expr, value any) error {
+func (h *sHandler) handleOption(expr, value any) error {
 	name, ok := expr.(sexpr.Ident)
 	if !ok {
 		return ErrIdent

@@ -6,6 +6,13 @@ import (
 	"github.com/midbel/angle/svg"
 )
 
+type Insets struct {
+	Top    int
+	Right  int
+	Left   int
+	Bottom int
+}
+
 type Content struct {
 	Value []rune
 	Style

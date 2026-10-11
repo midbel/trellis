@@ -2,6 +2,8 @@ package trellis
 
 type Node struct {
 	Value string
+	// Label string
+	// Value T
 	Style Style
 	Nodes []*Node
 }

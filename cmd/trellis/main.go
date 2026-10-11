@@ -39,6 +39,7 @@ type CliFlags struct {
 	Orient       trellis.Orientation
 	Output       trellis.Output
 	Style        trellis.ConnectorStyle
+	Path         trellis.PathType
 	File         string
 }
 
@@ -74,6 +75,11 @@ func parseArgs(args []string) (CliFlags, *flag.FlagSet, error) {
 		cli.Style = v
 		return err
 	})
+	fs.Func("p", "path type", func(str string) error {
+		v, err := trellis.ParsePath(str)
+		cli.Path = v
+		return err
+	})
 
 	err := fs.Parse(args)
 	if err == nil {
@@ -101,6 +107,8 @@ func applyOverrides(fs *flag.FlagSet, cli *CliFlags, spec *codec.TreeSpec) {
 			spec.Options.Reverse = cli.Reverse
 		case "b":
 			spec.Options.Border = cli.Border
+		case "p":
+			spec.Options.Path = cli.Path
 		default:
 		}
 	})

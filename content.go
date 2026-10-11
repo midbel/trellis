@@ -6,13 +6,6 @@ import (
 	"github.com/midbel/angle/svg"
 )
 
-type Insets struct {
-	Top    int
-	Right  int
-	Left   int
-	Bottom int
-}
-
 type Content struct {
 	Value []rune
 	Style
@@ -56,15 +49,11 @@ func (s Style) IsUnderline() bool {
 type Metrics interface {
 	Width(str []rune) int
 	Height() int
-	Margin() int
-	Padding() int
 }
 
 type svgMetric struct {
-	font    string
-	size    int
-	margin  int
-	padding int
+	font string
+	size int
 }
 
 func (m svgMetric) Width(str []rune) int {
@@ -76,18 +65,7 @@ func (m svgMetric) Height() int {
 	return m.size
 }
 
-func (m svgMetric) Margin() int {
-	return m.margin
-}
-
-func (m svgMetric) Padding() int {
-	return m.padding
-}
-
-type defaultMetric struct {
-	margin  int
-	padding int
-}
+type defaultMetric struct{}
 
 func (defaultMetric) Width(str []rune) int {
 	return DisplayWidth(str)
@@ -95,14 +73,6 @@ func (defaultMetric) Width(str []rune) int {
 
 func (defaultMetric) Height() int {
 	return 1
-}
-
-func (m defaultMetric) Margin() int {
-	return m.margin
-}
-
-func (m defaultMetric) Padding() int {
-	return m.padding
 }
 
 func DisplayWidth(value []rune) int {

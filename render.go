@@ -6,9 +6,9 @@ import (
 )
 
 var renderers = map[Orientation]func(io.Writer, *Node, Options) error{
-	HorizontalLayout: Horizontal,
-	VerticalLayout:   Vertical,
-	CompactLayout:    Compact,
+	HorizontalLayout: horizontalTree,
+	VerticalLayout:   verticalTree,
+	CompactLayout:    compactTree,
 }
 
 func Render(w io.Writer, root *Node, options Options) error {
@@ -27,7 +27,7 @@ func Render(w io.Writer, root *Node, options Options) error {
 	return fn(w, root, options)
 }
 
-func Horizontal(w io.Writer, root *Node, options Options) error {
+func horizontalTree(w io.Writer, root *Node, options Options) error {
 	items, opts, err := prepareRender(root, options)
 	if err != nil {
 		return err
@@ -72,7 +72,7 @@ func Horizontal(w io.Writer, root *Node, options Options) error {
 	return renderCanvas(w, master, options)
 }
 
-func Vertical(w io.Writer, root *Node, options Options) error {
+func verticalTree(w io.Writer, root *Node, options Options) error {
 	items, opts, err := prepareRender(root, options)
 	if err != nil {
 		return err
@@ -118,7 +118,7 @@ func Vertical(w io.Writer, root *Node, options Options) error {
 	return renderCanvas(w, master, options)
 }
 
-func Compact(w io.Writer, root *Node, options Options) error {
+func compactTree(w io.Writer, root *Node, options Options) error {
 	if options == nil {
 		return ErrOptions
 	}
@@ -236,6 +236,8 @@ func transformNode(n *Node, options Options) (*Item, error) {
 		Metric:  options.Metrics(n),
 		AlignX:  opts.AlignX,
 		AlignY:  opts.AlignY,
+		Margin:  NewInsets(opts.Margin, opts.Margin, opts.Margin, opts.Margin),
+		Padding: NewInsets(opts.Padding, opts.Padding, opts.Padding, opts.Padding),
 	}
 	for _, n := range n.Nodes {
 		sub, err := transformNode(n, options)

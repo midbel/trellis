@@ -21,6 +21,8 @@ type Item struct {
 
 	AlignX   Alignment
 	AlignY   Alignment
+	Margin   Insets
+	Padding  Insets
 	Ideal    Point
 	Position Point
 	Bounds   Rect
@@ -64,7 +66,6 @@ func (i *Item) LastLeaf() *Item {
 }
 
 func (i *Item) X() int {
-	// return i.Position.X
 	switch i.AlignX {
 	case AlignStart:
 		return i.Bounds.StartX()
@@ -76,7 +77,6 @@ func (i *Item) X() int {
 }
 
 func (i *Item) Y() int {
-	// return i.Position.Y
 	switch i.AlignY {
 	case AlignStart:
 		return i.Bounds.StartY()
@@ -88,15 +88,11 @@ func (i *Item) Y() int {
 }
 
 func (i *Item) ContentBounds() Rect {
-	var (
-		padding = i.Metric.Padding()
-		total   = padding + padding
-	)
 	r := Rect{
-		X:      i.X() - padding,
-		Y:      i.Y(),
-		Width:  i.Metric.Width(i.Value) + total,
-		Height: i.Metric.Height(), // + total,
+		X:      i.X() - i.Padding.Left,
+		Y:      i.Y() - i.Padding.Top,
+		Width:  i.Metric.Width(i.Value) + i.Padding.H(),
+		Height: i.Metric.Height() + i.Padding.V(),
 	}
 	return r
 }
@@ -136,7 +132,7 @@ func (i *Item) Size() int {
 }
 
 func (i *Item) applyMargins() {
-	i.Bounds = i.Bounds.applyMargins(i.Metric.Margin())
+	i.Bounds = i.Bounds.applyMargins(i.Margin)
 }
 
 func stdVerticalLayout(root *Item, opts RenderOptions) *ItemsSet {

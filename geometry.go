@@ -61,6 +61,34 @@ func (p Point) String() string {
 	return fmt.Sprintf("point(%d, %d)", p.X, p.Y)
 }
 
+type Insets struct {
+	Top    int
+	Right  int
+	Bottom int
+	Left   int
+}
+
+func NewInsets(top, right, bottom, left int) Insets {
+	return Insets{
+		Top:    top,
+		Right:  right,
+		Bottom: bottom,
+		Left:   left,
+	}
+}
+
+func (i Insets) Zero() bool {
+	return i.Top == 0 && i.Right == 0 && i.Bottom == 0 && i.Left == 0
+}
+
+func (i Insets) H() int {
+	return i.Left + i.Right
+}
+
+func (i Insets) V() int {
+	return i.Top + i.Bottom
+}
+
 type Rect struct {
 	X      int
 	Y      int
@@ -70,6 +98,14 @@ type Rect struct {
 
 func (r Rect) UpperLeft() Point {
 	return NewPoint(r.X, r.Y)
+}
+
+func (r Rect) MidLeft() Point {
+	return NewPoint(r.X, r.Y+r.OffsetY())
+}
+
+func (r Rect) MidRight() Point {
+	return NewPoint(r.EndX(), r.Y+r.OffsetY())
 }
 
 func (r Rect) UpperMid() Point {
@@ -112,17 +148,17 @@ func (r Rect) OffsetY() int {
 	return r.Height / 2
 }
 
-func (r Rect) applyMargins(margin int) Rect {
-	if margin == 0 {
+func (r Rect) applyMargins(margin Insets) Rect {
+	if margin.Zero() {
 		return r
 	}
-	if r.Width > margin+margin {
-		r.Width -= margin + margin
+	if r.Width > margin.Left+margin.Right {
+		r.Width -= margin.Left + margin.Right
 	}
-	if r.Height > margin+margin {
-		r.Height -= margin + margin
+	if r.Height > margin.Top+margin.Bottom {
+		r.Height -= margin.Top + margin.Bottom
 	}
-	r.X += margin
-	r.Y += margin
+	r.X += margin.Left
+	r.Y += margin.Top
 	return r
 }

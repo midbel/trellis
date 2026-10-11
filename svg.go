@@ -19,10 +19,8 @@ func (o *SvgOptions) Metrics(n *Node) Metrics {
 		n.Style.Size = 12
 	}
 	m := svgMetric{
-		font:    n.Style.Family,
-		size:    n.Style.Size,
-		margin:  o.Margin,
-		padding: o.Padding,
+		font: n.Style.Family,
+		size: n.Style.Size,
 	}
 	return m
 }

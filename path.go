@@ -140,9 +140,9 @@ func horizontalPath(from, to *Item) Path {
 		end   = to.ContentBounds()
 	)
 
-	ep := end.UpperLeft()
+	ep := end.MidLeft()
 	ep.X--
-	p := NewPath(start.UpperRight(), ep)
+	p := NewPath(start.MidRight(), ep)
 
 	p.Pivot.Orient = HorizontalLayout
 	if to.Bounds.X == from.Bounds.EndX() {

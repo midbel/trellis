@@ -24,10 +24,13 @@ const (
 )
 
 type Style struct {
-	Flags  StyleFlag
-	Size   int
-	Family string
-	Color  string
+	Flags   StyleFlag
+	Size    int
+	Family  string
+	Color   string
+	Border  bool
+	Margin  Insets
+	Padding Insets
 }
 
 func (s Style) Zero() bool {

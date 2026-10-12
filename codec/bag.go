@@ -27,6 +27,8 @@ type OptionsBag struct {
 	Path            trellis.PathType // manathan, direct, curve
 
 	Compact bool
+
+	Global trellis.Style
 }
 
 func defaultBag() *OptionsBag {

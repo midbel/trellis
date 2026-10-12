@@ -128,6 +128,9 @@ func (t *RenderOptions) applyDefaults() {
 	if t.AllocateMode == 0 {
 		t.AllocateMode = AllocateEqual
 	}
+	if t.Orient == 0 {
+		t.Orient = HorizontalLayout
+	}
 }
 
 func defaultRenderContent(node *Node, opts RenderOptions) Content {

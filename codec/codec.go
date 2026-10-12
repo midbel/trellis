@@ -73,45 +73,30 @@ func buildSpecFromJson(data any) (*TreeSpec, error) {
 	if !ok {
 		return nil, fmt.Errorf("expected object")
 	}
-	var source any
+	var (
+		source  any
+		options = defaultBag()
+	)
+	if err := getOptionsFromJson(root["rendering"], options); err != nil {
+		return nil, err
+	}
 	if d, ok := root["data"]; ok {
 		source = d
 	} else {
 		source = data
 	}
-	tree, err := buildNodeFromJson(source)
+	tree, err := buildNodeFromJson(source, options.Global)
 	if err != nil {
 		return nil, err
 	}
 	spec := &TreeSpec{
 		Node:    tree,
-		Options: defaultBag(),
+		Options: options,
 	}
-	return spec, getOptionsFromJson(root["rendering"], spec.Options)
+	return spec, nil
 }
 
-func getOptionsFromJson(data any, options *OptionsBag) error {
-	if data == nil {
-		return nil
-	}
-	opts, ok := data.(map[string]any)
-	if !ok {
-		return fmt.Errorf("options should be an object")
-	}
-	setters := makeSetters(options)
-	for k, o := range opts {
-		fn, ok := setters[k]
-		if !ok {
-			continue
-		}
-		if err := fn(o); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func buildNodeFromJson(data any) (*trellis.Node, error) {
+func buildNodeFromJson(data any, global trellis.Style) (*trellis.Node, error) {
 	root, ok := data.(map[string]any)
 	if !ok {
 		return nil, fmt.Errorf("expected object")
@@ -122,11 +107,12 @@ func buildNodeFromJson(data any) (*trellis.Node, error) {
 	}
 	n := &trellis.Node{
 		Value: name,
+		Style: global,
 	}
 	getStyleFromJson(root["style"], &n.Style)
 	if children, ok := root["children"].([]any); ok {
 		for _, c := range children {
-			sub, err := buildNodeFromJson(c)
+			sub, err := buildNodeFromJson(c, global)
 			if err != nil {
 				return nil, err
 			}
@@ -136,6 +122,31 @@ func buildNodeFromJson(data any) (*trellis.Node, error) {
 		}
 	}
 	return n, nil
+}
+
+func getOptionsFromJson(data any, options *OptionsBag) error {
+	if data == nil {
+		return nil
+	}
+	opts, ok := data.(map[string]any)
+	if !ok {
+		return fmt.Errorf("options should be an object")
+	}
+	if style, ok := opts["style"]; ok {
+		getStyleFromJson(style, &options.Global)
+		delete(opts, "style")
+	}
+	setters := makeSetters(options)
+	for k, o := range opts {
+		fn, ok := setters[k]
+		if !ok {
+			return fmt.Errorf("%s: unknown option", k)
+		}
+		if err := fn(o); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func getStyleFromJson(data any, style *trellis.Style) {

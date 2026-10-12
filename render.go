@@ -59,10 +59,14 @@ func horizontalTree(w io.Writer, root *Node, options Options) error {
 			return err
 		}
 		for _, i := range set.Items {
-			canvas.Put(i.X(), i.Y(), i.Content)
+			if err := canvas.Put(i.X(), i.Y(), i.Content); err != nil {
+				return err
+			}
 			for _, x := range i.Children {
 				path := horizontalPath(i, x)
-				canvas.Put(path.X(), path.Y(), path)
+				if err := canvas.Put(path.X(), path.Y(), path); err != nil {
+					return err
+				}
 			}
 		}
 		canvas.Move(0, offset)
@@ -105,10 +109,14 @@ func verticalTree(w io.Writer, root *Node, options Options) error {
 			return err
 		}
 		for _, i := range set.Items {
-			canvas.Put(i.X(), i.Y(), i.Content)
+			if err := canvas.Put(i.X(), i.Y(), i.Content); err != nil {
+				return err
+			}
 			for _, x := range i.Children {
 				path := verticalPath(i, x)
-				canvas.Put(path.X(), path.Y(), path)
+				if err := canvas.Put(path.X(), path.Y(), path); err != nil {
+					return err
+				}
 			}
 		}
 		canvas.Move(offset, 0)

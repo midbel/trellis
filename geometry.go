@@ -147,18 +147,3 @@ func (r Rect) OffsetX() int {
 func (r Rect) OffsetY() int {
 	return r.Height / 2
 }
-
-func (r Rect) applyMargins(margin Insets) Rect {
-	if margin.Zero() {
-		return r
-	}
-	if r.Width > margin.Left+margin.Right {
-		r.Width -= margin.Left + margin.Right
-	}
-	if r.Height > margin.Top+margin.Bottom {
-		r.Height -= margin.Top + margin.Bottom
-	}
-	r.X += margin.Left
-	r.Y += margin.Top
-	return r
-}

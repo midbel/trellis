@@ -66,33 +66,45 @@ func (i *Item) LastLeaf() *Item {
 }
 
 func (i *Item) X() int {
-	switch i.AlignX {
-	case AlignStart:
-		return i.Bounds.StartX()
-	case AlignEnd:
-		return i.Bounds.EndX() - i.Size()
-	default:
-		return i.Bounds.StartX() + (i.Bounds.Width-i.Size())/2
-	}
+	bounds := i.InnerBounds()
+	return bounds.X + i.Padding.Left
 }
 
 func (i *Item) Y() int {
-	switch i.AlignY {
-	case AlignStart:
-		return i.Bounds.StartY()
-	case AlignEnd:
-		return i.Bounds.EndY() - i.Metric.Height()
-	default:
-		return i.Bounds.StartY() + i.Bounds.OffsetY()
-	}
+	bounds := i.InnerBounds()
+	return bounds.Y + i.Padding.Top
 }
 
-func (i *Item) ContentBounds() Rect {
+func (i *Item) OuterBounds() Rect {
+	r := i.Bounds
+	r.X += i.Margin.Left
+	r.Y += i.Margin.Top
+	r.Width -= i.Margin.H()
+	r.Height -= i.Margin.V()
+	return r
+}
+
+func (i *Item) InnerBounds() Rect {
+	bounds := i.OuterBounds()
 	r := Rect{
-		X:      i.X() - i.Padding.Left,
-		Y:      i.Y() - i.Padding.Top,
+		X:      bounds.X,
+		Y:      bounds.Y,
 		Width:  i.Metric.Width(i.Value) + i.Padding.H(),
 		Height: i.Metric.Height() + i.Padding.V(),
+	}
+	switch i.AlignX {
+	case AlignStart:
+	case AlignEnd:
+		r.X = bounds.EndX() - r.Width
+	default:
+		r.X += (bounds.Width - r.Width) / 2
+	}
+	switch i.AlignY {
+	case AlignStart:
+	case AlignEnd:
+		r.Y = bounds.EndY() - r.Height
+	default:
+		r.Y += (bounds.Height - r.Height) / 2
 	}
 	return r
 }
@@ -129,10 +141,6 @@ func (i *Item) Len() int {
 
 func (i *Item) Size() int {
 	return i.Metric.Width(i.Value)
-}
-
-func (i *Item) applyMargins() {
-	i.Bounds = i.Bounds.applyMargins(i.Margin)
 }
 
 func stdVerticalLayout(root *Item, opts RenderOptions) *ItemsSet {
@@ -194,7 +202,6 @@ func computeVerticalChildren(node *Item, opts RenderOptions, spacing, level, hei
 			Height: height,
 		}
 
-		x.applyMargins()
 		if x.Bounds.Width < opts.Spacing+1 {
 			x.Bounds.Width += opts.Spacing + 1
 		}
@@ -243,8 +250,6 @@ func computeVerticalNode(node *Item, opts RenderOptions, spacing, height int) {
 			node.Bounds.Width = opts.estimateMinSize
 		}
 	}
-
-	node.applyMargins()
 }
 
 func stdHorizontalLayout(root *Item, opts RenderOptions) *ItemsSet {
@@ -300,7 +305,6 @@ func computeHorizontalChildren(node *Item, opts RenderOptions, spacing, level, w
 			Width:  width,
 			Height: endY - startY,
 		}
-		x.applyMargins()
 
 		if x.Bounds.Height < opts.Spacing+1 {
 			x.Bounds.Height += opts.Spacing + 1
@@ -341,7 +345,6 @@ func computeHorizontalNode(node *Item, opts RenderOptions, spacing, width int) {
 	if node.Len() == 1 {
 		node.Bounds.Height = opts.estimateMinSize
 	}
-	node.applyMargins()
 }
 
 const compactBarWidth = 2

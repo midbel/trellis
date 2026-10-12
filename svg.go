@@ -96,6 +96,7 @@ func (s *Svg) createText(x, y int, c Content) svg.Element {
 	}
 	t := svg.NewText(float64(x), float64(y), string(c.Value))
 	t = t.Font(f)
+	t = t.Baseline("hanging")
 	if c.Style.Color != "" {
 		t = t.Fill(svg.Color(c.Style.Color))
 	}

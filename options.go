@@ -48,6 +48,7 @@ func (o *TableOptions) applyDefaults() {
 
 type RenderOptions struct {
 	AllocateMode Allocate
+	Placement    Alignment
 	Orient       Orientation
 	Size         Dimension
 	Path         PathType // manathan, direct, curve
@@ -55,7 +56,7 @@ type RenderOptions struct {
 	MaxDepth     int
 	Spacing      int // Distance between sibling allocation regions.
 	Reverse      bool
-	Transform func(*Node, RenderOptions) Content
+	Transform    func(*Node, RenderOptions) Content
 
 	estimateMinSize int
 }
@@ -95,13 +96,6 @@ func (t *RenderOptions) ResetSize() {
 func (t *RenderOptions) Clone() RenderOptions {
 	x := *t
 	return x
-}
-
-func (t *RenderOptions) Align() Alignment {
-	if t.Orient == HorizontalLayout {
-		return t.AlignX
-	}
-	return t.AlignY
 }
 
 func (t *RenderOptions) applyDefaults() {

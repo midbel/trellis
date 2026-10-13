@@ -136,8 +136,8 @@ func compactTree(w io.Writer, root *Node, options Options) error {
 	}
 
 	opts.Spacing = SpacingL
-	opts.AlignY = AlignStart
-	opts.AlignX = AlignStart
+	// opts.AlignY = AlignStart
+	// opts.AlignX = AlignStart
 	opts.Orient = CompactLayout
 
 	// set := compactLayout(root, opts)

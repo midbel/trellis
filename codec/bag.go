@@ -10,6 +10,7 @@ type OptionsBag struct {
 	Type         trellis.Output
 	Orient       trellis.Orientation
 	AllocateMode trellis.Allocate
+	Placement    trellis.Alignment
 	Width        int
 	Height       int
 	MinDepth     int
@@ -34,6 +35,7 @@ func defaultBag() *OptionsBag {
 func (b *OptionsBag) Build() (trellis.Options, error) {
 	base := trellis.RenderOptions{
 		AllocateMode: b.AllocateMode,
+		Placement:    b.Placement,
 		Orient:       b.Orient,
 		Size:         trellis.NewDimension(b.Width, b.Height),
 		MinDepth:     b.MinDepth,

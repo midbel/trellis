@@ -424,10 +424,6 @@ func (m *treeLayout) Spacing() int {
 }
 
 func (m *treeLayout) makeLayout(node *Item, depth int, opts RenderOptions) *Item {
-	// sub := Item{
-	// 	// Content: opts.Render(node, opts),
-	// 	// root:    depth == 0,
-	// }
 	node.Position.X = depth
 	depth++
 	if opts.MaxDepth == 0 || depth <= opts.MaxDepth {
@@ -442,9 +438,9 @@ func (m *treeLayout) makeLayout(node *Item, depth int, opts RenderOptions) *Item
 		node.Position.Y = m.siblingsSpacing
 		m.siblingsSpacing += opts.Spacing
 	} else {
-		if opts.Align() == AlignStart {
+		if opts.Placement == AlignStart {
 			node.Position.Y = node.Children[0].Position.Y
-		} else if opts.Align() == AlignEnd {
+		} else if opts.Placement == AlignEnd {
 			node.Position.Y = node.Children[len(node.Children)-1].Position.Y
 		} else {
 			if len(node.Children) > 0 {

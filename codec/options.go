@@ -41,6 +41,38 @@ func makeSetters(opts *OptionsBag) map[string]func(any) error {
 		"min-depth":   assignValue(&opts.MinDepth, parseInt),
 		"max-depth":   assignValue(&opts.MaxDepth, parseInt),
 		"orientation": assignValue(&opts.Orient, parseOrientation),
+		"placement":   assignValue(&opts.Placement, parseAlignment),
+	}
+}
+
+func makeStyleSetters(style *trellis.Style) map[string]func(any) error {
+	return map[string]func(any) error{
+		"bold":        assignFlag(&style.Flags, trellis.StyleBold),
+		"italic":      assignFlag(&style.Flags, trellis.StyleItalic),
+		"underline":   assignFlag(&style.Flags, trellis.StyleUnderline),
+		"border":      assignValue(&style.Border, parseBool),
+		"color":       assignValue(&style.Color, parseString),
+		"font-family": assignValue(&style.Family, parseString),
+		"font-size":   assignValue(&style.Size, parseNumber),
+		"x-align":     assignValue(&style.AlignX, parseAlignment),
+		"y-align":     assignValue(&style.AlignY, parseAlignment),
+		"margin":      assignValue(&style.Margin, parseInsets),
+		"padding":     assignValue(&style.Padding, parseInsets),
+	}
+}
+
+func assignFlag(dst *trellis.StyleFlag, flag trellis.StyleFlag) func(any) error {
+	return func(value any) error {
+		v, err := parseBool(value)
+		if err != nil {
+			return err
+		}
+		if v {
+			*dst |= flag
+		} else {
+			*dst &^= flag
+		}
+		return nil
 	}
 }
 
@@ -80,7 +112,7 @@ func parseSpacing(value any) (int, error) {
 	}
 }
 
-func parseInsets(value any) (int, error) {
+func parseInsets(value any) (trellis.Insets, error) {
 	get := func(pad string) (int, error) {
 		switch pad {
 		case "small":
@@ -93,14 +125,22 @@ func parseInsets(value any) (int, error) {
 			return 0, fmt.Errorf("insets: unsupported value %q", pad)
 		}
 	}
+	var (
+		size int
+		err  error
+	)
 	switch v := value.(type) {
 	case string:
-		return get(v)
+		size, err = get(v)
 	case sexpr.Ident:
-		return get(string(v))
+		size, err = get(string(v))
 	default:
-		return parseNumber(value)
+		size, err = parseNumber(value)
 	}
+	if err != nil {
+		return trellis.Insets{}, err
+	}
+	return trellis.NewInsets(size, size, size, size), nil
 }
 
 func parseOrientation(value any) (trellis.Orientation, error) {

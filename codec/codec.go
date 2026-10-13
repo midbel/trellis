@@ -161,55 +161,15 @@ func getStyleFromJson(data any, style *trellis.Style) error {
 	if !ok {
 		return fmt.Errorf("style should be given as object")
 	}
-	if b, ok := y["bold"].(bool); ok && b {
-		style.Flags |= trellis.StyleBold
-	}
-	if i, ok := y["italic"].(bool); ok && i {
-		style.Flags |= trellis.StyleItalic
-	}
-	if u, ok := y["underline"].(bool); ok && u {
-		style.Flags |= trellis.StyleUnderline
-	}
-	if f, ok := y["font-family"].(string); ok && f != "" {
-		style.Family = f
-	}
-	if a, ok := y["align-x"].(string); ok {
-		x, err := parseAlignment(a)
-		if err != nil {
+	setters := makeStyleSetters(style)
+	for k, v := range y {
+		fn, ok := setters[k]
+		if !ok {
+			return fmt.Errorf("%s: unknown style property", k)
+		}
+		if err := fn(v); err != nil {
 			return err
 		}
-		style.AlignX = x
-	}
-	if a, ok := y["align-y"].(string); ok {
-		x, err := parseAlignment(a)
-		if err != nil {
-			return err
-		}
-		style.AlignY = x
-	}
-	if v, ok := y["font-size"]; ok {
-		z, err := parseNumber(v)
-		if err != nil {
-			return err
-		}
-		style.Size = z
-	}
-	if v, ok := y["margin"]; ok {
-		z, err := parseInsets(v)
-		if err != nil {
-			return err
-		}
-		style.Margin = trellis.NewInsets(z, z, z, z)
-	}
-	if v, ok := y["padding"]; ok {
-		z, err := parseInsets(v)
-		if err != nil {
-			return err
-		}
-		style.Padding = trellis.NewInsets(z, z, z, z)
-	}
-	if c, ok := y["color"].(string); ok && c != "" {
-		style.Color = c
 	}
 	return nil
 }

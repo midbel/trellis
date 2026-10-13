@@ -73,6 +73,10 @@ func (i *Item) Y() int {
 
 func (i *Item) OuterBounds() Rect {
 	r := i.Bounds
+	if i.Margin.V() > r.Height || i.Margin.H() > r.Width {
+		// error
+		return r
+	}
 	r.X += i.Margin.Left
 	r.Y += i.Margin.Top
 	r.Width -= i.Margin.H()

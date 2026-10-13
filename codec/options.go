@@ -31,14 +31,10 @@ func makeSetters(opts *OptionsBag) map[string]func(any) error {
 	return map[string]func(any) error{
 		"width":       assignValue(&opts.Width, parseInt),
 		"height":      assignValue(&opts.Height, parseInt),
-		"padding":     assignValue(&opts.Padding, parsePadding),
-		"margin":      assignValue(&opts.Margin, parseMargin),
 		"spacing":     assignValue(&opts.Spacing, parseSpacing),
 		"border":      assignValue(&opts.Border, parseBool),
 		"reverse":     assignValue(&opts.Reverse, parseBool),
 		"ticks":       assignValue(&opts.CoordinatesStep, parseInt),
-		"align-x":     assignValue(&opts.AlignX, parseAlignment),
-		"align-y":     assignValue(&opts.AlignY, parseAlignment),
 		"connector":   assignValue(&opts.Style, parseConnectorStyle),
 		"path":        assignValue(&opts.Path, parsePathType),
 		"output":      assignValue(&opts.Type, parseOutput),
@@ -84,7 +80,7 @@ func parseSpacing(value any) (int, error) {
 	}
 }
 
-func parseMargin(value any) (int, error) {
+func parseInsets(value any) (int, error) {
 	get := func(pad string) (int, error) {
 		switch pad {
 		case "small":
@@ -94,7 +90,7 @@ func parseMargin(value any) (int, error) {
 		case "large":
 			return trellis.PaddingL, nil
 		default:
-			return 0, fmt.Errorf("padding: unsupported value %q", pad)
+			return 0, fmt.Errorf("insets: unsupported value %q", pad)
 		}
 	}
 	switch v := value.(type) {
@@ -103,30 +99,7 @@ func parseMargin(value any) (int, error) {
 	case sexpr.Ident:
 		return get(string(v))
 	default:
-		return parseInt(value)
-	}
-}
-
-func parsePadding(value any) (int, error) {
-	get := func(pad string) (int, error) {
-		switch pad {
-		case "small":
-			return trellis.PaddingS, nil
-		case "medium":
-			return trellis.PaddingM, nil
-		case "large":
-			return trellis.PaddingL, nil
-		default:
-			return 0, fmt.Errorf("padding: unsupported value %q", pad)
-		}
-	}
-	switch v := value.(type) {
-	case string:
-		return get(v)
-	case sexpr.Ident:
-		return get(string(v))
-	default:
-		return parseInt(value)
+		return parseNumber(value)
 	}
 }
 
@@ -183,6 +156,13 @@ func parseAlignment(value any) (trellis.Alignment, error) {
 	default:
 		return 0, ErrType
 	}
+}
+
+func parseNumber(value any) (int, error) {
+	if f, ok := value.(float64); ok {
+		return int(f), nil
+	}
+	return parseInt(value)
 }
 
 func parseInt(value any) (int, error) {

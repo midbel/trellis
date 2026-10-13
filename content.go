@@ -31,6 +31,8 @@ type Style struct {
 	Border  bool
 	Margin  Insets
 	Padding Insets
+	AlignX  Alignment
+	AlignY  Alignment
 }
 
 func (s Style) Zero() bool {

@@ -19,10 +19,6 @@ type Item struct {
 
 	Metric Metrics
 
-	AlignX   Alignment
-	AlignY   Alignment
-	Margin   Insets
-	Padding  Insets
 	Ideal    Point
 	Position Point
 	Bounds   Rect

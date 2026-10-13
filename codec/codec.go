@@ -109,7 +109,9 @@ func buildNodeFromJson(data any, global trellis.Style) (*trellis.Node, error) {
 		Value: name,
 		Style: global,
 	}
-	getStyleFromJson(root["style"], &n.Style)
+	if err := getStyleFromJson(root["style"], &n.Style); err != nil {
+		return nil, err
+	}
 	if children, ok := root["children"].([]any); ok {
 		for _, c := range children {
 			sub, err := buildNodeFromJson(c, global)
@@ -133,7 +135,9 @@ func getOptionsFromJson(data any, options *OptionsBag) error {
 		return fmt.Errorf("options should be an object")
 	}
 	if style, ok := opts["style"]; ok {
-		getStyleFromJson(style, &options.Global)
+		if err := getStyleFromJson(style, &options.Global); err != nil {
+			return err
+		}
 		delete(opts, "style")
 	}
 	setters := makeSetters(options)
@@ -149,10 +153,13 @@ func getOptionsFromJson(data any, options *OptionsBag) error {
 	return nil
 }
 
-func getStyleFromJson(data any, style *trellis.Style) {
+func getStyleFromJson(data any, style *trellis.Style) error {
+	if data == nil {
+		return nil
+	}
 	y, ok := data.(map[string]any)
 	if !ok {
-		return
+		return fmt.Errorf("style should be given as object")
 	}
 	if b, ok := y["bold"].(bool); ok && b {
 		style.Flags |= trellis.StyleBold
@@ -166,18 +173,45 @@ func getStyleFromJson(data any, style *trellis.Style) {
 	if f, ok := y["font-family"].(string); ok && f != "" {
 		style.Family = f
 	}
-	switch z := y["font-size"].(type) {
-	case float64:
-		style.Size = int(z)
-	case int:
+	if a, ok := y["align-x"].(string); ok {
+		x, err := parseAlignment(a)
+		if err != nil {
+			return err
+		}
+		style.AlignX = x
+	}
+	if a, ok := y["align-y"].(string); ok {
+		x, err := parseAlignment(a)
+		if err != nil {
+			return err
+		}
+		style.AlignY = x
+	}
+	if v, ok := y["font-size"]; ok {
+		z, err := parseNumber(v)
+		if err != nil {
+			return err
+		}
 		style.Size = z
-	case int64:
-		style.Size = int(z)
-	default:
+	}
+	if v, ok := y["margin"]; ok {
+		z, err := parseInsets(v)
+		if err != nil {
+			return err
+		}
+		style.Margin = trellis.NewInsets(z, z, z, z)
+	}
+	if v, ok := y["padding"]; ok {
+		z, err := parseInsets(v)
+		if err != nil {
+			return err
+		}
+		style.Padding = trellis.NewInsets(z, z, z, z)
 	}
 	if c, ok := y["color"].(string); ok && c != "" {
 		style.Color = c
 	}
+	return nil
 }
 
 func treeFromXml(r io.Reader) (*TreeSpec, error) {

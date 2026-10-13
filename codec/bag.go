@@ -16,10 +16,6 @@ type OptionsBag struct {
 	MaxDepth     int
 	Spacing      int // Distance between sibling allocation regions.
 	Reverse      bool
-	AlignY       trellis.Alignment
-	AlignX       trellis.Alignment
-	Margin       int // Space outside the node, mainly reserved for connectors
-	Padding      int // Space inside the node's visual box
 
 	Border          bool
 	CoordinatesStep int
@@ -44,10 +40,6 @@ func (b *OptionsBag) Build() (trellis.Options, error) {
 		MaxDepth:     b.MaxDepth,
 		Spacing:      b.Spacing,
 		Reverse:      b.Reverse,
-		AlignY:       b.AlignY,
-		AlignX:       b.AlignX,
-		Margin:       b.Margin,
-		Padding:      b.Padding,
 		Path:         b.Path,
 	}
 	var opts trellis.Options

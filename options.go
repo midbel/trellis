@@ -55,11 +55,6 @@ type RenderOptions struct {
 	MaxDepth     int
 	Spacing      int // Distance between sibling allocation regions.
 	Reverse      bool
-	AlignY       Alignment
-	AlignX       Alignment
-	Margin       int // Space outside the node, mainly reserved for connectors
-	Padding      int // Space inside the node's visual box
-	// PaddingChar  string
 	Transform func(*Node, RenderOptions) Content
 
 	estimateMinSize int
@@ -79,12 +74,6 @@ func (o *RenderOptions) Render(n *Node, opts RenderOptions) Content {
 func (o *RenderOptions) Validate() error {
 	if err := o.Size.Validate(); err != nil {
 		return err
-	}
-	if o.Margin < 0 {
-		return fmt.Errorf("margin can not be negative")
-	}
-	if o.Padding < 0 {
-		return fmt.Errorf("padding can not be negative")
 	}
 	if o.Spacing < 0 {
 		return fmt.Errorf("spacing can not be negative")
@@ -116,9 +105,6 @@ func (t *RenderOptions) Align() Alignment {
 }
 
 func (t *RenderOptions) applyDefaults() {
-	if t.Margin == 0 {
-		t.Margin = SpacingL
-	}
 	if t.Spacing == 0 {
 		t.Spacing = SpacingM
 	}

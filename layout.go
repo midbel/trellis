@@ -174,24 +174,24 @@ func stdVerticalLayout(root *Item, opts RenderOptions) *ItemsSet {
 	return &set
 }
 
-func computeVerticalCoordinates(node *Item, opts RenderOptions, spacing, level int) {
+func computeVerticalCoordinates(node *Item, opts RenderOptions, extent, level int) {
 	height := opts.Size.Height / (level + 1)
 
-	computeVerticalChildren(node, opts, spacing, level, height)
+	computeVerticalChildren(node, opts, extent, level, height)
 	resolveVerticalChildren(node)
-	computeVerticalNode(node, opts, spacing, height)
+	computeVerticalNode(node, opts, extent, height)
 }
 
-func computeVerticalChildren(node *Item, opts RenderOptions, spacing, level, height int) {
+func computeVerticalChildren(node *Item, opts RenderOptions, extent, level, height int) {
 	for _, x := range node.Children {
 		if !x.Leaf() {
-			computeVerticalCoordinates(x, opts, spacing, level)
+			computeVerticalCoordinates(x, opts, extent, level)
 			continue
 		}
 		var (
 			startY = (x.Ideal.Y * height)
-			startX = (x.Ideal.X * opts.Size.Width / spacing)
-			endX   = ((x.Ideal.X + opts.Spacing) * opts.Size.Width) / spacing
+			startX = (x.Ideal.X * opts.Size.Width / extent)
+			endX   = ((x.Ideal.X + opts.Spacing) * opts.Size.Width) / extent
 		)
 		x.Position.X = startX
 		x.Position.Y = startY
@@ -221,22 +221,22 @@ func resolveVerticalChildren(node *Item) {
 	}
 }
 
-func computeVerticalNode(node *Item, opts RenderOptions, spacing, height int) {
+func computeVerticalNode(node *Item, opts RenderOptions, extent, height int) {
 	var (
 		first = node.FirstLeaf()
 		last  = node.LastLeaf()
 	)
-	if spacing == 0 {
-		spacing++
+	if extent == 0 {
+		extent++
 	}
-	node.Position.X = node.Ideal.X * opts.Size.Width / spacing
+	node.Position.X = node.Ideal.X * opts.Size.Width / extent
 	node.Position.Y = node.Ideal.Y * height
 
 	if node.Leaf() {
 		node.Bounds = Rect{
 			X:      node.Position.X,
 			Y:      node.Position.Y,
-			Width:  opts.Size.Width / spacing,
+			Width:  opts.Size.Width / extent,
 			Height: height,
 		}
 	} else {
@@ -278,24 +278,24 @@ func stdHorizontalLayout(root *Item, opts RenderOptions) *ItemsSet {
 	return &set
 }
 
-func computeHorizontalCoordinates(node *Item, opts RenderOptions, spacing, level int) {
+func computeHorizontalCoordinates(node *Item, opts RenderOptions, extent, level int) {
 	width := opts.Size.Width / (level + 1)
 
-	computeHorizontalChildren(node, opts, spacing, level, width)
+	computeHorizontalChildren(node, opts, extent, level, width)
 	resolveHorizontalChildren(node)
-	computeHorizontalNode(node, opts, spacing, width)
+	computeHorizontalNode(node, opts, extent, width)
 }
 
-func computeHorizontalChildren(node *Item, opts RenderOptions, spacing, level, width int) {
+func computeHorizontalChildren(node *Item, opts RenderOptions, extent, level, width int) {
 	for _, x := range node.Children {
 		if !x.Leaf() {
-			computeHorizontalCoordinates(x, opts, spacing, level)
+			computeHorizontalCoordinates(x, opts, extent, level)
 			continue
 		}
 		var (
 			startX = x.Ideal.X * width
-			startY = (x.Ideal.Y * opts.Size.Height / spacing)
-			endY   = ((x.Ideal.Y + opts.Spacing) * opts.Size.Height) / spacing
+			startY = (x.Ideal.Y * opts.Size.Height / extent)
+			endY   = ((x.Ideal.Y + opts.Spacing) * opts.Size.Height) / extent
 		)
 		x.Position.X = startX
 		x.Position.Y = startY
@@ -325,16 +325,16 @@ func resolveHorizontalChildren(node *Item) {
 	}
 }
 
-func computeHorizontalNode(node *Item, opts RenderOptions, spacing, width int) {
+func computeHorizontalNode(node *Item, opts RenderOptions, extent, width int) {
 	var (
 		first = node.FirstLeaf()
 		last  = node.LastLeaf()
 	)
-	if spacing == 0 {
-		spacing++
+	if extent == 0 {
+		extent++
 	}
 	node.Position.X = node.Ideal.X * width
-	node.Position.Y = node.Ideal.Y * opts.Size.Height / spacing
+	node.Position.Y = node.Ideal.Y * opts.Size.Height / extent
 
 	node.Bounds = Rect{
 		X:      node.Position.X,
@@ -377,6 +377,7 @@ func compactLayout(root *Item, opts RenderOptions) *ItemsSet {
 			Height: 1,
 		}
 	}
+	set.Width = opts.Size.Width
 	set.Height++
 
 	ix := slices.IndexFunc(items, func(i *Item) bool {
@@ -388,10 +389,10 @@ func compactLayout(root *Item, opts RenderOptions) *ItemsSet {
 	return &set
 }
 
-func rearrangeCompactChildren(node *Item, spacing int) {
+func rearrangeCompactChildren(node *Item, extent int) {
 	for i := range node.Children {
-		node.Children[i].Position.X = node.Position.X + spacing
-		rearrangeCompactChildren(node.Children[i], spacing)
+		node.Children[i].Position.X = node.Position.X + extent
+		rearrangeCompactChildren(node.Children[i], extent)
 	}
 }
 

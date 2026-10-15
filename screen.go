@@ -285,7 +285,7 @@ func (s *Screen) createPath(x, y int, path Path) error {
 		return fmt.Errorf("screen only supports manatthan path")
 	}
 	var paths []Path
-	if s.opts.Orient == HorizontalLayout {
+	if s.opts.Orient == HorizontalLayout || s.opts.Orient == CompactLayout {
 		paths = splitPathH(path)
 	} else {
 		paths = splitPathV(path)

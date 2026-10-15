@@ -33,10 +33,16 @@ type Path struct {
 }
 
 func NewPath(start, end Point) Path {
-	return Path{
+	p := Path{
 		Start: start,
 		End:   end,
 	}
+	if p.Horizontal() {
+		p.Pivot.Orient = HorizontalLayout
+	} else {
+		p.Pivot.Orient = VerticalLayout
+	}
+	return p
 }
 
 func (p Path) Move(x, y int) Path {

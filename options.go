@@ -30,6 +30,45 @@ type Options interface {
 	applyDefaults()
 }
 
+// type OutputOptions struct {
+// 	Compact bool
+
+// 	CoordinatesStep int
+
+// 	Border bool
+// 	Style  ConnectorStyle
+// }
+
+// func (o OutputOptions) toSvg() error {
+// 	return nil
+// }
+
+// func (o OutputOptions) toScreen() error {
+// 	return nil
+// }
+
+// func (o OutputOptions) toXml() error {
+// 	return nil
+// }
+
+// func (o OutputOptions) toJson() error {
+// 	return nil
+// }
+
+// type TreeOptions struct {
+// 	AllocateMode Allocate
+// 	Placement    Alignment
+// 	Orient       Orientation
+// 	Size         Dimension
+// 	Path         PathType // manathan, direct, curve
+// 	MinDepth     int
+// 	MaxDepth     int
+// 	Spacing      int // Distance between sibling allocation regions.
+// 	Reverse      bool
+
+// 	Global Style
+// }
+
 type TableOptions struct {
 	RenderOptions
 }

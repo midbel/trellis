@@ -88,13 +88,13 @@ func (c *Canvas) Table(opts TableOptions) (View, error) {
 func (c *Canvas) adjustSize(opts RenderOptions) RenderOptions {
 	if len(c.children) > 0 {
 		opts.ResetSize()
-		if opts.Orient == HorizontalLayout {
+		if opts.Orient == HorizontalLayout || opts.Orient == CompactLayout {
 			opts.Size.Width = c.dim.Width
 		} else {
 			opts.Size.Height = c.dim.Height
 		}
 		for _, x := range c.children {
-			if opts.Orient == HorizontalLayout {
+			if opts.Orient == HorizontalLayout || opts.Orient == CompactLayout {
 				opts.Size.Height += x.dim.Height
 				opts.Size.Width = max(opts.Size.Width, x.dim.Width)
 			} else if opts.Orient == VerticalLayout {

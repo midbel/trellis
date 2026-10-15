@@ -127,51 +127,55 @@ func verticalTree(w io.Writer, root *Node, options Options) error {
 }
 
 func compactTree(w io.Writer, root *Node, options Options) error {
-	if options == nil {
-		return ErrOptions
-	}
-	opts, err := options.Layout()
+	items, opts, err := prepareRender(root, options)
 	if err != nil {
 		return err
 	}
-
-	opts.Spacing = SpacingL
-	// opts.AlignY = AlignStart
-	// opts.AlignX = AlignStart
-	opts.Orient = CompactLayout
-
-	// set := compactLayout(root, opts)
-	// if ix := slices.IndexFunc(set.Items, func(i *Item) bool { return i.Root() }); ix >= 0 {
-	// 	set.Height = set.Items[ix].Weight()
-	// } else {
-	// 	return fmt.Errorf("missing root")
-	// }
-
-	// canvas, err := NewCanvas(opts.Size)
-	// if err != nil {
-	// 	return err
-	// }
-
-	// for _, i := range set.Items {
-	// 	canvas.Put(i.Position.X, i.Position.Y, i.Content)
-
-	// 	x := i.Position.X - compactBarWidth
-	// 	canvas.HorizontalPath(x, i.Position.Y, compactBarWidth)
-	// 	canvas.VerticalPath(x, i.Position.Y, i.Weight()+1)
-	// }
-	// return renderCanvas(w, canvas, options)
-	return nil
+	if len(items) == 0 {
+		return nil
+	}
+	opts.Placement = AlignStart
+	master, err := NewCanvas(opts.Size)
+	if err != nil {
+		return err
+	}
+	var offset int
+	for i := range items {
+		var (
+			clone = opts.Clone()
+			set   = compactLayout(items[i], clone)
+		)
+		canvas, err := NewCanvas(set.Dimension())
+		if err != nil {
+			return err
+		}
+		for _, i := range set.Items {
+			if err := canvas.Put(i.Position.X, i.Position.Y, i.Content); err != nil {
+				return err
+			}
+			p1 := NewPoint(0, i.Position.Y)
+			p2 := NewPoint(i.Position.X-1, i.Position.Y)
+			p := NewPath(p1, p2)
+			if p.DistanceX() > 0 {
+				canvas.Put(p.X(), p.Y(), p)
+			}
+		}
+		canvas.Move(0, offset)
+		master.Append(canvas)
+		offset += set.Height
+	}
+	return renderCanvas(w, master, options)
 }
 
-func Sunburst(w io.Writer, root *Node, options Options) error {
+func sunburst(w io.Writer, root *Node, options Options) error {
 	return fmt.Errorf("not yet implemented")
 }
 
-func Radial(w io.Writer, root *Node, options Options) error {
+func radial(w io.Writer, root *Node, options Options) error {
 	return fmt.Errorf("not yet implemented")
 }
 
-func TreeMap(w io.Writer, root *Node, options Options) error {
+func treeMap(w io.Writer, root *Node, options Options) error {
 	return fmt.Errorf("not yet implemented")
 }
 

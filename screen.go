@@ -301,7 +301,11 @@ func (s *Screen) createPath(x, y int, path Path) error {
 }
 
 func (s *Screen) verticalConnector(path Path) {
-	s.crossings = append(s.crossings, path.Start, path.End)
+	if s.opts.Orient == CompactLayout {
+		// s.crossings = append(s.crossings, path.Start)
+	} else {
+		s.crossings = append(s.crossings, path.Start, path.End)
+	}
 
 	char := s.connector().VerticalBar()
 	if path.DistanceY() == 1 {
@@ -321,7 +325,11 @@ func (s *Screen) verticalConnector(path Path) {
 }
 
 func (s *Screen) horizontalConnector(path Path) {
-	s.crossings = append(s.crossings, path.Start, path.End)
+	if s.opts.Orient == CompactLayout {
+		s.crossings = append(s.crossings, path.Start)
+	} else {
+		s.crossings = append(s.crossings, path.Start, path.End)
+	}
 
 	char := s.connector().HorizontalBar()
 	if path.DistanceX() == 1 {
@@ -381,8 +389,35 @@ func (s *Screen) writeSymbol(x, y int, char rune) {
 
 func (s *Screen) writeCrossings() {
 	if s.opts.Orient == CompactLayout {
-		return
+		s.compactCrossings()
+	} else {
+		s.stdCrossings()
 	}
+}
+
+func (s *Screen) compactCrossings() {
+	isBar := func(y, x int) bool {
+		if !s.dim.Valid(x, y) {
+			return false
+		}
+		return IsBar(s.lines[y][x])
+	}
+	for _, p := range s.crossings {
+		char := s.lines[p.Y][p.X]
+		if p.X == 0 && p.Y == 0 {
+			char = char
+		} else {
+			char = s.connector().VerticalRight()
+			if !isBar(p.Y+1, p.X) {
+				char = s.connector().BottomLeft()
+			}
+		}
+		fmt.Println(p)
+		s.lines[p.Y][p.X] = char
+	}
+}
+
+func (s *Screen) stdCrossings() {
 	isBar := func(y, x int) bool {
 		if !s.dim.Valid(x, y) {
 			return false

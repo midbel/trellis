@@ -1,6 +1,7 @@
 package trellis
 
 import (
+	"fmt"
 	"slices"
 )
 
@@ -8,6 +9,14 @@ type ItemsSet struct {
 	Width  int
 	Height int
 	Items  []*Item
+}
+
+func (s ItemsSet) Root() (*Item, error) {
+	ix := slices.IndexFunc(s.Items, func(i *Item) bool { return i.root })
+	if ix < 0 {
+		return nil, fmt.Errorf("root not found")
+	}
+	return s.Items[ix], nil
 }
 
 func (s ItemsSet) Dimension() Dimension {

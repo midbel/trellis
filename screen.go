@@ -285,7 +285,7 @@ func (s *Screen) createPath(x, y int, path Path) error {
 		return fmt.Errorf("screen only supports manatthan path")
 	}
 	var paths []Path
-	if s.opts.Orient == HorizontalLayout || s.opts.Orient == CompactLayout {
+	if path.Pivot.Orient == HorizontalLayout {
 		paths = splitPathH(path)
 	} else {
 		paths = splitPathV(path)
@@ -380,6 +380,9 @@ func (s *Screen) writeSymbol(x, y int, char rune) {
 }
 
 func (s *Screen) writeCrossings() {
+	if s.opts.Orient == CompactLayout {
+		return
+	}
 	isBar := func(y, x int) bool {
 		if !s.dim.Valid(x, y) {
 			return false

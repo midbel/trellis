@@ -139,7 +139,42 @@ func compactTree(w io.Writer, root *Node, options Options) error {
 	if err != nil {
 		return err
 	}
-	var offset int
+	var (
+		offset  int
+		recurse func(*Canvas, *Item, int) error
+	)
+
+	recurse = func(canvas *Canvas, i *Item, parent int) error {
+		if err := canvas.Put(i.Position.X, i.Position.Y, i.Content); err != nil {
+			return err
+		}
+		h1 := NewPoint(parent, i.Position.Y)
+		h2 := NewPoint(i.Position.X-1, i.Position.Y)
+		h := NewPath(h1, h2)
+		if h.DistanceX() > 0 {
+			if err := canvas.Put(h.X(), h.Y(), h); err != nil {
+				return err
+			}
+		}
+		if i.Leaf() {
+			return nil
+		}
+		v1 := NewPoint(parent, i.Position.Y+1)
+		v2 := NewPoint(parent, i.Position.Y+i.Weight())
+		v := NewPath(v1, v2)
+		if v.DistanceY() > 0 {
+			if err := canvas.Put(h.X(), h.Y(), v); err != nil {
+				return err
+			}
+		}
+
+		for _, c := range i.Children {
+			if err := recurse(canvas, c, i.Position.X); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
 	for i := range items {
 		var (
 			clone = opts.Clone()
@@ -149,16 +184,12 @@ func compactTree(w io.Writer, root *Node, options Options) error {
 		if err != nil {
 			return err
 		}
-		for _, i := range set.Items {
-			if err := canvas.Put(i.Position.X, i.Position.Y, i.Content); err != nil {
-				return err
-			}
-			p1 := NewPoint(0, i.Position.Y)
-			p2 := NewPoint(i.Position.X-1, i.Position.Y)
-			p := NewPath(p1, p2)
-			if p.DistanceX() > 0 {
-				canvas.Put(p.X(), p.Y(), p)
-			}
+		root, err := set.Root()
+		if err != nil {
+			return err
+		}
+		if err := recurse(canvas, root, 0); err != nil {
+			return err
 		}
 		canvas.Move(0, offset)
 		master.Append(canvas)

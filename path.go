@@ -152,7 +152,8 @@ func horizontalPath(from, to *Item) Path {
 
 	p.Pivot.Orient = HorizontalLayout
 	if to.Bounds.X == from.Bounds.EndX() {
-		p.Pivot.Pos = to.Bounds.X
+		// TODO: change -2 by ???
+		p.Pivot.Pos = from.Bounds.EndX() - 2
 	} else {
 		diff := (to.Bounds.X - from.Bounds.EndX()) / 2
 		p.Pivot.Pos = from.Bounds.EndX() + diff
@@ -174,7 +175,8 @@ func verticalPath(from, to *Item) Path {
 
 	p.Pivot.Orient = VerticalLayout
 	if to.Bounds.Y == from.Bounds.EndY() {
-		p.Pivot.Pos = to.Bounds.Y
+		// TODO: change -2 by ???
+		p.Pivot.Pos = from.Bounds.EndY() - 1
 	} else {
 		diff := (to.Bounds.Y - from.Bounds.EndY()) / 2
 		p.Pivot.Pos = from.Bounds.EndY() + diff

@@ -71,8 +71,14 @@ func (i *Item) LastLeaf() *Item {
 }
 
 func (i *Item) X() int {
-	bounds := i.InnerBounds()
-	return bounds.X + i.Padding.Left
+	var (
+		bounds = i.InnerBounds()
+		left int
+	)
+	if i.Padding.Left == 0 {
+		left++
+	}
+	return bounds.X + i.Padding.Left + left
 }
 
 func (i *Item) Y() int {
@@ -83,7 +89,6 @@ func (i *Item) Y() int {
 func (i *Item) OuterBounds() Rect {
 	r := i.Bounds
 	if i.Margin.V() > r.Height || i.Margin.H() > r.Width {
-		// error
 		return r
 	}
 	r.X += i.Margin.Left
@@ -94,11 +99,17 @@ func (i *Item) OuterBounds() Rect {
 }
 
 func (i *Item) InnerBounds() Rect {
-	bounds := i.OuterBounds()
+	var (
+		bounds = i.OuterBounds()
+		left int
+	)
+	if i.Padding.H() == 0 {
+		left++
+	}
 	r := Rect{
 		X:      bounds.X,
 		Y:      bounds.Y,
-		Width:  i.Metric.Width(i.Value) + i.Padding.H(),
+		Width:  i.Metric.Width(i.Value) + i.Padding.H() + left,
 		Height: i.Metric.Height() + i.Padding.V(),
 	}
 	switch i.AlignX {

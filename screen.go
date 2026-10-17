@@ -412,7 +412,6 @@ func (s *Screen) compactCrossings() {
 				char = s.connector().BottomLeft()
 			}
 		}
-		fmt.Println(p)
 		s.lines[p.Y][p.X] = char
 	}
 }

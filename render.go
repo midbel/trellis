@@ -5,7 +5,7 @@ import (
 	"io"
 )
 
-var renderers = map[Orientation]func(*Node, Options) (*Canvas, error){
+var renderers = map[Orientation]func([]*Item, *RenderOptions) (*Canvas, error){
 	HorizontalLayout: buildHorizontal,
 	VerticalLayout:   buildVertical,
 	CompactLayout:    buildCompact,
@@ -24,22 +24,21 @@ func Render(w io.Writer, root *Node, options Options) error {
 	if !ok {
 		return fmt.Errorf("unsupported layout given")
 	}
-	canvas, err := fn(root, options)
-	if err != nil || canvas == nil {
+	items, err := prepareRender(root, &rdr)
+	if err != nil {
+		return err
+	}
+	if len(items) == 0 {
+		return nil
+	}
+	canvas, err := fn(items, &rdr)
+	if err != nil {
 		return err
 	}
 	return renderCanvas(w, canvas, options)
 }
 
-func buildHorizontal(root *Node, options Options) (*Canvas, error) {
-	items, opts, err := prepareRender(root, options)
-	if err != nil {
-		return nil, err
-	}
-	if len(items) == 0 {
-		return nil, nil
-	}
-
+func buildHorizontal(items []*Item, opts *RenderOptions) (*Canvas, error) {
 	sizes, err := allocateFromSize(opts.Size, items, opts.AllocateMode, HorizontalLayout)
 	if err != nil {
 		return nil, err
@@ -47,14 +46,13 @@ func buildHorizontal(root *Node, options Options) (*Canvas, error) {
 	if opts.Size, err = adjustSizes(sizes, HorizontalLayout); err != nil {
 		return nil, err
 	}
-
 	master, err := NewCanvas(opts.Size)
 	if err != nil {
 		return nil, err
 	}
 	var offset int
 	for i := range items {
-		set, err := stdHorizontalLayout(items[i], cloneAndResizeOptions(opts, sizes[i]))
+		set, err := stdHorizontalLayout(items[i], cloneAndResizeOptions(*opts, sizes[i]))
 		if err != nil {
 			return nil, err
 		}
@@ -80,15 +78,7 @@ func buildHorizontal(root *Node, options Options) (*Canvas, error) {
 	return master, nil
 }
 
-func buildVertical(root *Node, options Options) (*Canvas, error) {
-	items, opts, err := prepareRender(root, options)
-	if err != nil {
-		return nil, err
-	}
-	if len(items) == 0 {
-		return nil, nil
-	}
-
+func buildVertical(items []*Item, opts *RenderOptions) (*Canvas, error) {
 	sizes, err := allocateFromSize(opts.Size, items, opts.AllocateMode, VerticalLayout)
 	if err != nil {
 		return nil, err
@@ -96,14 +86,13 @@ func buildVertical(root *Node, options Options) (*Canvas, error) {
 	if opts.Size, err = adjustSizes(sizes, VerticalLayout); err != nil {
 		return nil, err
 	}
-
 	master, err := NewCanvas(opts.Size)
 	if err != nil {
 		return nil, err
 	}
 	var offset int
 	for i := range items {
-		set, err := stdVerticalLayout(items[i], cloneAndResizeOptions(opts, sizes[i]))
+		set, err := stdVerticalLayout(items[i], cloneAndResizeOptions(*opts, sizes[i]))
 		if err != nil {
 			return nil, err
 		}
@@ -130,14 +119,7 @@ func buildVertical(root *Node, options Options) (*Canvas, error) {
 	return master, nil
 }
 
-func buildCompact(root *Node, options Options) (*Canvas, error) {
-	items, opts, err := prepareRender(root, options)
-	if err != nil {
-		return nil, err
-	}
-	if len(items) == 0 {
-		return nil, nil
-	}
+func buildCompact(items []*Item, opts *RenderOptions) (*Canvas, error) {
 	opts.Placement = AlignStart
 	master, err := NewCanvas(opts.Size)
 	if err != nil {
@@ -247,31 +229,19 @@ func cloneAndResizeOptions(opts RenderOptions, size Dimension) RenderOptions {
 	return clone
 }
 
-func prepareRender(node *Node, options Options) ([]*Item, RenderOptions, error) {
-	if options == nil {
-		return nil, RenderOptions{}, fmt.Errorf("options should be provided")
-	}
-	opts, err := options.Layout()
-	if err != nil {
-		return nil, opts, err
-	}
+func prepareRender(node *Node, opts *RenderOptions) ([]*Item, error) {
 	if opts.Orient == HorizontalLayout {
 		opts.estimateMinSize = estimateMinSize(node, opts.Size.Height)
 	} else {
 		opts.estimateMinSize = estimateMinSize(node, opts.Size.Width)
 	}
-
-	items, err := traverseNodes(traverse(node, opts.MinDepth), options)
-	if err != nil {
-		return nil, opts, err
-	}
-	return items, opts, nil
+	return traverseNodes(traverse(node, opts.MinDepth), opts)
 }
 
-func traverseNodes(nodes []*Node, options Options) ([]*Item, error) {
+func traverseNodes(nodes []*Node, opts *RenderOptions) ([]*Item, error) {
 	list := make([]*Item, 0, len(nodes))
 	for _, n := range nodes {
-		i, err := transformNode(n, options)
+		i, err := transformNode(n, opts)
 		if err != nil {
 			return nil, err
 		}
@@ -281,18 +251,14 @@ func traverseNodes(nodes []*Node, options Options) ([]*Item, error) {
 	return list, nil
 }
 
-func transformNode(n *Node, options Options) (*Item, error) {
-	opts, err := options.Layout()
-	if err != nil {
-		return nil, err
-	}
+func transformNode(n *Node, opts *RenderOptions) (*Item, error) {
 	it := &Item{
-		Content: opts.Render(n, opts),
-		Metric:  options.Metrics(n),
+		Content: opts.Render(n, *opts),
+		Metric:  opts.Metrics(n),
 	}
 	it.Style = it.Style.Merge(opts.Global)
 	for _, n := range n.Nodes {
-		sub, err := transformNode(n, options)
+		sub, err := transformNode(n, opts)
 		if err != nil {
 			return nil, err
 		}

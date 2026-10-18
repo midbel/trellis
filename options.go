@@ -3,6 +3,8 @@ package trellis
 import (
 	"errors"
 	"fmt"
+
+	"github.com/midbel/angle/svg"
 )
 
 var (
@@ -26,7 +28,6 @@ const (
 type Options interface {
 	Layout() (RenderOptions, error)
 	Format() Output
-	Metrics(*Node) Metrics
 	applyDefaults()
 }
 
@@ -72,6 +73,7 @@ func (o *TableOptions) applyDefaults() {
 }
 
 type RenderOptions struct {
+	Output       Output
 	AllocateMode Allocate
 	Placement    Alignment
 	Orient       Orientation
@@ -89,7 +91,21 @@ type RenderOptions struct {
 	estimateMinSize int
 }
 
-func (o *RenderOptions) Metrics(_ *Node) Metrics {
+func (o *RenderOptions) Format() Output {
+	return o.Output
+}
+
+func (o *RenderOptions) Metrics(n *Node) Metrics {
+	if o.Output == OutputSvg {
+		m := svgMetric{
+			font: n.Style.Family,
+			size: n.Style.Size,
+		}
+		if m.size == 0 {
+			m.size = svg.DefaultFontSize
+		}
+		return m
+	}
 	return defaultMetric{}
 }
 

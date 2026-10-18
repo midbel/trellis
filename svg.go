@@ -14,17 +14,6 @@ type SvgOptions struct {
 	Style           ConnectorStyle
 }
 
-func (o *SvgOptions) Metrics(n *Node) Metrics {
-	if n.Style.Size == 0 {
-		n.Style.Size = 12
-	}
-	m := svgMetric{
-		font: n.Style.Family,
-		size: n.Style.Size,
-	}
-	return m
-}
-
 func (o *SvgOptions) Layout() (RenderOptions, error) {
 	return o.RenderOptions, o.RenderOptions.Validate()
 }

@@ -11,7 +11,13 @@ type ItemsSet struct {
 	Items  []*Item
 }
 
-func (s ItemsSet) Root() (*Item, error) {
+func createSet(is []*Item) *ItemsSet {
+	return &ItemsSet{
+		Items: is,
+	}
+}
+
+func (s *ItemsSet) Root() (*Item, error) {
 	ix := slices.IndexFunc(s.Items, func(i *Item) bool { return i.root })
 	if ix < 0 {
 		return nil, fmt.Errorf("root not found")
@@ -19,7 +25,16 @@ func (s ItemsSet) Root() (*Item, error) {
 	return s.Items[ix], nil
 }
 
-func (s ItemsSet) Dimension() Dimension {
+func (s *ItemsSet) Update() {
+	s.Width = maxFromItems(s.Items, func(i *Item) int {
+		return i.Bounds.EndX()
+	})
+	s.Height = maxFromItems(s.Items, func(i *Item) int {
+		return i.Bounds.EndY()
+	})
+}
+
+func (s *ItemsSet) Dimension() Dimension {
 	return NewDimension(s.Width, s.Height)
 }
 
@@ -167,31 +182,27 @@ func stdVerticalLayout(root *Item, opts RenderOptions) *ItemsSet {
 	var (
 		mk  = defaultTreeLayout()
 		is  = mk.Make(root, opts)
-		set ItemsSet
+		set = createSet(is)
 	)
-	for i := range is {
-		is[i].Position = is[i].Position.Swap()
-		is[i].Ideal = is[i].Position
+	for i := range set.Items {
+		set.Items[i].Position = set.Items[i].Position.Swap()
+		set.Items[i].Ideal = set.Items[i].Position
 	}
 	var (
-		extent = maxFromItems(is, func(i *Item) int { return i.Position.X + opts.Spacing })
-		level  = maxFromItems(is, func(i *Item) int { return i.Position.Y })
+		extent = maxFromItems(set.Items, func(i *Item) int { return i.Position.X + opts.Spacing })
+		level  = maxFromItems(set.Items, func(i *Item) int { return i.Position.Y })
 	)
-	ix := slices.IndexFunc(is, func(it *Item) bool {
-		return it.Root()
-	})
-	if ix < 0 {
-		return nil
-	}
 	if extent == 0 {
 		extent = opts.Spacing
 	}
+	root, err := set.Root()
+	if err != nil {
+		return nil
+	}
 
-	computeVerticalCoordinates(is[ix], opts, extent, level)
-	set.Width = maxFromItems(is, func(i *Item) int { return i.Bounds.EndX() })
-	set.Height = maxFromItems(is, func(i *Item) int { return i.Bounds.EndY() })
-	set.Items = is
-	return &set
+	computeVerticalCoordinates(root, opts, extent, level)
+	set.Update()
+	return set
 }
 
 func computeVerticalCoordinates(node *Item, opts RenderOptions, extent, level int) {
@@ -278,24 +289,20 @@ func stdHorizontalLayout(root *Item, opts RenderOptions) *ItemsSet {
 		is     = mk.Make(root, opts)
 		extent = maxFromItems(is, func(i *Item) int { return i.Position.Y + opts.Spacing })
 		level  = maxFromItems(is, func(i *Item) int { return i.Position.X })
-		set    ItemsSet
+		set    = createSet(is)
 	)
-	ix := slices.IndexFunc(is, func(it *Item) bool {
-		return it.Root()
-	})
-	if ix < 0 {
-		return nil
-	}
 	if extent == 0 {
 		extent = opts.Spacing
 	}
+	root, err := set.Root()
+	if err != nil {
+		return nil
+	}
 
-	computeHorizontalCoordinates(is[ix], opts, extent, level)
-	set.Width = maxFromItems(is, func(i *Item) int { return i.Bounds.EndX() })
-	set.Height = maxFromItems(is, func(i *Item) int { return i.Bounds.EndY() })
+	computeHorizontalCoordinates(root, opts, extent, level)
+	set.Update()
 	set.Height = max(set.Height, opts.Size.Height)
-	set.Items = is
-	return &set
+	return set
 }
 
 func computeHorizontalCoordinates(node *Item, opts RenderOptions, extent, level int) {

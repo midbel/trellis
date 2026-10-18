@@ -5,10 +5,10 @@ import (
 	"io"
 )
 
-var renderers = map[Orientation]func(io.Writer, *Node, Options) error{
-	HorizontalLayout: horizontalTree,
-	VerticalLayout:   verticalTree,
-	CompactLayout:    compactTree,
+var renderers = map[Orientation]func(io.Writer, *Node, Options) (*Canvas, error){
+	HorizontalLayout: buildHorizontal,
+	VerticalLayout:   buildVertical,
+	CompactLayout:    buildCompact,
 }
 
 func Render(w io.Writer, root *Node, options Options) error {
@@ -24,29 +24,33 @@ func Render(w io.Writer, root *Node, options Options) error {
 	if !ok {
 		return fmt.Errorf("unsupported layout given")
 	}
-	return fn(w, root, options)
-}
-
-func horizontalTree(w io.Writer, root *Node, options Options) error {
-	items, opts, err := prepareRender(root, options)
-	if err != nil {
+	canvas, err := fn(w, root, options)
+	if err != nil || canvas == nil {
 		return err
 	}
+	return renderCanvas(w, canvas, options)
+}
+
+func buildHorizontal(w io.Writer, root *Node, options Options) (*Canvas, error) {
+	items, opts, err := prepareRender(root, options)
+	if err != nil {
+		return nil, err
+	}
 	if len(items) == 0 {
-		return nil
+		return nil, nil
 	}
 
 	sizes, err := allocateFromSize(opts.Size, items, opts.AllocateMode, HorizontalLayout)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if opts.Size, err = adjustSizes(sizes, HorizontalLayout); err != nil {
-		return err
+		return nil, err
 	}
 
 	master, err := NewCanvas(opts.Size)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	var offset int
 	for i := range items {
@@ -56,16 +60,16 @@ func horizontalTree(w io.Writer, root *Node, options Options) error {
 		set := stdHorizontalLayout(items[i], clone)
 		canvas, err := NewCanvas(set.Dimension())
 		if err != nil {
-			return err
+			return nil, err
 		}
 		for _, i := range set.Items {
 			if err := canvas.Put(i.X(), i.Y(), i.Content); err != nil {
-				return err
+				return nil, err
 			}
 			for _, x := range i.Children {
 				path := horizontalPath(i, x)
 				if err := canvas.Put(path.X(), path.Y(), path); err != nil {
-					return err
+					return nil, err
 				}
 			}
 		}
@@ -73,29 +77,29 @@ func horizontalTree(w io.Writer, root *Node, options Options) error {
 		master.Append(canvas)
 		offset += set.Height
 	}
-	return renderCanvas(w, master, options)
+	return master, nil
 }
 
-func verticalTree(w io.Writer, root *Node, options Options) error {
+func buildVertical(w io.Writer, root *Node, options Options) (*Canvas, error) {
 	items, opts, err := prepareRender(root, options)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if len(items) == 0 {
-		return nil
+		return nil, nil
 	}
 
 	sizes, err := allocateFromSize(opts.Size, items, opts.AllocateMode, VerticalLayout)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if opts.Size, err = adjustSizes(sizes, VerticalLayout); err != nil {
-		return err
+		return nil, err
 	}
 
 	master, err := NewCanvas(opts.Size)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	var offset int
 	for i := range items {
@@ -106,16 +110,16 @@ func verticalTree(w io.Writer, root *Node, options Options) error {
 
 		canvas, err := NewCanvas(set.Dimension())
 		if err != nil {
-			return err
+			return nil, err
 		}
 		for _, i := range set.Items {
 			if err := canvas.Put(i.X(), i.Y(), i.Content); err != nil {
-				return err
+				return nil, err
 			}
 			for _, x := range i.Children {
 				path := verticalPath(i, x)
 				if err := canvas.Put(path.X(), path.Y(), path); err != nil {
-					return err
+					return nil, err
 				}
 			}
 		}
@@ -123,21 +127,21 @@ func verticalTree(w io.Writer, root *Node, options Options) error {
 		master.Append(canvas)
 		offset += set.Width
 	}
-	return renderCanvas(w, master, options)
+	return master, nil
 }
 
-func compactTree(w io.Writer, root *Node, options Options) error {
+func buildCompact(w io.Writer, root *Node, options Options) (*Canvas, error) {
 	items, opts, err := prepareRender(root, options)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if len(items) == 0 {
-		return nil
+		return nil, nil
 	}
 	opts.Placement = AlignStart
 	master, err := NewCanvas(opts.Size)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	var (
 		offset  int
@@ -182,20 +186,20 @@ func compactTree(w io.Writer, root *Node, options Options) error {
 		)
 		canvas, err := NewCanvas(set.Dimension())
 		if err != nil {
-			return err
+			return nil, err
 		}
 		root, err := set.Root()
 		if err != nil {
-			return err
+			return nil, err
 		}
 		if err := recurse(canvas, root, 0); err != nil {
-			return err
+			return nil, err
 		}
 		canvas.Move(0, offset)
 		master.Append(canvas)
 		offset += set.Height
 	}
-	return renderCanvas(w, master, options)
+	return master, nil
 }
 
 func sunburst(w io.Writer, root *Node, options Options) error {

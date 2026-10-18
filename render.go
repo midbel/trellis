@@ -12,6 +12,9 @@ var renderers = map[Orientation]func([]*Item, *RenderOptions) (*Canvas, error){
 }
 
 func Render(w io.Writer, root *Node, options Options) error {
+	if root == nil {
+		return fmt.Errorf("root node should be given")
+	}
 	if options == nil {
 		return fmt.Errorf("options should be provided")
 	}

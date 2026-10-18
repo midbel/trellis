@@ -34,6 +34,7 @@ func defaultBag() *OptionsBag {
 
 func (b *OptionsBag) Build() (trellis.Options, error) {
 	base := trellis.RenderOptions{
+		Output:       b.Type,
 		AllocateMode: b.AllocateMode,
 		Placement:    b.Placement,
 		Orient:       b.Orient,

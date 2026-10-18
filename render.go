@@ -12,9 +12,6 @@ var renderers = map[Orientation]func([]*Item, *RenderOptions) (*Canvas, error){
 }
 
 func Render(w io.Writer, root *Node, options Options) error {
-	if root == nil {
-		return fmt.Errorf("root node should be given")
-	}
 	if options == nil {
 		return fmt.Errorf("options should be provided")
 	}
@@ -233,6 +230,9 @@ func cloneAndResizeOptions(opts RenderOptions, size Dimension) RenderOptions {
 }
 
 func prepareRender(node *Node, opts *RenderOptions) ([]*Item, error) {
+	if node == nil {
+		return fmt.Errorf("root node should be given")
+	}
 	if opts.Orient == HorizontalLayout {
 		opts.estimateMinSize = estimateMinSize(node, opts.Size.Height)
 	} else {

@@ -178,7 +178,7 @@ func (i *Item) Size() int {
 	return i.Metric.Width(i.Value)
 }
 
-func stdVerticalLayout(root *Item, opts RenderOptions) *ItemsSet {
+func stdVerticalLayout(root *Item, opts RenderOptions) (*ItemsSet, error) {
 	var (
 		mk  = defaultTreeLayout()
 		is  = mk.Make(root, opts)
@@ -197,12 +197,12 @@ func stdVerticalLayout(root *Item, opts RenderOptions) *ItemsSet {
 	}
 	root, err := set.Root()
 	if err != nil {
-		return nil
+		return nil, err
 	}
 
 	computeVerticalCoordinates(root, opts, extent, level)
 	set.Update()
-	return set
+	return set, nil
 }
 
 func computeVerticalCoordinates(node *Item, opts RenderOptions, extent, level int) {
@@ -283,7 +283,7 @@ func computeVerticalNode(node *Item, opts RenderOptions, extent, height int) {
 	}
 }
 
-func stdHorizontalLayout(root *Item, opts RenderOptions) *ItemsSet {
+func stdHorizontalLayout(root *Item, opts RenderOptions) (*ItemsSet, error) {
 	var (
 		mk     = defaultTreeLayout()
 		is     = mk.Make(root, opts)
@@ -296,13 +296,13 @@ func stdHorizontalLayout(root *Item, opts RenderOptions) *ItemsSet {
 	}
 	root, err := set.Root()
 	if err != nil {
-		return nil
+		return nil, err
 	}
 
 	computeHorizontalCoordinates(root, opts, extent, level)
 	set.Update()
 	set.Height = max(set.Height, opts.Size.Height)
-	return set
+	return set, nil
 }
 
 func computeHorizontalCoordinates(node *Item, opts RenderOptions, extent, level int) {
@@ -376,14 +376,14 @@ func computeHorizontalNode(node *Item, opts RenderOptions, extent, width int) {
 
 const compactBarWidth = 2
 
-func compactLayout(root *Item, opts RenderOptions) *ItemsSet {
+func compactLayout(root *Item, opts RenderOptions) (*ItemsSet, error) {
 	clone := opts.Clone()
 	clone.Spacing = 1
 
 	var (
 		mk    = defaultTreeLayout()
 		items = mk.Make(root, clone)
-		set   ItemsSet
+		set   = createSet(items)
 	)
 	items[0].Bounds = Rect{
 		Width:  opts.Size.Width,
@@ -392,28 +392,27 @@ func compactLayout(root *Item, opts RenderOptions) *ItemsSet {
 		Y:      items[0].Position.Y,
 	}
 
-	for i := 1; i < len(items); i++ {
-		for items[i].Position.Y <= items[i-1].Position.Y {
-			items[i].Position.Y++
+	for i := 1; i < len(set.Items); i++ {
+		for set.Items[i].Position.Y <= set.Items[i-1].Position.Y {
+			set.Items[i].Position.Y++
 		}
-		set.Height = items[i].Position.Y
-		items[i].Bounds = Rect{
-			X:      items[i].Position.X,
-			Y:      items[i].Position.Y,
-			Width:  opts.Size.Width - items[i].Position.X,
+		set.Height = set.Items[i].Position.Y
+		set.Items[i].Bounds = Rect{
+			X:      set.Items[i].Position.X,
+			Y:      set.Items[i].Position.Y,
+			Width:  opts.Size.Width - set.Items[i].Position.X,
 			Height: 1,
 		}
 	}
 	set.Width = opts.Size.Width
 	set.Height++
 
-	ix := slices.IndexFunc(items, func(i *Item) bool {
-		return i.Root()
-	})
-	rearrangeCompactChildren(items[ix], opts.Spacing)
-
-	set.Items = items
-	return &set
+	root, err := set.Root()
+	if err != nil {
+		return nil, err
+	}
+	rearrangeCompactChildren(root, opts.Spacing)
+	return set, nil
 }
 
 func rearrangeCompactChildren(node *Item, extent int) {

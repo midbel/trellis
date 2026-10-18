@@ -54,10 +54,10 @@ func buildHorizontal(root *Node, options Options) (*Canvas, error) {
 	}
 	var offset int
 	for i := range items {
-		clone := opts.Clone()
-		clone.Size = sizes[i]
-
-		set := stdHorizontalLayout(items[i], clone)
+		set, err := stdHorizontalLayout(items[i], cloneAndResizeOptions(opts, sizes[i]))
+		if err != nil {
+			return nil, err
+		}
 		canvas, err := NewCanvas(set.Dimension())
 		if err != nil {
 			return nil, err
@@ -103,10 +103,10 @@ func buildVertical(root *Node, options Options) (*Canvas, error) {
 	}
 	var offset int
 	for i := range items {
-		clone := opts.Clone()
-		clone.Size = sizes[i]
-
-		set := stdVerticalLayout(items[i], clone)
+		set, err := stdVerticalLayout(items[i], cloneAndResizeOptions(opts, sizes[i]))
+		if err != nil {
+			return nil, err
+		}
 
 		canvas, err := NewCanvas(set.Dimension())
 		if err != nil {
@@ -180,10 +180,12 @@ func buildCompact(root *Node, options Options) (*Canvas, error) {
 		return nil
 	}
 	for i := range items {
-		var (
-			clone = opts.Clone()
-			set   = compactLayout(items[i], clone)
-		)
+		clone := opts.Clone()
+
+		set, err := compactLayout(items[i], clone)
+		if err != nil {
+			return nil, err
+		}
 		canvas, err := NewCanvas(set.Dimension())
 		if err != nil {
 			return nil, err
@@ -237,6 +239,12 @@ func renderCanvas(w io.Writer, canvas *Canvas, opts Options) error {
 		return err
 	}
 	return view.Render(w)
+}
+
+func cloneAndResizeOptions(opts RenderOptions, size Dimension) RenderOptions {
+	clone := opts.Clone()
+	clone.Size = size
+	return clone
 }
 
 func prepareRender(node *Node, options Options) ([]*Item, RenderOptions, error) {

@@ -231,7 +231,7 @@ func cloneAndResizeOptions(opts RenderOptions, size Dimension) RenderOptions {
 
 func prepareRender(node *Node, opts *RenderOptions) ([]*Item, error) {
 	if node == nil {
-		return fmt.Errorf("root node should be given")
+		return nil, fmt.Errorf("root node should be given")
 	}
 	if opts.Orient == HorizontalLayout {
 		opts.estimateMinSize = estimateMinSize(node, opts.Size.Height)

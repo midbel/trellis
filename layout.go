@@ -455,11 +455,12 @@ func (m *treeLayout) Spacing() int {
 func (m *treeLayout) makeLayout(node *Item, depth int, opts RenderOptions) *Item {
 	node.Position.X = depth
 	depth++
+
+	children := node.Children
+	node.Children = node.Children[:0]
 	if opts.MaxDepth == 0 || depth <= opts.MaxDepth {
-		children := node.Children
-		node.Children = node.Children[:0]
 		for _, n := range children {
-			child := m.makeLayout(n, depth, opts)
+			child := m.makeLayout(n, depth+1, opts)
 			node.Children = append(node.Children, child)
 		}
 	}

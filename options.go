@@ -55,20 +55,6 @@ type Options interface {
 // 	return nil
 // }
 
-// type TreeOptions struct {
-// 	AllocateMode Allocate
-// 	Placement    Alignment
-// 	Orient       Orientation
-// 	Size         Dimension
-// 	Path         PathType // manathan, direct, curve
-// 	MinDepth     int
-// 	MaxDepth     int
-// 	Spacing      int // Distance between sibling allocation regions.
-// 	Reverse      bool
-
-// 	Global Style
-// }
-
 type TableOptions struct {
 	RenderOptions
 }
@@ -95,7 +81,10 @@ type RenderOptions struct {
 	MaxDepth     int
 	Spacing      int // Distance between sibling allocation regions.
 	Reverse      bool
-	Transform    func(*Node, RenderOptions) Content
+
+	Global Style
+
+	Transform func(*Node, RenderOptions) Content
 
 	estimateMinSize int
 }

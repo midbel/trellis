@@ -278,6 +278,7 @@ func transformNode(n *Node, options Options) (*Item, error) {
 		Content: opts.Render(n, opts),
 		Metric:  options.Metrics(n),
 	}
+	it.Style = it.Style.Merge(opts.Global)
 	for _, n := range n.Nodes {
 		sub, err := transformNode(n, options)
 		if err != nil {

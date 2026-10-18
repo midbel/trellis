@@ -73,7 +73,7 @@ func (i *Item) LastLeaf() *Item {
 func (i *Item) X() int {
 	var (
 		bounds = i.InnerBounds()
-		left int
+		left   int
 	)
 	if i.Padding.Left == 0 {
 		left++
@@ -101,7 +101,7 @@ func (i *Item) OuterBounds() Rect {
 func (i *Item) InnerBounds() Rect {
 	var (
 		bounds = i.OuterBounds()
-		left int
+		left   int
 	)
 	if i.Padding.H() == 0 {
 		left++

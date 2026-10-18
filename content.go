@@ -35,6 +35,28 @@ type Style struct {
 	AlignY  Alignment
 }
 
+func (s Style) Merge(other Style) Style {
+	s.Flags |= other.Flags
+	if s.Size == 0 {
+		s.Size = other.Size
+	}
+	if s.Family == "" {
+		s.Family = other.Family
+	}
+	if s.Color == "" {
+		s.Color = other.Color
+	}
+	if s.AlignX == 0 {
+		s.AlignX = other.AlignX
+	}
+	if s.AlignY == 0 {
+		s.AlignY = other.AlignY
+	}
+	s.Margin = s.Margin.Merge(other.Margin)
+	s.Padding = s.Padding.Merge(other.Padding)
+	return s
+}
+
 func (s Style) Zero() bool {
 	return s.Flags == 0 && s.Size == 0 && s.Family == "" && s.Color == ""
 }

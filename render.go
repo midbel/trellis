@@ -5,7 +5,7 @@ import (
 	"io"
 )
 
-var renderers = map[Orientation]func(io.Writer, *Node, Options) (*Canvas, error){
+var renderers = map[Orientation]func(*Node, Options) (*Canvas, error){
 	HorizontalLayout: buildHorizontal,
 	VerticalLayout:   buildVertical,
 	CompactLayout:    buildCompact,
@@ -24,14 +24,14 @@ func Render(w io.Writer, root *Node, options Options) error {
 	if !ok {
 		return fmt.Errorf("unsupported layout given")
 	}
-	canvas, err := fn(w, root, options)
+	canvas, err := fn(root, options)
 	if err != nil || canvas == nil {
 		return err
 	}
 	return renderCanvas(w, canvas, options)
 }
 
-func buildHorizontal(w io.Writer, root *Node, options Options) (*Canvas, error) {
+func buildHorizontal(root *Node, options Options) (*Canvas, error) {
 	items, opts, err := prepareRender(root, options)
 	if err != nil {
 		return nil, err
@@ -80,7 +80,7 @@ func buildHorizontal(w io.Writer, root *Node, options Options) (*Canvas, error) 
 	return master, nil
 }
 
-func buildVertical(w io.Writer, root *Node, options Options) (*Canvas, error) {
+func buildVertical(root *Node, options Options) (*Canvas, error) {
 	items, opts, err := prepareRender(root, options)
 	if err != nil {
 		return nil, err
@@ -130,7 +130,7 @@ func buildVertical(w io.Writer, root *Node, options Options) (*Canvas, error) {
 	return master, nil
 }
 
-func buildCompact(w io.Writer, root *Node, options Options) (*Canvas, error) {
+func buildCompact(root *Node, options Options) (*Canvas, error) {
 	items, opts, err := prepareRender(root, options)
 	if err != nil {
 		return nil, err
@@ -167,7 +167,7 @@ func buildCompact(w io.Writer, root *Node, options Options) (*Canvas, error) {
 		v2 := NewPoint(parent, i.Position.Y+i.Weight())
 		v := NewPath(v1, v2)
 		if v.DistanceY() > 0 {
-			if err := canvas.Put(h.X(), h.Y(), v); err != nil {
+			if err := canvas.Put(v.X(), v.Y(), v); err != nil {
 				return err
 			}
 		}
@@ -202,7 +202,7 @@ func buildCompact(w io.Writer, root *Node, options Options) (*Canvas, error) {
 	return master, nil
 }
 
-func sunburst(w io.Writer, root *Node, options Options) error {
+func sunburst(root *Node, options Options) error {
 	return fmt.Errorf("not yet implemented")
 }
 

@@ -52,8 +52,6 @@ func (s Style) Merge(other Style) Style {
 	if s.AlignY == 0 {
 		s.AlignY = other.AlignY
 	}
-	s.Margin = s.Margin.Merge(other.Margin)
-	s.Padding = s.Padding.Merge(other.Padding)
 	return s
 }
 

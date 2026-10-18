@@ -89,22 +89,6 @@ func (i Insets) V() int {
 	return i.Top + i.Bottom
 }
 
-func (i Insets) Merge(other Insets) Insets {
-	if i.Top == 0 {
-		i.Top = other.Top
-	}
-	if i.Right == 0 {
-		i.Right = other.Right
-	}
-	if i.Bottom == 0 {
-		i.Bottom = other.Bottom
-	}
-	if i.Left == 0 {
-		i.Left = other.Left
-	}
-	return i
-}
-
 type Rect struct {
 	X      int
 	Y      int

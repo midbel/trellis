@@ -126,7 +126,9 @@ func (s *Screen) writeFooter(ws *bufio.Writer, spaces string) error {
 		return nil
 	}
 	if s.showCoordinates() {
-		ws.WriteString(spaces)
+		if _, err := ws.WriteString(spaces); err != nil {
+			return err
+		}
 	}
 	if _, err := ws.WriteRune(s.connector().BottomLeft()); err != nil {
 		return err
@@ -403,6 +405,9 @@ func (s *Screen) compactCrossings() {
 		return IsBar(s.lines[y][x])
 	}
 	for _, p := range s.crossings {
+		if !s.dim.Valid(p.X, p.Y) {
+			continue
+		}
 		char := s.lines[p.Y][p.X]
 		if p.X == 0 && p.Y == 0 {
 			char = char

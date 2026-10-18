@@ -82,7 +82,7 @@ type svgMetric struct {
 }
 
 func (m svgMetric) Width(str []rune) int {
-	z := svg.EstimateTextWidth(string(str), float64(m.size))
+	z := svg.EstimateTextWidthForFont(string(str), m.font, float64(m.size))
 	return int(z)
 }
 

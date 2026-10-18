@@ -49,6 +49,9 @@ type Svg struct {
 }
 
 func NewSvg(opts SvgOptions) (View, error) {
+	if err := opts.Size.Validate(); err != nil {
+		return nil, err
+	}
 	doc := svg.NewDocument(float64(opts.Size.Width), float64(opts.Size.Height))
 	return &Svg{
 		root: doc,

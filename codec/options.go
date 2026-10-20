@@ -1,7 +1,7 @@
 package codec
 
 import (
-	"fmt"
+	"strconv"
 
 	"github.com/midbel/sexpr"
 	"github.com/midbel/trellis"
@@ -29,8 +29,8 @@ func makeFlags(opts *OptionsBag) map[string]func() {
 
 func makeSetters(opts *OptionsBag) map[string]func(any) error {
 	return map[string]func(any) error{
-		"width":       assignValue(&opts.Width, parseInt),
-		"height":      assignValue(&opts.Height, parseInt),
+		"width":       assignValue(&opts.Width, parseNumber),
+		"height":      assignValue(&opts.Height, parseNumber),
 		"spacing":     assignValue(&opts.Spacing, parseSpacing),
 		"border":      assignValue(&opts.Border, parseBool),
 		"reverse":     assignValue(&opts.Reverse, parseBool),
@@ -99,7 +99,7 @@ func parseSpacing(value any) (int, error) {
 		case "extra":
 			return trellis.SpacingX, nil
 		default:
-			return 0, fmt.Errorf("padding: unsupported value %q", pad)
+			return parseNumber(pad)
 		}
 	}
 	switch v := value.(type) {
@@ -108,7 +108,7 @@ func parseSpacing(value any) (int, error) {
 	case sexpr.Ident:
 		return get(string(v))
 	default:
-		return parseInt(value)
+		return parseNumber(value)
 	}
 }
 
@@ -122,7 +122,7 @@ func parseInsets(value any) (trellis.Insets, error) {
 		case "large":
 			return trellis.PaddingL, nil
 		default:
-			return 0, fmt.Errorf("insets: unsupported value %q", pad)
+			return parseNumber(pad)
 		}
 	}
 	var (
@@ -199,6 +199,13 @@ func parseAlignment(value any) (trellis.Alignment, error) {
 }
 
 func parseNumber(value any) (int, error) {
+	if s, ok := value.(string); ok {
+		f, err := strconv.ParseFloat(s, 64)
+		if err != nil {
+			return 0, err
+		}
+		value = f
+	}
 	if f, ok := value.(float64); ok {
 		return int(f), nil
 	}
@@ -223,6 +230,9 @@ func parseInt(value any) (int, error) {
 }
 
 func parseBool(value any) (bool, error) {
+	if v, ok := value.(string); ok {
+		return strconv.ParseBool(v)
+	}
 	x, ok := value.(bool)
 	if !ok {
 		return false, ErrType

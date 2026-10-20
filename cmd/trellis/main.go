@@ -132,6 +132,8 @@ func loadTree() (*codec.TreeSpec, error) {
 		format = codec.FormatSexpr
 	case ".json":
 		format = codec.FormatJson
+	case ".xml":
+		format = codec.FormatXml
 	default:
 		return nil, fmt.Errorf("file type not supported")
 	}

@@ -149,7 +149,7 @@ func getOptionsFromJson(data any, options *OptionsBag) error {
 			return fmt.Errorf("%s: unknown option", k)
 		}
 		if err := fn(o); err != nil {
-			return err
+			return fmt.Errorf("%s: option(json): %w - %s", k, err, o)
 		}
 	}
 	return nil
@@ -170,7 +170,7 @@ func getStyleFromJson(data any, style *trellis.Style) error {
 			return fmt.Errorf("%s: unknown style property", k)
 		}
 		if err := fn(v); err != nil {
-			return err
+			return fmt.Errorf("%s: style(json): %w - %v", k, err, v)
 		}
 	}
 	return nil
@@ -189,13 +189,72 @@ func treeFromXml(r io.Reader) (*TreeSpec, error) {
 	if err := getOptionsFromXml(root, options); err != nil {
 		return nil, err
 	}
-	return nil, nil
+	top, err := getNodeFromRoot(root)
+	if err != nil {
+		return nil, err
+	}
+	tree, err := buildNodeFromXml(top, options.Global)
+	if err != nil {
+		return nil, err
+	}
+	spec := &TreeSpec{
+		Node: tree,
+		Options: options,
+	}
+	return spec, nil
+}
+
+func buildNodeFromXml(node xml.Node, global trellis.Style) (*trellis.Node, error) {
+	el, ok := node.(*xml.Element)
+	if !ok {
+		return nil, fmt.Errorf("element expected")
+	}
+
+	n := &trellis.Node{
+		Style: global,
+	}
+	if err := setNodeValue(n, el); err != nil {
+		return nil, err
+	}
+	for _, c := range el.ElementsByName("node") {
+		child, err := buildNodeFromXml(c, global)
+		if err != nil {
+			return nil, err
+		}
+		n.Nodes = append(n.Nodes, child)
+	}
+	return n, nil
+}
+
+func getNodeFromRoot(node xml.Node) (xml.Node, error) {
+	el, ok := node.(*xml.Element)
+	if !ok {
+		return nil, fmt.Errorf("element expected")
+	}
+	return el.ElementByName("node")
+}
+
+func setNodeValue(node *trellis.Node, el xml.Node) error {
+	name, ok := el.(*xml.Element)
+	if !ok {
+		return fmt.Errorf("element expected")
+	}
+	n, err := name.ElementByName("name")
+	if err != nil {
+		return err
+	}
+	v, ok := n.(*xml.Element)
+	if !ok {
+		return fmt.Errorf("expected name to be element")
+	}
+	node.Value = v.Value()
+	return nil
 }
 
 func getOptionsFromXml(node xml.Node, options *OptionsBag) error {
 	el, ok := node.(*xml.Element)
 	if !ok {
-
+		return fmt.Errorf("element expected")
 	}
 	n, err := el.ElementByName("rendering")
 	if err != nil {
@@ -208,15 +267,47 @@ func getOptionsFromXml(node xml.Node, options *OptionsBag) error {
 	setters := makeSetters(options)
 	for _, c := range rdr.Elements() {
 		if c.Local == "style" {
-
+			if err := getStyleFromXml(c, &options.Global); err != nil {
+				return err
+			}
 		} else {
 			fn, ok := setters[c.Local]
 			if !ok {
 				return fmt.Errorf("%s: unknown option", c.Local)
 			}
-			if err := fn(c.Value()); err != nil {
-				return err
+			var value any
+			if c.Leaf() {
+				value = true
+			} else {
+				value = c.Value()
 			}
+			if err := fn(value); err != nil {
+				return fmt.Errorf("%s: option(xml): %w - %s", c.Local, err, c.Value())
+			}
+		}
+	}
+	return nil
+}
+
+func getStyleFromXml(node xml.Node, style *trellis.Style) error {
+	el, ok := node.(*xml.Element)
+	if !ok {
+		return fmt.Errorf("element expected")
+	}
+	setters := makeStyleSetters(style)
+	for _, c := range el.Elements() {
+		fn, ok := setters[c.Local]
+		if !ok {
+			return fmt.Errorf("%s: unknown style property", c.Local)
+		}
+		var value any
+		if c.Leaf() {
+			value = true
+		} else {
+			value = c.Value()
+		}
+		if err := fn(value); err != nil {
+			return fmt.Errorf("%s: style(xml): %w - %s", c.Local, err, c.Value())
 		}
 	}
 	return nil

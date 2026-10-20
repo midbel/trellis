@@ -243,11 +243,7 @@ func setNodeValue(node *trellis.Node, el xml.Node) error {
 	if err != nil {
 		return err
 	}
-	v, ok := n.(*xml.Element)
-	if !ok {
-		return fmt.Errorf("expected name to be element")
-	}
-	node.Value = v.Value()
+	node.Value = n.Content()
 	return nil
 }
 
@@ -256,13 +252,9 @@ func getOptionsFromXml(node xml.Node, options *OptionsBag) error {
 	if !ok {
 		return fmt.Errorf("element expected")
 	}
-	n, err := el.ElementByName("rendering")
+	rdr, err := el.ElementByName("rendering")
 	if err != nil {
 		return nil
-	}
-	rdr, ok := n.(*xml.Element)
-	if !ok {
-		return fmt.Errorf("expected rendering to be an element")
 	}
 	setters := makeSetters(options)
 	for _, c := range rdr.Elements() {
@@ -279,10 +271,10 @@ func getOptionsFromXml(node xml.Node, options *OptionsBag) error {
 			if c.Leaf() {
 				value = true
 			} else {
-				value = c.Value()
+				value = c.Content()
 			}
 			if err := fn(value); err != nil {
-				return fmt.Errorf("%s: option(xml): %w - %s", c.Local, err, c.Value())
+				return fmt.Errorf("%s: option(xml): %w - %s", c.Local, err, value)
 			}
 		}
 	}
@@ -304,10 +296,10 @@ func getStyleFromXml(node xml.Node, style *trellis.Style) error {
 		if c.Leaf() {
 			value = true
 		} else {
-			value = c.Value()
+			value = c.Content()
 		}
 		if err := fn(value); err != nil {
-			return fmt.Errorf("%s: style(xml): %w - %s", c.Local, err, c.Value())
+			return fmt.Errorf("%s: style(xml): %w - %s", c.Local, err, value)
 		}
 	}
 	return nil

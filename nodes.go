@@ -14,6 +14,13 @@ func NewNode(value string) *Node {
 	}
 }
 
+func (n *Node) Content() Content {
+	return Content{
+		Value: []rune(n.Value),
+		Style: n.Style,
+	}
+}
+
 func (n *Node) Leaf() bool {
 	return len(n.Nodes) == 0
 }

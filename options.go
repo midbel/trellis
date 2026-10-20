@@ -84,10 +84,6 @@ type RenderOptions struct {
 	Spacing      int // Distance between sibling allocation regions.
 	Reverse      bool
 
-	Global Style
-
-	Transform func(*Node, RenderOptions) Content
-
 	estimateMinSize int
 }
 
@@ -107,13 +103,6 @@ func (o *RenderOptions) Metrics(n *Node) Metrics {
 		return m
 	}
 	return defaultMetric{}
-}
-
-func (o *RenderOptions) Render(n *Node, opts RenderOptions) Content {
-	if o.Transform == nil {
-		return defaultRenderContent(n, opts)
-	}
-	return o.Transform(n, opts)
 }
 
 func (o *RenderOptions) Validate() error {
@@ -146,21 +135,11 @@ func (t *RenderOptions) applyDefaults() {
 	if t.Spacing == 0 {
 		t.Spacing = SpacingM
 	}
-	if t.Transform == nil {
-		t.Transform = defaultRenderContent
-	}
 	if t.AllocateMode == 0 {
 		t.AllocateMode = AllocateEqual
 	}
 	if t.Orient == 0 {
 		t.Orient = HorizontalLayout
-	}
-}
-
-func defaultRenderContent(node *Node, opts RenderOptions) Content {
-	return Content{
-		Value: []rune(node.Value),
-		Style: node.Style,
 	}
 }
 

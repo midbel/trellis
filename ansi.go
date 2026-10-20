@@ -37,19 +37,6 @@ func writeAnsiStyle(ws io.ByteWriter, color string, bold, italic bool) error {
 	return nil
 }
 
-func writeAnsiColor(ws io.ByteWriter, color string) error {
-	fst, snd := ansiColor(color)
-	if fst == 0 && snd == 0 {
-		return nil
-	}
-	ws.WriteByte(ansiEsc)
-	ws.WriteByte(ansiOpen)
-	ws.WriteByte(fst)
-	ws.WriteByte(snd)
-	ws.WriteByte(ansiCmd)
-	return nil
-}
-
 func writeAnsiClose(ws io.ByteWriter) error {
 	ws.WriteByte(ansiEsc)
 	ws.WriteByte(ansiOpen)

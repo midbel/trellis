@@ -410,7 +410,7 @@ func (s *Screen) compactCrossings() {
 		}
 		char := s.lines[p.Y][p.X]
 		if p.X == 0 && p.Y == 0 {
-			char = char
+			// pass
 		} else {
 			char = s.connector().VerticalRight()
 			if !isBar(p.Y+1, p.X) {

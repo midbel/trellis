@@ -256,10 +256,9 @@ func traverseNodes(nodes []*Node, opts *RenderOptions) ([]*Item, error) {
 
 func transformNode(n *Node, opts *RenderOptions) (*Item, error) {
 	it := &Item{
-		Content: opts.Render(n, *opts),
+		Content: n.Content(),
 		Metric:  opts.Metrics(n),
 	}
-	it.Style = it.Style.Merge(opts.Global)
 	for _, n := range n.Nodes {
 		sub, err := transformNode(n, opts)
 		if err != nil {

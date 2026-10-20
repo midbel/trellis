@@ -18,6 +18,22 @@ type View interface {
 	drawer
 }
 
+type TableOptions struct {
+	RenderOptions
+}
+
+func (o *TableOptions) Layout() (RenderOptions, error) {
+	return o.RenderOptions, o.RenderOptions.Validate()
+}
+
+func (*TableOptions) Format() Output {
+	return OutputTable
+}
+
+func (o *TableOptions) applyDefaults() {
+	o.RenderOptions.applyDefaults()
+}
+
 type Table struct {
 	cells []Placement
 }
@@ -28,8 +44,9 @@ func NewTable() (View, error) {
 }
 
 func (t *Table) Render(w io.Writer) error {
-	fmt.Fprintf(w, "%-16s | %6s | %6s", "Value", "X", "Y")
-	fmt.Fprintln(w)
+	if err := t.renderHeader(w); err != nil {
+		return err
+	}
 	for _, p := range t.cells {
 		var lines []any
 		switch c := p.Cell.(type) {
@@ -43,10 +60,29 @@ func (t *Table) Render(w io.Writer) error {
 		if len(lines) == 0 {
 			continue
 		}
-		fmt.Fprintf(w, "%-16s | %6d | %6d", lines...)
-		fmt.Fprintln(w)
+		if err := t.renderLine(w, lines); err != nil {
+			return err
+		}
 	}
 	return nil
+}
+
+func (t *Table) renderLine(w io.Writer, lines []any) error {
+	_, err := fmt.Fprintf(w, "%-16s | %6d | %6d", lines...)
+	if err != nil {
+		return err
+	}
+	_, err = fmt.Fprintln(w)
+	return err
+}
+
+func (t *Table) renderHeader(w io.Writer) error {
+	_, err := fmt.Fprintf(w, "%-16s | %6s | %6s", "Value", "X", "Y")
+	if err != nil {
+		return err
+	}
+	_, err = fmt.Fprintln(w)
+	return err
 }
 
 func (t *Table) draw(x, y int, cell Cell) error {

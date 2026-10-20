@@ -56,22 +56,6 @@ type Options interface {
 // 	return nil
 // }
 
-type TableOptions struct {
-	RenderOptions
-}
-
-func (o *TableOptions) Layout() (RenderOptions, error) {
-	return o.RenderOptions, o.RenderOptions.Validate()
-}
-
-func (*TableOptions) Format() Output {
-	return OutputTable
-}
-
-func (o *TableOptions) applyDefaults() {
-	o.RenderOptions.applyDefaults()
-}
-
 type RenderOptions struct {
 	Output       Output
 	AllocateMode Allocate

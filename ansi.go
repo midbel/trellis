@@ -15,34 +15,31 @@ const (
 )
 
 func writeAnsiStyle(ws io.ByteWriter, color string, bold, italic bool) error {
-	ws.WriteByte(ansiEsc)
-	ws.WriteByte(ansiOpen)
+	aw := newAnsiWriter(ws)
 	if bold {
-		ws.WriteByte(ansiBold)
+		aw.writeBold()
 	}
 	if italic {
 		if bold {
-			ws.WriteByte(ansiSep)
+			aw.writeSep()
 		}
-		ws.WriteByte(ansiItalic)
+		aw.writeItalic()
 	}
 	if fst, snd := ansiColor(color); fst > 0 && snd > 0 {
 		if bold || italic {
-			ws.WriteByte(ansiSep)
+			aw.writeSep()
 		}
-		ws.WriteByte(fst)
-		ws.WriteByte(snd)
+		aw.writeByte(fst)
+		aw.writeByte(snd)
 	}
-	ws.WriteByte(ansiCmd)
-	return nil
+	aw.writeCmd()
+	return aw.fail()
 }
 
 func writeAnsiClose(ws io.ByteWriter) error {
-	ws.WriteByte(ansiEsc)
-	ws.WriteByte(ansiOpen)
-	ws.WriteByte(ansiReset)
-	ws.WriteByte(ansiCmd)
-	return nil
+	aw := newAnsiWriter(ws)
+	aw.writeCmd()
+	return aw.fail()
 }
 
 func ansiColor(s string) (byte, byte) {
@@ -65,5 +62,49 @@ func ansiColor(s string) (byte, byte) {
 		return '3', '7'
 	default:
 		return 0, 0
+	}
+}
+
+type ansiWriter struct {
+	err    error
+	writer io.ByteWriter
+}
+
+func newAnsiWriter(ws io.ByteWriter) *ansiWriter {
+	aw := &ansiWriter{
+		writer: ws,
+	}
+	aw.writeByte(ansiEsc)
+	aw.writeByte(ansiOpen)
+	return aw
+}
+
+func (w *ansiWriter) writeBold() {
+	w.writeByte(ansiBold)
+}
+
+func (w *ansiWriter) writeItalic() {
+	w.writeByte(ansiItalic)
+}
+
+func (w *ansiWriter) writeSep() {
+	w.writeByte(ansiSep)
+}
+
+func (w *ansiWriter) writeReset() {
+	w.writeByte(ansiReset)
+}
+
+func (w *ansiWriter) writeCmd() {
+	w.writeByte(ansiCmd)
+}
+
+func (w *ansiWriter) fail() error {
+	return w.err
+}
+
+func (w *ansiWriter) writeByte(b byte) {
+	if w.err == nil {
+		w.err = w.writer.WriteByte(b)
 	}
 }

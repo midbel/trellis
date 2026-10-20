@@ -460,7 +460,7 @@ func (m *treeLayout) makeLayout(node *Item, depth int, opts RenderOptions) *Item
 	node.Children = node.Children[:0]
 	if opts.MaxDepth == 0 || depth <= opts.MaxDepth {
 		for _, n := range children {
-			child := m.makeLayout(n, depth+1, opts)
+			child := m.makeLayout(n, depth, opts)
 			node.Children = append(node.Children, child)
 		}
 	}

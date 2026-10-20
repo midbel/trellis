@@ -273,7 +273,7 @@ func (s *Screen) createContent(x, y int, val Content) error {
 		x += z
 		size += z
 	}
-	if !val.Style.Zero() {
+	if hasStyleForScreen(val.Style) {
 		s.styles[NewPoint(x-size, y)] = styleExtent{
 			Style:  val.Style,
 			Length: size,

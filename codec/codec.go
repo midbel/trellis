@@ -122,6 +122,8 @@ func buildNodeFromJson(data any, global trellis.Style) (*trellis.Node, error) {
 				n.Nodes = append(n.Nodes, sub)
 			}
 		}
+	} else {
+		return nil, fmt.Errorf("children to be an array")
 	}
 	return n, nil
 }
@@ -175,14 +177,49 @@ func getStyleFromJson(data any, style *trellis.Style) error {
 }
 
 func treeFromXml(r io.Reader) (*TreeSpec, error) {
-	var (
-		rs = xml.NewReader(r)
-		xh = handleXml()
-	)
-	if err := rs.Read(xh); err != nil {
+	doc, err := xml.Decode(r)
+	if err != nil {
+		return nil, err
+	}
+	root, err := doc.Root()
+	if err != nil {
+		return nil, err
+	}
+	options := defaultBag()
+	if err := getOptionsFromXml(root, options); err != nil {
 		return nil, err
 	}
 	return nil, nil
+}
+
+func getOptionsFromXml(node xml.Node, options *OptionsBag) error {
+	el, ok := node.(*xml.Element)
+	if !ok {
+
+	}
+	n, err := el.ElementByName("rendering")
+	if err != nil {
+		return nil
+	}
+	rdr, ok := n.(*xml.Element)
+	if !ok {
+		return fmt.Errorf("expected rendering to be an element")
+	}
+	setters := makeSetters(options)
+	for _, c := range rdr.Elements() {
+		if c.Local == "style" {
+
+		} else {
+			fn, ok := setters[c.Local]
+			if !ok {
+				return fmt.Errorf("%s: unknown option", c.Local)
+			}
+			if err := fn(c.Value()); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 func treeFromSexpr(r io.Reader) (*TreeSpec, error) {
@@ -203,44 +240,6 @@ func treeFromSexpr(r io.Reader) (*TreeSpec, error) {
 type context struct {
 	values   []any
 	children []*trellis.Node
-}
-
-type xHandler struct {
-	options *OptionsBag
-	root    *trellis.Node
-	stack   []*context
-
-	setters map[string]func(any) error
-	flags   map[string]func()
-}
-
-func handleXml() *xHandler {
-	h := &xHandler{
-		options: defaultBag(),
-	}
-	h.setters = makeSetters(h.options)
-	h.flags = makeFlags(h.options)
-	return h
-}
-
-func (h *xHandler) OnStartElement(el xml.Element, self bool) error {
-	return nil
-}
-
-func (h *xHandler) OnCloseElement(name xml.Name) error {
-	return nil
-}
-
-func (h *xHandler) OnText(txt xml.Text) error {
-	return nil
-}
-
-func (h *xHandler) OnComment(comment xml.Comment) error {
-	return nil
-}
-
-func (h *xHandler) OnPI(pi xml.PI) error {
-	return nil
 }
 
 type sHandler struct {

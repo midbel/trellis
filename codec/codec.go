@@ -61,7 +61,7 @@ func treeFromDot(r io.Reader) (*TreeSpec, error) {
 }
 
 func treeFromJson(r io.Reader) (*TreeSpec, error) {
-	data, err := curly.Decode5(r)
+	data, err := curly.Five(r)
 	if err != nil {
 		return nil, err
 	}

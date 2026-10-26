@@ -8,27 +8,16 @@ import (
 )
 
 type SvgOptions struct {
-	RenderOptions
 	Border          bool
 	CoordinatesStep int
 	Style           ConnectorStyle
-}
-
-func (o *SvgOptions) Layout() (RenderOptions, error) {
-	return o.RenderOptions, o.RenderOptions.Validate()
-}
-
-func (*SvgOptions) Format() Output {
-	return OutputSvg
+	Path            Path
 }
 
 func (o *SvgOptions) applyDefaults() {
 	o.RenderOptions.applyDefaults()
 	if o.Style == 0 {
 		o.Style = ConnectorUnicode
-	}
-	if o.Path == 0 {
-		o.Path = ManatthanPath
 	}
 }
 

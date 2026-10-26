@@ -9,25 +9,10 @@ import (
 )
 
 type ScreenOptions struct {
-	RenderOptions
 	Border          bool
 	CoordinatesStep int
 	Style           ConnectorStyle
-}
-
-func (o *ScreenOptions) Layout() (RenderOptions, error) {
-	var err error
-	if o.Path != ManatthanPath {
-		err = fmt.Errorf("manatthan default for screen only")
-	}
-	if err == nil {
-		err = o.RenderOptions.Validate()
-	}
-	return o.RenderOptions, err
-}
-
-func (*ScreenOptions) Format() Output {
-	return OutputScreen
+	Path            Path
 }
 
 func (o *ScreenOptions) applyDefaults() {

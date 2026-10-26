@@ -198,7 +198,7 @@ func treeFromXml(r io.Reader) (*TreeSpec, error) {
 		return nil, err
 	}
 	spec := &TreeSpec{
-		Node: tree,
+		Node:    tree,
 		Options: options,
 	}
 	return spec, nil

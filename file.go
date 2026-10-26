@@ -10,37 +10,15 @@ import (
 )
 
 type JsonOptions struct {
-	RenderOptions
 	Compact bool
-}
-
-func (o *JsonOptions) Layout() (RenderOptions, error) {
-	return o.RenderOptions, o.RenderOptions.Validate()
-}
-
-func (*JsonOptions) Format() Output {
-	return OutputJson
-}
-
-func (o *JsonOptions) applyDefaults() {
-	o.RenderOptions.applyDefaults()
+	orient  Orientation
+	path    Path
 }
 
 type XmlOptions struct {
-	RenderOptions
 	Compact bool
-}
-
-func (o *XmlOptions) Layout() (RenderOptions, error) {
-	return o.RenderOptions, o.RenderOptions.Validate()
-}
-
-func (*XmlOptions) Format() Output {
-	return OutputXml
-}
-
-func (o *XmlOptions) applyDefaults() {
-	o.RenderOptions.applyDefaults()
+	orient  Orientation
+	path    Path
 }
 
 type JsonFile struct {
@@ -48,14 +26,14 @@ type JsonFile struct {
 	opts JsonOptions
 }
 
-func NewJson(opts JsonOptions) (View, error) {
+func NewJson(size Dimension, opts JsonOptions) (View, error) {
 	j := &JsonFile{
 		root: make(map[string]any),
 		opts: opts,
 	}
-	j.root["width"] = opts.Size.Width
-	j.root["height"] = opts.Size.Height
-	j.root["orientation"] = opts.Orient.String()
+	j.root["width"] = size.Width
+	j.root["height"] = size.Height
+	j.root["orientation"] = opts.orient.String()
 	j.root["cells"] = []any{}
 	j.root["paths"] = []any{}
 	j.root["canvas"] = []any{}
@@ -83,11 +61,11 @@ func (f *JsonFile) draw(x, y int, cell Cell) error {
 	case Path:
 		var v any
 		if f.opts.Path == CurvePath {
-			v = createCurveJsonPath(c, f.opts.Orient)
+			v = createCurveJsonPath(c, f.opts.orient)
 		} else if f.opts.Path == DirectPath {
-			v = createDirectJsonPath(c, f.opts.Orient)
+			v = createDirectJsonPath(c, f.opts.orient)
 		} else {
-			v = createManathanJsonPath(c, f.opts.Orient)
+			v = createManathanJsonPath(c, f.opts.orient)
 		}
 		vs, ok := f.root["paths"].([]any)
 		if ok {
@@ -140,11 +118,11 @@ func (e *jsonElement) draw(x, y int, cell Cell) error {
 	case Path:
 		var v any
 		if e.opts.Path == CurvePath {
-			v = createCurveJsonPath(c, e.opts.Orient)
+			v = createCurveJsonPath(c, e.opts.orient)
 		} else if e.opts.Path == DirectPath {
-			v = createDirectJsonPath(c, e.opts.Orient)
+			v = createDirectJsonPath(c, e.opts.orient)
 		} else {
-			v = createManathanJsonPath(c, e.opts.Orient)
+			v = createManathanJsonPath(c, e.opts.orient)
 		}
 		vs, ok := e.canvas["paths"].([]any)
 		if ok {
@@ -231,13 +209,13 @@ type XmlFile struct {
 	opts XmlOptions
 }
 
-func NewXml(opts XmlOptions) (View, error) {
+func NewXml(size Dimension, opts XmlOptions) (View, error) {
 	el := xml.Element{
 		Name: xml.NewName("canvas"),
 		Attributes: []xml.Attribute{
-			xml.NewAttribute(xml.NewName("width"), strconv.Itoa(opts.Size.Width)),
-			xml.NewAttribute(xml.NewName("height"), strconv.Itoa(opts.Size.Height)),
-			xml.NewAttribute(xml.NewName("orientation"), opts.Orient.String()),
+			xml.NewAttribute(xml.NewName("width"), strconv.Itoa(size.Width)),
+			xml.NewAttribute(xml.NewName("height"), strconv.Itoa(size.Height)),
+			xml.NewAttribute(xml.NewName("orientation"), opts.orient.String()),
 		},
 	}
 	return &XmlFile{
@@ -262,11 +240,11 @@ func (f *XmlFile) draw(x, y int, cell Cell) error {
 		node = createElementForContent(x, y, c)
 	case Path:
 		if f.opts.Path == CurvePath {
-			node = createCurveElement(c, f.opts.Orient)
+			node = createCurveElement(c, f.opts.orient)
 		} else if f.opts.Path == DirectPath {
-			node = createDirectElement(c, f.opts.Orient)
+			node = createDirectElement(c, f.opts.orient)
 		} else {
-			node = createManathanElement(c, f.opts.Orient)
+			node = createManathanElement(c, f.opts.orient)
 		}
 	default:
 		return fmt.Errorf("invalid cell type")
@@ -312,11 +290,11 @@ func (e *xmlElement) draw(x, y int, cell Cell) error {
 		node = createElementForContent(x, y, c)
 	case Path:
 		if e.opts.Path == CurvePath {
-			node = createCurveElement(c, e.opts.Orient)
+			node = createCurveElement(c, e.opts.orient)
 		} else if e.opts.Path == DirectPath {
-			node = createDirectElement(c, e.opts.Orient)
+			node = createDirectElement(c, e.opts.orient)
 		} else {
-			node = createManathanElement(c, e.opts.Orient)
+			node = createManathanElement(c, e.opts.orient)
 		}
 	default:
 		return fmt.Errorf("invalid cell type")

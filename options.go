@@ -31,30 +31,56 @@ type Options interface {
 	applyDefaults()
 }
 
-// type OutputOptions struct {
-// 	Compact bool
+type OutputOptions struct {
+	Mode            Output
+	Compact         bool
+	CoordinatesStep int
+	Border          bool
+	Connector       ConnectorStyle
+	Path            Path
+}
 
-// 	CoordinatesStep int
+func (o OutputOptions) toSvg() (SvgOptions, error) {
+	opts := SvgOptions{
+		Border:          o.Border,
+		Style:           o.Connector,
+		CoordinatesStep: o.CoordinatesStep,
+		Path:            o.Path,
+	}
+	if opts.CoordinatesStep < 0 {
+		return opts, fmt.Errorf("negative value not allow for ticks")
+	}
+	opts.applyDefaults()
+	return opts, nil
+}
 
-// 	Border bool
-// 	Style  ConnectorStyle
-// }
+func (o OutputOptions) toScreen() (ScreenOptions, error) {
+	opts := ScreenOptions{
+		Border:          o.Border,
+		Style:           o.Connector,
+		CoordinatesStep: o.CoordinatesStep,
+		Path:            o.Path,
+	}
+	if opts.CoordinatesStep < 0 {
+		return opts, fmt.Errorf("negative value not allow for ticks")
+	}
+	opts.applyDefaults()
+	return opts, nil
+}
 
-// func (o OutputOptions) toSvg() error {
-// 	return nil
-// }
+func (o OutputOptions) toXml() (XmlOptions, error) {
+	opts := XmlOptions{
+		Compact: o.Compact,
+	}
+	return opts, nil
+}
 
-// func (o OutputOptions) toScreen() error {
-// 	return nil
-// }
-
-// func (o OutputOptions) toXml() error {
-// 	return nil
-// }
-
-// func (o OutputOptions) toJson() error {
-// 	return nil
-// }
+func (o OutputOptions) toJson() (JsonOptions, error) {
+	opts := JsonOptions{
+		Compact: o.Compact,
+	}
+	return opts, nil
+}
 
 type RenderOptions struct {
 	Output       Output

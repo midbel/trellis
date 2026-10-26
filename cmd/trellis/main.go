@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -10,8 +9,6 @@ import (
 	"github.com/midbel/trellis"
 	"github.com/midbel/trellis/codec"
 )
-
-var errFail = errors.New("fail")
 
 func main() {
 	spec, err := loadTree()

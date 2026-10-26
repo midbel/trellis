@@ -29,6 +29,11 @@ func (d *Dimension) Valid(x, y int) bool {
 	return x >= 0 && x < d.Width && y >= 0 && y < d.Height
 }
 
+func (d *Dimension) Reset() {
+	d.Width = 0
+	d.Height = 0
+}
+
 type Point struct {
 	X, Y int
 }

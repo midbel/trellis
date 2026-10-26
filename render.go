@@ -199,28 +199,29 @@ func treeMap(w io.Writer, root *Node, options Options) error {
 }
 
 func renderCanvas(w io.Writer, canvas *Canvas, opts Options) error {
-	var (
-		view View
-		err  error
-	)
-	switch opts := opts.(type) {
-	case *ScreenOptions:
-		view, err = canvas.Screen(*opts)
-	case *SvgOptions:
-		view, err = canvas.Svg(*opts)
-	case *XmlOptions:
-		view, err = canvas.Xml(*opts)
-	case *JsonOptions:
-		view, err = canvas.Json(*opts)
-	case *TableOptions:
-		view, err = canvas.Table(*opts)
-	default:
-		return fmt.Errorf("unsupported output type")
-	}
-	if err != nil {
-		return err
-	}
-	return view.Render(w)
+	// var (
+	// 	view View
+	// 	err  error
+	// )
+	// switch opts := opts.(type) {
+	// case *ScreenOptions:
+	// 	view, err = canvas.Screen(*opts)
+	// case *SvgOptions:
+	// 	view, err = canvas.Svg(*opts)
+	// case *XmlOptions:
+	// 	view, err = canvas.Xml(*opts)
+	// case *JsonOptions:
+	// 	view, err = canvas.Json(*opts)
+	// case *TableOptions:
+	// 	view, err = canvas.Table(*opts)
+	// default:
+	// 	return fmt.Errorf("unsupported output type")
+	// }
+	// if err != nil {
+	// 	return err
+	// }
+	// return view.Render(w)
+	return nil
 }
 
 func cloneAndResizeOptions(opts RenderOptions, size Dimension) RenderOptions {

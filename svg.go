@@ -11,7 +11,7 @@ type SvgOptions struct {
 	Border          bool
 	CoordinatesStep int
 	Style           ConnectorStyle
-	Path            Path
+	Path            PathType
 }
 
 func (o *SvgOptions) applyDefaults() {
@@ -26,11 +26,11 @@ type Svg struct {
 	opts SvgOptions
 }
 
-func NewSvg(opts SvgOptions) (View, error) {
-	if err := opts.Size.Validate(); err != nil {
+func NewSvg(size Dimension, opts SvgOptions) (View, error) {
+	if err := size.Validate(); err != nil {
 		return nil, err
 	}
-	doc := svg.NewDocument(float64(opts.Size.Width), float64(opts.Size.Height))
+	doc := svg.NewDocument(float64(size.Width), float64(size.Height))
 	return &Svg{
 		root: doc,
 		opts: opts,

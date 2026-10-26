@@ -37,7 +37,7 @@ type OutputOptions struct {
 	CoordinatesStep int
 	Border          bool
 	Connector       ConnectorStyle
-	Path            Path
+	Path            PathType
 }
 
 func (o OutputOptions) toSvg() (SvgOptions, error) {
@@ -71,6 +71,7 @@ func (o OutputOptions) toScreen() (ScreenOptions, error) {
 func (o OutputOptions) toXml() (XmlOptions, error) {
 	opts := XmlOptions{
 		Compact: o.Compact,
+		Path:    o.Path,
 	}
 	return opts, nil
 }
@@ -78,6 +79,7 @@ func (o OutputOptions) toXml() (XmlOptions, error) {
 func (o OutputOptions) toJson() (JsonOptions, error) {
 	opts := JsonOptions{
 		Compact: o.Compact,
+		Path:    o.Path,
 	}
 	return opts, nil
 }

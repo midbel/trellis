@@ -11,14 +11,14 @@ import (
 
 type JsonOptions struct {
 	Compact bool
+	Path    PathType
 	orient  Orientation
-	path    Path
 }
 
 type XmlOptions struct {
 	Compact bool
+	Path    PathType
 	orient  Orientation
-	path    Path
 }
 
 type JsonFile struct {

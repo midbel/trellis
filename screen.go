@@ -12,7 +12,7 @@ type ScreenOptions struct {
 	Border          bool
 	CoordinatesStep int
 	Style           ConnectorStyle
-	Path            Path
+	Path            PathType
 }
 
 func (o *ScreenOptions) applyDefaults() {
@@ -37,18 +37,18 @@ type Screen struct {
 	crossings []Point
 }
 
-func NewScreen(opts ScreenOptions) (View, error) {
-	if err := opts.Size.Validate(); err != nil {
+func NewScreen(size Dimension, opts ScreenOptions) (View, error) {
+	if err := size.Validate(); err != nil {
 		return nil, err
 	}
 	sc := &Screen{
-		lines:  make([][]rune, opts.Size.Height),
+		lines:  make([][]rune, size.Height),
 		styles: make(map[Point]styleExtent),
-		dim:    opts.Size,
+		dim:    size,
 		opts:   opts,
 	}
 	for i := range sc.lines {
-		sc.lines[i] = make([]rune, opts.Size.Width)
+		sc.lines[i] = make([]rune, size.Width)
 	}
 	sc.initGrid()
 	return sc, nil

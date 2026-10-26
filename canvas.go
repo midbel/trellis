@@ -18,7 +18,7 @@ type Canvas struct {
 	cells    []Placement
 	children []*Canvas
 
-	opts RendererOptions
+	opts RenderOptions
 }
 
 func NewCanvas(size Dimension) (*Canvas, error) {
@@ -52,27 +52,39 @@ func (c *Canvas) Render(w io.Writer, opts OutputOptions) error {
 		if err != nil {
 			return err
 		}
-		view = NewSvg(opts)
+		view, err = NewSvg(c.adjustSize2(), opts)
+		if err != nil {
+			return err
+		}
 	case OutputScreen:
 		opts, err := opts.toScreen()
 		if err != nil {
 			return err
 		}
-		view = NewScreen(opts)
+		view, err = NewScreen(c.adjustSize2(), opts)
+		if err != nil {
+			return err
+		}
 	case OutputXml:
 		opts, err := opts.toXml()
 		if err != nil {
 			return err
 		}
 		opts.orient = c.opts.Orient
-		view = NewXml(c.size, opts)
+		view, err = NewXml(c.adjustSize2(), opts)
+		if err != nil {
+			return err
+		}
 	case OutputJson:
 		opts, err := opts.toJson()
 		if err != nil {
 			return err
 		}
 		opts.orient = c.opts.Orient
-		view = NewJson(c.size, opts)
+		view, err = NewJson(c.adjustSize2(), opts)
+		if err != nil {
+			return err
+		}
 	default:
 		return fmt.Errorf("unsupported view type")
 	}
@@ -83,12 +95,13 @@ func (c *Canvas) Render(w io.Writer, opts OutputOptions) error {
 }
 
 func (c *Canvas) Screen(opts ScreenOptions) (View, error) {
-	opts.RenderOptions = c.adjustSize(opts.RenderOptions)
-	view, err := NewScreen(opts)
-	if err != nil {
-		return nil, err
-	}
-	return view, c.fillView(view)
+	// opts.RenderOptions = c.adjustSize(opts.RenderOptions)
+	// view, err := NewScreen(opts)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// return view, c.fillView(view)
+	return nil, nil
 }
 
 func (c *Canvas) Xml(opts XmlOptions) (View, error) {
@@ -102,12 +115,13 @@ func (c *Canvas) Xml(opts XmlOptions) (View, error) {
 }
 
 func (c *Canvas) Svg(opts SvgOptions) (View, error) {
-	opts.RenderOptions = c.adjustSize(opts.RenderOptions)
-	view, err := NewSvg(opts)
-	if err != nil {
-		return nil, err
-	}
-	return view, c.fillView(view)
+	// opts.RenderOptions = c.adjustSize(opts.RenderOptions)
+	// view, err := NewSvg(opts)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// return view, c.fillView(view)
+	return nil, nil
 }
 
 func (c *Canvas) Json(opts JsonOptions) (View, error) {
@@ -126,6 +140,30 @@ func (c *Canvas) Table(opts TableOptions) (View, error) {
 		return nil, err
 	}
 	return view, c.fillView(view)
+}
+
+func (c *Canvas) adjustSize2() Dimension {
+	z := c.dim
+	if len(c.children) == 0 {
+		return z
+	}
+	z.Reset()
+
+	if c.opts.Orient == HorizontalLayout || c.opts.Orient == CompactLayout {
+		z.Width = c.dim.Width
+	} else {
+		z.Height = c.dim.Height
+	}
+	for _, x := range c.children {
+		if c.opts.Orient == HorizontalLayout || c.opts.Orient == CompactLayout {
+			z.Height += x.dim.Height
+			z.Width = max(z.Width, x.dim.Width)
+		} else if opts.Orient == VerticalLayout {
+			z.Width += x.dim.Width
+			z.Height = max(z.Height, x.dim.Height)
+		}
+	}
+	return z
 }
 
 func (c *Canvas) adjustSize(opts RenderOptions) RenderOptions {

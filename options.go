@@ -39,6 +39,20 @@ type OutputOptions struct {
 	Path            PathType
 }
 
+func (o *OutputOptions) Metrics(n *Node) Metrics {
+	if o.Mode == OutputSvg {
+		m := svgMetric{
+			font: n.Style.Family,
+			size: n.Style.Size,
+		}
+		if m.size == 0 {
+			m.size = svg.DefaultFontSize
+		}
+		return m
+	}
+	return defaultMetric{}
+}
+
 func (o OutputOptions) toSvg() (SvgOptions, error) {
 	opts := SvgOptions{
 		Border:          o.Border,
@@ -84,7 +98,6 @@ func (o OutputOptions) toJson() (JsonOptions, error) {
 }
 
 type RenderOptions struct {
-	Output       Output
 	AllocateMode Allocate
 	Placement    Alignment
 	Orient       Orientation
@@ -95,24 +108,6 @@ type RenderOptions struct {
 	Reverse      bool
 
 	estimateMinSize int
-}
-
-func (o *RenderOptions) Format() Output {
-	return o.Output
-}
-
-func (o *RenderOptions) Metrics(n *Node) Metrics {
-	if o.Output == OutputSvg {
-		m := svgMetric{
-			font: n.Style.Family,
-			size: n.Style.Size,
-		}
-		if m.size == 0 {
-			m.size = svg.DefaultFontSize
-		}
-		return m
-	}
-	return defaultMetric{}
 }
 
 func (o *RenderOptions) Validate() error {

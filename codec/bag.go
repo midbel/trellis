@@ -32,7 +32,7 @@ func defaultBag() *OptionsBag {
 
 func (b *OptionsBag) RenderOptions() *trellis.RenderOptions {
 	return &trellis.RenderOptions{
-		Output:       b.Type,
+		// Output:       b.Type,
 		AllocateMode: b.AllocateMode,
 		Placement:    b.Placement,
 		Orient:       b.Orient,

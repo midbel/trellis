@@ -14,7 +14,7 @@ func Render(w io.Writer, root *Node, rdr *RenderOptions, options *OutputOptions)
 	if !ok {
 		return fmt.Errorf("unsupported layout given")
 	}
-	items, err := prepareRender(root, rdr)
+	items, err := prepareRender(root, rdr, options)
 	if err != nil {
 		return err
 	}
@@ -365,7 +365,7 @@ func cloneAndResizeOptions(opts RenderOptions, size Dimension) RenderOptions {
 	return clone
 }
 
-func prepareRender(node *Node, opts *RenderOptions) ([]*Item, error) {
+func prepareRender(node *Node, opts *RenderOptions, options *OutputOptions) ([]*Item, error) {
 	if node == nil {
 		return nil, fmt.Errorf("root node should be given")
 	}
@@ -374,13 +374,13 @@ func prepareRender(node *Node, opts *RenderOptions) ([]*Item, error) {
 	} else {
 		opts.estimateMinSize = estimateMinSize(node, opts.Size.Width)
 	}
-	return traverseNodes(traverse(node, opts.MinDepth), opts)
+	return traverseNodes(traverse(node, opts.MinDepth), opts, options)
 }
 
-func traverseNodes(nodes []*Node, opts *RenderOptions) ([]*Item, error) {
+func traverseNodes(nodes []*Node, opts *RenderOptions, options *OutputOptions) ([]*Item, error) {
 	list := make([]*Item, 0, len(nodes))
 	for _, n := range nodes {
-		i, err := transformNode(n, opts)
+		i, err := transformNode(n, opts, options)
 		if err != nil {
 			return nil, err
 		}
@@ -390,13 +390,13 @@ func traverseNodes(nodes []*Node, opts *RenderOptions) ([]*Item, error) {
 	return list, nil
 }
 
-func transformNode(n *Node, opts *RenderOptions) (*Item, error) {
+func transformNode(n *Node, opts *RenderOptions, options *OutputOptions) (*Item, error) {
 	it := &Item{
 		Content: n.Content(),
-		Metric:  opts.Metrics(n),
+		Metric:  options.Metrics(n),
 	}
 	for _, n := range n.Nodes {
-		sub, err := transformNode(n, opts)
+		sub, err := transformNode(n, opts, options)
 		if err != nil {
 			return nil, err
 		}

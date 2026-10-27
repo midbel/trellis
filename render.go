@@ -11,15 +11,12 @@ var renderers = map[Orientation]func([]*Item, *RenderOptions) (*Canvas, error){
 	CompactLayout:    buildCompact,
 }
 
-func Render(w io.Writer, root *Node, options Options) error {
+func Render(w io.Writer, root *Node, rdr RenderOptions, options Options) error {
 	if options == nil {
 		return fmt.Errorf("options should be provided")
 	}
 	options.applyDefaults()
-	rdr, err := options.Layout()
-	if err != nil {
-		return err
-	}
+
 	fn, ok := renderers[rdr.Orient]
 	if !ok {
 		return fmt.Errorf("unsupported layout given")
@@ -46,7 +43,7 @@ func buildHorizontal(items []*Item, opts *RenderOptions) (*Canvas, error) {
 	if opts.Size, err = adjustSizes(sizes, HorizontalLayout); err != nil {
 		return nil, err
 	}
-	master, err := NewCanvas(opts.Size)
+	master, err := NewCanvas(opts.Size, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -56,7 +53,7 @@ func buildHorizontal(items []*Item, opts *RenderOptions) (*Canvas, error) {
 		if err != nil {
 			return nil, err
 		}
-		canvas, err := NewCanvas(set.Dimension())
+		canvas, err := NewCanvas(set.Dimension(), opts)
 		if err != nil {
 			return nil, err
 		}
@@ -86,7 +83,7 @@ func buildVertical(items []*Item, opts *RenderOptions) (*Canvas, error) {
 	if opts.Size, err = adjustSizes(sizes, VerticalLayout); err != nil {
 		return nil, err
 	}
-	master, err := NewCanvas(opts.Size)
+	master, err := NewCanvas(opts.Size, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +94,7 @@ func buildVertical(items []*Item, opts *RenderOptions) (*Canvas, error) {
 			return nil, err
 		}
 
-		canvas, err := NewCanvas(set.Dimension())
+		canvas, err := NewCanvas(set.Dimension(), opts)
 		if err != nil {
 			return nil, err
 		}
@@ -121,7 +118,7 @@ func buildVertical(items []*Item, opts *RenderOptions) (*Canvas, error) {
 
 func buildCompact(items []*Item, opts *RenderOptions) (*Canvas, error) {
 	opts.Placement = AlignStart
-	master, err := NewCanvas(opts.Size)
+	master, err := NewCanvas(opts.Size, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -168,7 +165,7 @@ func buildCompact(items []*Item, opts *RenderOptions) (*Canvas, error) {
 		if err != nil {
 			return nil, err
 		}
-		canvas, err := NewCanvas(set.Dimension())
+		canvas, err := NewCanvas(set.Dimension(), opts)
 		if err != nil {
 			return nil, err
 		}

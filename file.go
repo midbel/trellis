@@ -15,11 +15,23 @@ type JsonOptions struct {
 	orient  Orientation
 }
 
+func (*JsonOptions) Format() Output {
+	return OutputJson
+}
+
+func (*JsonOptions) applyDefaults() {}
+
 type XmlOptions struct {
 	Compact bool
 	Path    PathType
 	orient  Orientation
 }
+
+func (*XmlOptions) Format() Output {
+	return OutputXml
+}
+
+func (*XmlOptions) applyDefaults() {}
 
 type JsonFile struct {
 	root map[string]any

@@ -12,10 +12,14 @@ type SvgOptions struct {
 	CoordinatesStep int
 	Style           ConnectorStyle
 	Path            PathType
+	orient Orientation
+}
+
+func (*SvgOptions) Format() Output {
+	return OutputSvg
 }
 
 func (o *SvgOptions) applyDefaults() {
-	o.RenderOptions.applyDefaults()
 	if o.Style == 0 {
 		o.Style = ConnectorUnicode
 	}
@@ -99,7 +103,7 @@ func (s *Svg) createPath(c Path) (svg.Element, error) {
 
 func (s *Svg) curvePath(c Path) (svg.Element, error) {
 	var paths []Path
-	if s.opts.Orient == HorizontalLayout {
+	if s.opts.orient == HorizontalLayout {
 		paths = splitPathH(c)
 	} else {
 		paths = splitPathV(c)
@@ -137,7 +141,7 @@ func (s *Svg) directPath(c Path) (svg.Element, error) {
 
 func (s *Svg) manatthanPath(c Path) (svg.Element, error) {
 	var paths []Path
-	if s.opts.Orient == HorizontalLayout {
+	if s.opts.orient == HorizontalLayout {
 		paths = splitPathH(c)
 	} else {
 		paths = splitPathV(c)

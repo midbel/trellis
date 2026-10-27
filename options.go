@@ -26,7 +26,6 @@ const (
 )
 
 type Options interface {
-	Layout() (RenderOptions, error)
 	Format() Output
 	applyDefaults()
 }

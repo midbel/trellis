@@ -13,10 +13,14 @@ type ScreenOptions struct {
 	CoordinatesStep int
 	Style           ConnectorStyle
 	Path            PathType
+	orient Orientation
+}
+
+func (*ScreenOptions) Format() Output {
+	return OutputScreen
 }
 
 func (o *ScreenOptions) applyDefaults() {
-	o.RenderOptions.applyDefaults()
 	if o.Style == 0 {
 		o.Style = ConnectorUnicode
 	}
@@ -288,7 +292,7 @@ func (s *Screen) createPath(x, y int, path Path) error {
 }
 
 func (s *Screen) verticalConnector(path Path) {
-	if s.opts.Orient == CompactLayout {
+	if s.opts.orient == CompactLayout {
 		// s.crossings = append(s.crossings, path.Start)
 	} else {
 		s.crossings = append(s.crossings, path.Start, path.End)
@@ -312,7 +316,7 @@ func (s *Screen) verticalConnector(path Path) {
 }
 
 func (s *Screen) horizontalConnector(path Path) {
-	if s.opts.Orient == CompactLayout {
+	if s.opts.orient == CompactLayout {
 		s.crossings = append(s.crossings, path.Start)
 	} else {
 		s.crossings = append(s.crossings, path.Start, path.End)
@@ -375,7 +379,7 @@ func (s *Screen) writeSymbol(x, y int, char rune) {
 }
 
 func (s *Screen) writeCrossings() {
-	if s.opts.Orient == CompactLayout {
+	if s.opts.orient == CompactLayout {
 		s.compactCrossings()
 	} else {
 		s.stdCrossings()

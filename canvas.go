@@ -21,9 +21,10 @@ type Canvas struct {
 	opts RenderOptions
 }
 
-func NewCanvas(size Dimension) (*Canvas, error) {
+func NewCanvas(size Dimension, opts *RenderOptions) (*Canvas, error) {
 	canvas := &Canvas{
-		dim: size,
+		dim:  size,
+		opts: *opts,
 	}
 	if err := canvas.dim.Validate(); err != nil {
 		return nil, err
@@ -52,6 +53,7 @@ func (c *Canvas) Render(w io.Writer, opts OutputOptions) error {
 		if err != nil {
 			return err
 		}
+		opts.orient = opts.orient
 		view, err = NewSvg(c.adjustSize2(), opts)
 		if err != nil {
 			return err
@@ -61,6 +63,7 @@ func (c *Canvas) Render(w io.Writer, opts OutputOptions) error {
 		if err != nil {
 			return err
 		}
+		opts.orient = opts.orient
 		view, err = NewScreen(c.adjustSize2(), opts)
 		if err != nil {
 			return err
@@ -94,46 +97,6 @@ func (c *Canvas) Render(w io.Writer, opts OutputOptions) error {
 	return view.Render(w)
 }
 
-func (c *Canvas) Screen(opts ScreenOptions) (View, error) {
-	// opts.RenderOptions = c.adjustSize(opts.RenderOptions)
-	// view, err := NewScreen(opts)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// return view, c.fillView(view)
-	return nil, nil
-}
-
-func (c *Canvas) Xml(opts XmlOptions) (View, error) {
-	// opts.RenderOptions = c.adjustSize(opts.RenderOptions)
-	// view, err := NewXml(opts)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// return view, c.fillView(view)
-	return nil, nil
-}
-
-func (c *Canvas) Svg(opts SvgOptions) (View, error) {
-	// opts.RenderOptions = c.adjustSize(opts.RenderOptions)
-	// view, err := NewSvg(opts)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// return view, c.fillView(view)
-	return nil, nil
-}
-
-func (c *Canvas) Json(opts JsonOptions) (View, error) {
-	// opts.RenderOptions = c.adjustSize(opts.RenderOptions)
-	// view, err := NewJson(opts)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// return view, c.fillView(view)
-	return nil, nil
-}
-
 func (c *Canvas) Table(opts TableOptions) (View, error) {
 	view, err := NewTable()
 	if err != nil {
@@ -158,7 +121,7 @@ func (c *Canvas) adjustSize2() Dimension {
 		if c.opts.Orient == HorizontalLayout || c.opts.Orient == CompactLayout {
 			z.Height += x.dim.Height
 			z.Width = max(z.Width, x.dim.Width)
-		} else if opts.Orient == VerticalLayout {
+		} else if c.opts.Orient == VerticalLayout {
 			z.Width += x.dim.Width
 			z.Height = max(z.Height, x.dim.Height)
 		}

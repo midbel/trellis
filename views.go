@@ -18,21 +18,13 @@ type View interface {
 	drawer
 }
 
-type TableOptions struct {
-	RenderOptions
-}
-
-func (o *TableOptions) Layout() (RenderOptions, error) {
-	return o.RenderOptions, o.RenderOptions.Validate()
-}
+type TableOptions struct {}
 
 func (*TableOptions) Format() Output {
 	return OutputTable
 }
 
-func (o *TableOptions) applyDefaults() {
-	o.RenderOptions.applyDefaults()
-}
+func (*TableOptions) applyDefaults() {}
 
 type Table struct {
 	cells []Placement

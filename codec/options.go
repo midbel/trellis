@@ -40,7 +40,7 @@ func makeSetters(opts *OptionsBag) map[string]func(any) error {
 		"output":      assignValue(&opts.Type, parseOutput),
 		"min-depth":   assignValue(&opts.MinDepth, parseInt),
 		"max-depth":   assignValue(&opts.MaxDepth, parseInt),
-		"orientation": assignValue(&opts.Orient, parseOrientation),
+		"orientation": assignValue(&opts.Orient, parseLayout),
 		"placement":   assignValue(&opts.Placement, parseAlignment),
 	}
 }
@@ -143,12 +143,12 @@ func parseInsets(value any) (trellis.Insets, error) {
 	return trellis.NewInsets(size, size, size, size), nil
 }
 
-func parseOrientation(value any) (trellis.Orientation, error) {
+func parseLayout(value any) (trellis.Layout, error) {
 	switch v := value.(type) {
 	case sexpr.Ident:
-		return trellis.ParseOrientation(string(v))
+		return trellis.ParseLayout(string(v))
 	case string:
-		return trellis.ParseOrientation(v)
+		return trellis.ParseLayout(v)
 	default:
 		return 0, ErrType
 	}

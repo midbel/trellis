@@ -12,7 +12,7 @@ import (
 type JsonOptions struct {
 	Compact bool
 	Path    PathType
-	orient  Orientation
+	orient  Layout
 }
 
 func (*JsonOptions) Format() Output {
@@ -24,7 +24,7 @@ func (*JsonOptions) applyDefaults() {}
 type XmlOptions struct {
 	Compact bool
 	Path    PathType
-	orient  Orientation
+	orient  Layout
 }
 
 func (*XmlOptions) Format() Output {
@@ -155,15 +155,15 @@ func createJsonContent(x, y int, c Content) any {
 	return v
 }
 
-func createCurveJsonPath(c Path, orient Orientation) any {
+func createCurveJsonPath(c Path, kind Layout) any {
 	var paths []Path
-	if orient == HorizontalLayout {
+	if kind == HorizontalLayout {
 		paths = splitPathH(c)
 	} else {
 		paths = splitPathV(c)
 	}
 	if len(paths) <= 1 {
-		return createDirectJsonPath(c, orient)
+		return createDirectJsonPath(c, kind)
 	}
 	g := map[string]any{
 		"type":  "curve",
@@ -177,7 +177,7 @@ func createCurveJsonPath(c Path, orient Orientation) any {
 	return g
 }
 
-func createDirectJsonPath(c Path, orient Orientation) any {
+func createDirectJsonPath(c Path, _ Layout) any {
 	g := map[string]any{
 		"type":  "direct",
 		"start": jsonPoint(c.Start),
@@ -186,9 +186,9 @@ func createDirectJsonPath(c Path, orient Orientation) any {
 	return g
 }
 
-func createManathanJsonPath(c Path, orient Orientation) any {
+func createManathanJsonPath(c Path, kind Layout) any {
 	var paths []Path
-	if orient == HorizontalLayout {
+	if kind == HorizontalLayout {
 		paths = splitPathH(c)
 	} else {
 		paths = splitPathV(c)
@@ -331,15 +331,15 @@ func createElementForContent(x, y int, val Content) xml.Node {
 	return &el
 }
 
-func createCurveElement(c Path, orient Orientation) xml.Node {
+func createCurveElement(c Path, kind Layout) xml.Node {
 	var paths []Path
-	if orient == HorizontalLayout {
+	if kind == HorizontalLayout {
 		paths = splitPathH(c)
 	} else {
 		paths = splitPathV(c)
 	}
 	if len(paths) <= 1 {
-		return createDirectElement(c, orient)
+		return createDirectElement(c, kind)
 	}
 	var (
 		fst  = paths[0]
@@ -362,7 +362,7 @@ func createCurveElement(c Path, orient Orientation) xml.Node {
 	return el
 }
 
-func createDirectElement(c Path, orient Orientation) xml.Node {
+func createDirectElement(c Path, _ Layout) xml.Node {
 	el := xml.NewElement(xml.NewName("path"))
 	attr := xml.NewAttribute(xml.NewName("type"), "direct")
 	el.Attributes = append(el.Attributes, attr)
@@ -373,13 +373,13 @@ func createDirectElement(c Path, orient Orientation) xml.Node {
 	return el
 }
 
-func createManathanElement(c Path, orient Orientation) xml.Node {
+func createManathanElement(c Path, kind Layout) xml.Node {
 	el := xml.NewElement(xml.NewName("path"))
 	attr := xml.NewAttribute(xml.NewName("type"), "manathan")
 	el.Attributes = append(el.Attributes, attr)
 
 	var paths []Path
-	if orient == HorizontalLayout {
+	if kind == HorizontalLayout {
 		paths = splitPathH(c)
 	} else {
 		paths = splitPathV(c)

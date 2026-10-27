@@ -6,7 +6,7 @@ import (
 
 type OptionsBag struct {
 	Type         trellis.Output
-	Orient       trellis.Orientation
+	Orient       trellis.Layout
 	AllocateMode trellis.Allocate
 	Placement    trellis.Alignment
 	Width        int

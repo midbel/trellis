@@ -13,7 +13,7 @@ type ScreenOptions struct {
 	CoordinatesStep int
 	Style           ConnectorStyle
 	Path            PathType
-	orient          Orientation
+	orient          Layout
 }
 
 func (*ScreenOptions) Format() Output {
@@ -276,7 +276,7 @@ func (s *Screen) createPath(x, y int, path Path) error {
 		return fmt.Errorf("screen only supports manatthan path")
 	}
 	var paths []Path
-	if path.Pivot.Orient == HorizontalLayout {
+	if path.Pivot.Orient == Horizontal {
 		paths = splitPathH(path)
 	} else {
 		paths = splitPathV(path)

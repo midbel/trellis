@@ -5,6 +5,49 @@ import (
 	"io"
 )
 
+type Layout uint8
+
+const (
+	HorizontalLayout Layout = 1 << iota
+	VerticalLayout
+	CompactLayout
+	TreemapLayout
+	RadialLayout
+	SunburstLayout
+)
+
+func ParseLayout(str string) (Layout, error) {
+	switch str {
+	case "", "h", "horizontal":
+		return HorizontalLayout, nil
+	case "v", "vertical":
+		return VerticalLayout, nil
+	case "c", "compact":
+		return CompactLayout, nil
+	default:
+		return 0, unknown("orientation", str)
+	}
+}
+
+func (o Layout) String() string {
+	switch o {
+	case HorizontalLayout:
+		return "horizontal"
+	case VerticalLayout:
+		return "vertical"
+	case CompactLayout:
+		return "compact"
+	case TreemapLayout:
+		return "treemap"
+	case SunburstLayout:
+		return "sunburst"
+	case RadialLayout:
+		return "radial"
+	default:
+		return ""
+	}
+}
+
 func Render(w io.Writer, root *Node, rdr *RenderOptions, options *OutputOptions) error {
 	if options == nil {
 		return fmt.Errorf("options should be provided")
@@ -193,10 +236,13 @@ func (c *Canvas) put(x, y int, cell Cell) error {
 	return nil
 }
 
-var renderers = map[Orientation]func([]*Item, *RenderOptions) (*Canvas, error){
+var renderers = map[Layout]func([]*Item, *RenderOptions) (*Canvas, error){
 	HorizontalLayout: buildHorizontal,
 	VerticalLayout:   buildVertical,
 	CompactLayout:    buildCompact,
+	TreemapLayout:    buildTreemap,
+	SunburstLayout:   buildSunburst,
+	RadialLayout:     buildRadial,
 }
 
 func buildHorizontal(items []*Item, opts *RenderOptions) (*Canvas, error) {
@@ -347,16 +393,16 @@ func buildCompact(items []*Item, opts *RenderOptions) (*Canvas, error) {
 	return master, nil
 }
 
-func sunburst(root *Node, options Options) error {
-	return fmt.Errorf("not yet implemented")
+func buildSunburst(items []*Item, options *RenderOptions) (*Canvas, error) {
+	return nil, fmt.Errorf("not yet implemented")
 }
 
-func radial(w io.Writer, root *Node, options Options) error {
-	return fmt.Errorf("not yet implemented")
+func buildRadial(items []*Item, options *RenderOptions) (*Canvas, error) {
+	return nil, fmt.Errorf("not yet implemented")
 }
 
-func treeMap(w io.Writer, root *Node, options Options) error {
-	return fmt.Errorf("not yet implemented")
+func buildTreemap(items []*Item, options *RenderOptions) (*Canvas, error) {
+	return nil, fmt.Errorf("not yet implemented")
 }
 
 func cloneAndResizeOptions(opts RenderOptions, size Dimension) RenderOptions {

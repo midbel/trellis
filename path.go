@@ -21,6 +21,13 @@ func ParsePath(str string) (PathType, error) {
 	}
 }
 
+type Orientation uint8
+
+const (
+	Horizontal Orientation = iota + 1
+	Vertical
+)
+
 type Axis struct {
 	Orient Orientation
 	Pos    int
@@ -38,9 +45,9 @@ func NewPath(start, end Point) Path {
 		End:   end,
 	}
 	if p.Horizontal() {
-		p.Pivot.Orient = HorizontalLayout
+		p.Pivot.Orient = Horizontal
 	} else {
-		p.Pivot.Orient = VerticalLayout
+		p.Pivot.Orient = Vertical
 	}
 	return p
 }
@@ -50,7 +57,7 @@ func (p Path) Move(x, y int) Path {
 	p.Start.Y += y
 	p.End.X += x
 	p.End.Y += y
-	if p.Pivot.Orient == HorizontalLayout {
+	if p.Pivot.Orient == Horizontal {
 		p.Pivot.Pos += x
 	} else {
 		p.Pivot.Pos += y
@@ -150,7 +157,7 @@ func horizontalPath(from, to *Item) Path {
 	ep.X--
 	p := NewPath(start.MidRight(), ep)
 
-	p.Pivot.Orient = HorizontalLayout
+	p.Pivot.Orient = Horizontal
 	if to.Bounds.X == from.Bounds.EndX() {
 		// TODO: change -2 by ???
 		p.Pivot.Pos = from.Bounds.EndX() - 2
@@ -173,7 +180,7 @@ func verticalPath(from, to *Item) Path {
 	ep.Y--
 	p := NewPath(start.LowerMid(), ep)
 
-	p.Pivot.Orient = VerticalLayout
+	p.Pivot.Orient = Vertical
 	if to.Bounds.Y == from.Bounds.EndY() {
 		// TODO: change -2 by ???
 		p.Pivot.Pos = from.Bounds.EndY() - 1

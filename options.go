@@ -100,7 +100,7 @@ func (o OutputOptions) toJson() (JsonOptions, error) {
 type RenderOptions struct {
 	AllocateMode Allocate
 	Placement    Alignment
-	Orient       Orientation
+	Orient       Layout
 	Size         Dimension
 	MinDepth     int
 	MaxDepth     int

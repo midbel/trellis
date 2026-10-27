@@ -32,7 +32,7 @@ type CliFlags struct {
 	Height       int
 	Reverse      bool
 	Border       bool
-	Orient       trellis.Orientation
+	Orient       trellis.Layout
 	Output       trellis.Output
 	Style        trellis.ConnectorStyle
 	Path         trellis.PathType
@@ -56,8 +56,8 @@ func parseArgs(args []string) (CliFlags, *flag.FlagSet, error) {
 		cli.AllocateMode = v
 		return err
 	})
-	fs.Func("t", "orientation", func(str string) error {
-		v, err := trellis.ParseOrientation(str)
+	fs.Func("t", "layout", func(str string) error {
+		v, err := trellis.ParseLayout(str)
 		cli.Orient = v
 		return err
 	})

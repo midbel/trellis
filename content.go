@@ -83,40 +83,6 @@ func ParseOutput(str string) (Output, error) {
 	}
 }
 
-type Orientation uint8
-
-const (
-	HorizontalLayout Orientation = 1 << iota
-	VerticalLayout
-	CompactLayout
-)
-
-func ParseOrientation(str string) (Orientation, error) {
-	switch str {
-	case "", "h", "horizontal":
-		return HorizontalLayout, nil
-	case "v", "vertical":
-		return VerticalLayout, nil
-	case "c", "compact":
-		return CompactLayout, nil
-	default:
-		return 0, unknown("orientation", str)
-	}
-}
-
-func (o Orientation) String() string {
-	switch o {
-	case HorizontalLayout:
-		return "horizontal"
-	case VerticalLayout:
-		return "vertical"
-	case CompactLayout:
-		return "compact"
-	default:
-		return ""
-	}
-}
-
 type Alignment uint8
 
 const (

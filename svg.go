@@ -12,7 +12,7 @@ type SvgOptions struct {
 	CoordinatesStep int
 	Style           ConnectorStyle
 	Path            PathType
-	orient          Orientation
+	orient          Layout
 }
 
 func (*SvgOptions) Format() Output {

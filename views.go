@@ -18,7 +18,7 @@ type View interface {
 	drawer
 }
 
-type TableOptions struct {}
+type TableOptions struct{}
 
 func (*TableOptions) Format() Output {
 	return OutputTable

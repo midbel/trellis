@@ -1,8 +1,6 @@
 package codec
 
 import (
-	"fmt"
-
 	"github.com/midbel/trellis"
 )
 
@@ -32,8 +30,8 @@ func defaultBag() *OptionsBag {
 	return new(OptionsBag)
 }
 
-func (b *OptionsBag) Build() (trellis.Options, error) {
-	base := trellis.RenderOptions{
+func (b *OptionsBag) RenderOptions() *trellis.RenderOptions {
+	return &trellis.RenderOptions{
 		Output:       b.Type,
 		AllocateMode: b.AllocateMode,
 		Placement:    b.Placement,
@@ -43,39 +41,16 @@ func (b *OptionsBag) Build() (trellis.Options, error) {
 		MaxDepth:     b.MaxDepth,
 		Spacing:      b.Spacing,
 		Reverse:      b.Reverse,
-		Path:         b.Path,
 	}
-	var opts trellis.Options
-	switch b.Type {
-	case trellis.OutputTable:
-		opts = &trellis.TableOptions{
-			RenderOptions: base,
-		}
-	case trellis.OutputSvg:
-		opts = &trellis.SvgOptions{
-			RenderOptions:   base,
-			Style:           b.Style,
-			CoordinatesStep: b.CoordinatesStep,
-		}
-	case trellis.OutputScreen:
-		opts = &trellis.ScreenOptions{
-			RenderOptions:   base,
-			Border:          b.Border,
-			Style:           b.Style,
-			CoordinatesStep: b.CoordinatesStep,
-		}
-	case trellis.OutputXml:
-		opts = &trellis.XmlOptions{
-			RenderOptions: base,
-			Compact:       b.Compact,
-		}
-	case trellis.OutputJson:
-		opts = &trellis.JsonOptions{
-			RenderOptions: base,
-			Compact:       b.Compact,
-		}
-	default:
-		return nil, fmt.Errorf("unsupported output type")
+}
+
+func (b *OptionsBag) OutputOptions() *trellis.OutputOptions {
+	return &trellis.OutputOptions{
+		Mode:            b.Type,
+		Compact:         b.Compact,
+		CoordinatesStep: b.CoordinatesStep,
+		Border:          b.Border,
+		Connector:       b.Style,
+		Path:            b.Path,
 	}
-	return opts, nil
 }

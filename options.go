@@ -89,7 +89,6 @@ type RenderOptions struct {
 	Placement    Alignment
 	Orient       Orientation
 	Size         Dimension
-	Path         PathType // manathan, direct, curve
 	MinDepth     int
 	MaxDepth     int
 	Spacing      int // Distance between sibling allocation regions.

@@ -44,10 +44,6 @@ type TreeSpec struct {
 	Options *OptionsBag
 }
 
-func (t *TreeSpec) Build() (trellis.Options, error) {
-	return t.Options.Build()
-}
-
 func Tree(r io.Reader, opts Options) (*TreeSpec, error) {
 	fn, ok := dispatch[opts.Format]
 	if !ok {

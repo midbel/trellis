@@ -16,12 +16,11 @@ func main() {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(2)
 	}
-	options, err := spec.Build()
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(2)
-	}
-	if err := trellis.Render(os.Stdout, spec.Node, options); err != nil {
+	var (
+		rOpts = spec.Options.RenderOptions()
+		oOpts = spec.Options.OutputOptions()
+	)
+	if err := trellis.Render(os.Stdout, spec.Node, rOpts, oOpts); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}

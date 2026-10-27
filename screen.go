@@ -13,7 +13,7 @@ type ScreenOptions struct {
 	CoordinatesStep int
 	Style           ConnectorStyle
 	Path            PathType
-	orient Orientation
+	orient          Orientation
 }
 
 func (*ScreenOptions) Format() Output {

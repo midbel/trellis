@@ -366,6 +366,7 @@ func cloneAndResizeOptions(opts RenderOptions, size Dimension) RenderOptions {
 }
 
 func prepareRender(node *Node, opts *RenderOptions, options *OutputOptions) ([]*Item, error) {
+	opts.applyDefaults()
 	if node == nil {
 		return nil, fmt.Errorf("root node should be given")
 	}
